@@ -13,12 +13,12 @@ const Reviews = new mongoose.Schema({
         description : 'Rating given by the user (1-5 scale)'
     },
     user: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
     },
     category: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
         ref: 'category',
         required: true,
     },
