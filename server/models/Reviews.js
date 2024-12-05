@@ -1,9 +1,20 @@
 import mongoose from 'mongoose';
 
 const Reviews = new mongoose.Schema({
+    user_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+    },
+    category_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'ReviewCategory',
+        required: true,
+    },
     content: {
         type: String,
         required: true,
+        description : 'Review content'
     },
     rating: {
         type: Number,    
@@ -12,29 +23,28 @@ const Reviews = new mongoose.Schema({
         max : 5,
         description : 'Rating given by the user (1-5 scale)'
     },
-    user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
-    },
-    category: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'category',
-        required: true,
-    },
-    createdAt: {
+    created_at: {
         type: Date,    
         default: Date.now,
+        description : 'Review submission timestamp'
+    },
+    is_responded: {
+        type: Boolean,
+        default: false,
+        description : 'Response given or pending'
+    },
+    blockchain_tx : {
+        type : String,   
+        default: '',
+        required: true,
+        description : 'Blockchain transaction ID'
     },
     status: {
         type: String,
         enum: ['Active', 'Inactive','Deleted'],
         default: 'Active',
     },
-    is_responded: {
-        type: Boolean,
-        default: false,
-    }
+  
 });
 
 
