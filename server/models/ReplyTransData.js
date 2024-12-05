@@ -7,7 +7,7 @@ const ReviewTransaction = new mongoose.Schema({
         required: true,
         description :'Content of the message'
     },
-    created_At: {
+    created_at: {
         type: Date,
         default: Date.now,
         description :'Reply submission timestamp'
@@ -15,7 +15,7 @@ const ReviewTransaction = new mongoose.Schema({
     Status: {
         type: String,
         enum: ['Active', 'Inactive'],
-        default: 'Active',
+        required: true,
         description :'Status of the reply (Active or Inactive)'
     }
 });

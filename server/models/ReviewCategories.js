@@ -2,28 +2,29 @@
 import mongoose, { Schema} from 'mongoose';
 
 const reviewCategorySchema = new Schema({
-  categoryName: {
+  category_name: {
     type: String,
     required: true,
     trim: true
   },
-  description: {
+  category_description: {
     type: String,
     trim: true
   },
-  createdAt: {
+  created_at: {
     type: Date,
     default: Date.now
+  },
+  created_by: {
+    type: String, 
+    required: true
   },
   status: {
     type: String,
     enum: ['Active', 'Inactive','Deleted'],
     default: 'Active'
   },
-  createdBy: {
-    type: String, 
-    required: true
-  },
+  
 });
 
 // reviewCategorySchema.pre('save', function(next) {

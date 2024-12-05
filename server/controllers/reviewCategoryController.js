@@ -32,7 +32,7 @@ export const createReviewCategory = async (req, res) => {
 // Function to get all review categories
 export const getAllReviewCategories = async (req, res) => {
   try {
-    const reviewCategories = await ReviewCategory.find({ isActive: true }); // You can adjust the query as needed
+    const reviewCategories = await ReviewCategory.find({ status: "Active" }); // You can adjust the query as needed
 
     if (reviewCategories.length === 0) {
       return res.status(404).json({ message: 'No active review categories found' });
