@@ -3,19 +3,18 @@ import ReviewCategory from "../models/ReviewCategories.js";
 // Function to create a new review category
 export const createReviewCategory = async (req, res) => {
   try {
-    const { categoryName, description, isActive, createdBy } = req.body;
+    const { category_name, category_description ,  created_by} = req.body;
 
     // Check if categoryName is provided
-    if (!categoryName) {
+    if (!category_name) {
       return res.status(400).json({ message: 'Category name is required' });
     }
 
     // Create a new instance of the ReviewCategory model
     const newReviewCategory = new ReviewCategory({
-      categoryName,
-      description,
-      isActive,
-      createdBy 
+      category_name,
+      category_description,
+      created_by
     });
 
     // Save the new review category to the database

@@ -7,7 +7,7 @@ const router = express.Router();
 router.post("/users", createUser);
 
 // Login users
-router.put("/login", loginUser);
+router.get("/login", loginUser);
 
 // Route to get all users
 router.get("/users", getAllUsers);
