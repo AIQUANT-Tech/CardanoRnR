@@ -59,9 +59,6 @@ export const loginUser = async (req, res) => {
         if (!isMatch) {
             return res.status(400).json({ message: "Invalid credentials." });
         }
-
-        newUser = await User.findOne({ email });
-
         return res.status(200).json({
             message: "Login successful",
             user: {
