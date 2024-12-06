@@ -19,29 +19,28 @@ describe('Review Controller Tests', () => {
     describe('POST /api/review/reviews - Create Review', () => {
         it('should create a review when valid data is provided', async () => {
             const validData = {
-                "_id": "6752d9f82bef84430b254187",
-                "user_id": "675287fd1dbb7d45a290dd19",
-                "overall_content": "Amazing experience overall.",
-                "overall_rating": 3,
-                "review_list": [
+                _id: "6752d9f82bef84430b254187",
+                user_id: "675287fd1dbb7d45a290dd19",
+                overall_content: "Amazing experience overall.",
+                overall_rating: 3,
+                review_list: [
                     [
                         {
-                            "category_id": "6751907fb59022490aeacda0",
-                            "content": "Great customer service.",
-                            "rating": 2
+                            category_id: "6751907fb59022490aeacda0",
+                            content: "Great customer service.",
+                            rating: 2
                         },
                         {
-                            "category_id": "67528525f08b6bc15cc93169",
-                            "content": "Good product quality.",
-                            "rating": 1
+                            category_id: "67528525f08b6bc15cc93169",
+                            content: "Good product quality.",
+                            rating: 1
                         }
                     ]
                 ],
-                "is_responded": false,
-                "blockchain_tx": " ",
-                "status": "Active",
-                "created_at": "2024-12-06T11:03:20.625Z",
-                "__v": 0
+                is_responded: false,
+                blockchain_tx: " ",
+                status: "Active",
+                created_at: "2024-12-06T11:03:20.625Z",
             }
              
 
@@ -67,13 +66,29 @@ describe('Review Controller Tests', () => {
 
         it('should return server error if there is an exception', async () => {
             const validData = {
-                user_id: 'user123',
-                category_id: 'category123',
-                content: 'This is a test review.',
-                rating: 5,
-                blockchain_tx: 'blockchainTransactionHash'
-            };
-
+                _id: "6752d9f82bef84430b254187",
+                user_id: "675287fd1dbb7d45a290dd19",
+                overall_content: "Amazing experience overall.",
+                overall_rating: 3,
+                review_list: [
+                    [
+                        {
+                            category_id: "6751907fb59022490aeacda0",
+                            content: "Great customer service.",
+                            rating: 2
+                        },
+                        {
+                            category_id: "67528525f08b6bc15cc93169",
+                            content: "Good product quality.",
+                            rating: 1
+                        }
+                    ]
+                ],
+                is_responded: false,
+                blockchain_tx: " ",
+                status: "Active",
+                created_at: "2024-12-06T11:03:20.625Z",
+            }
             mockingoose(Review).toReturn(new Error('Database error'), 'save');
 
             const response = await request(app)
@@ -89,25 +104,53 @@ describe('Review Controller Tests', () => {
         it('should return all reviews', async () => {
             const mockReviews = [
                 {
-                    blockchain_tx: " ",
-                    _id: "67516a47ee82e3a1bc6b0d94",
-                    content: "worst",
-                    rating: 1.5,
-                    user: "67516815101f5e5af47792ad",
-                    category: "67516a20ee82e3a1bc6b0d92",
-                    status: "Active",
+                    _id: "6752d9f82bef84430b254187",
+                    user_id: "675287fd1dbb7d45a290dd19",
+                    overall_content: "Amazing experience overall.",
+                    overall_rating: 3,
+                    review_list: [
+                        [
+                            {
+                                category_id: "6751907fb59022490aeacda0",
+                                content: "Great customer service.",
+                                rating: 2
+                            },
+                            {
+                                category_id: "67528525f08b6bc15cc93169",
+                                content: "Good product quality.",
+                                rating: 1
+                            }
+                        ]
+                    ],
                     is_responded: false,
+                    blockchain_tx: " ",
+                    status: "Active",
+                    created_at: "2024-12-06T11:03:20.625Z",
                 },
-                {                     
-                    blockchain_tx: " ",
-                    _id: "67516a47ee82e3a1bc6b0d4",
-                    content: "worst",
-                    rating: 1.5,
-                    user: "67516815101f5e5af47792d",
-                    category: "67516a20ee82e3a1bcb0d92",
-                    status: "Active",
+                {
+                    _id: "6752de33e833470b36335ca4",
+                    user_id: "67516815101f5e5af47792ad",
+                    overall_content: "BAD EXP overall.",
+                    overall_rating: 3,
+                    review_list: [
+                        [
+                            {
+                                category_id: "6751907fb59022490aeacda0",
+                                content: "Worst service.",
+                                rating: 2
+                            },
+                            {
+                                category_id: "67528525f08b6bc15cc93169",
+                                content: "wooo quality.",
+                                rating: 1
+                            }
+                        ]
+                    ],
                     is_responded: false,
-                 }
+                    blockchain_tx: " ",
+                    status: "Active",
+                    created_at: "2024-12-06T11:21:23.013Z",
+                }
             ];
 
             mockingoose(Review).toReturn(mockReviews, 'find');
