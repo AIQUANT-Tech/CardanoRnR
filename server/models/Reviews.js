@@ -6,23 +6,40 @@ const Reviews = new mongoose.Schema({
         ref: 'User',
         required: true,
     },
-    category_id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'ReviewCategory',
-        required: true,
-    },
-    content: {
+    overall_content: {
         type: String,
         required: true,
-        description : 'Review content'
+        description : 'OverallReview content'
     },
-    rating: {
+    overall_rating: {
         type: Number,    
         required: true,
         min : 1,
         max : 5,
-        description : 'Rating given by the user (1-5 scale)'
+        description : 'Rating given by the user (1-5 scale) overall'
     },
+    review_list: [{
+        type: Array,    
+        required: true,
+        description : 'List of reviews',
+        category_id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'ReviewCategory',
+            required: true,
+        },
+        content: {
+            type: String,
+            required: true,
+            description : 'Review content'
+        },
+        rating: {
+            type: Number,    
+            required: true,
+            min : 1,
+            max : 5,
+            description : 'Rating given by the user (1-5 scale)'
+        },
+    }],
     created_at: {
         type: Date,    
         default: Date.now,
