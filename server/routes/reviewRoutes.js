@@ -1,5 +1,5 @@
 import express from 'express';
-import { createReview, getAllReviews } from '../controllers/reviewController.js';
+import { createReview, getAllReviews,getReviewById } from '../controllers/reviewController.js';
 
 const router = express.Router();
 
@@ -8,5 +8,8 @@ router.post('/reviews', createReview);
 
 // Route to get all reviews
 router.get('/reviews', getAllReviews);
+
+// Get a review by ID
+router.get('/reviews/:id', getReviewById);
 
 export default router;

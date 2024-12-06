@@ -19,12 +19,31 @@ describe('Review Controller Tests', () => {
     describe('POST /api/review/reviews - Create Review', () => {
         it('should create a review when valid data is provided', async () => {
             const validData = {
-                content: "good",
-                rating: 4.5,
-                user_id: "67516815101f5e5af47792d",
-                category_id: "67516a20ee82e3a1bc6bo0d92",
-                blockchain_tx: " ",
-            };
+                "_id": "6752d9f82bef84430b254187",
+                "user_id": "675287fd1dbb7d45a290dd19",
+                "overall_content": "Amazing experience overall.",
+                "overall_rating": 3,
+                "review_list": [
+                    [
+                        {
+                            "category_id": "6751907fb59022490aeacda0",
+                            "content": "Great customer service.",
+                            "rating": 2
+                        },
+                        {
+                            "category_id": "67528525f08b6bc15cc93169",
+                            "content": "Good product quality.",
+                            "rating": 1
+                        }
+                    ]
+                ],
+                "is_responded": false,
+                "blockchain_tx": " ",
+                "status": "Active",
+                "created_at": "2024-12-06T11:03:20.625Z",
+                "__v": 0
+            }
+             
 
             mockingoose(Review).toReturn(validData, 'save');
 
