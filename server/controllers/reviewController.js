@@ -11,7 +11,7 @@ export const createReview = async (req, res) => {
         }
 
         // Create a new review
-        const newReview = new Review({ user_id, category_id, content, rating, blockchain_tx });
+        const newReview = new Review({ user_id, category_id, content, rating,  });
         const savedReview = await newReview.save();
 
         return res.status(201).json({ message: 'Review created successfully.', review: savedReview });

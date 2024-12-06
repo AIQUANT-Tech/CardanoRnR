@@ -1,5 +1,6 @@
 import express from 'express';
-import { createReviewCategory, getAllReviewCategories } from '../controllers/reviewCategoryController.js';
+import { createReviewCategory, getAllReviewCategories,updateReviewCategory,
+    deleteReviewCategory, } from '../controllers/reviewCategoryController.js';
 
 const router = express.Router();
 
@@ -8,5 +9,11 @@ router.post('/review-categories', createReviewCategory);
 
 // Route for getting all review categories
 router.get('/review-categories', getAllReviewCategories);
+
+// Update
+router.put('/review-categories/:id', updateReviewCategory);
+
+// delete
+router.delete('/review-categories/:id', deleteReviewCategory); 
 
 export default router;
