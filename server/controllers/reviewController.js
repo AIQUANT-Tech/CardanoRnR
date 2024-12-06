@@ -3,15 +3,15 @@ import Review from '../models/Reviews.js'; // Adjust the path if needed
 // Create a new review
 export const createReview = async (req, res) => {
     try {
-        const { user_id, category_id, content, rating, blockchain_tx } = req.body;
+        const { user_id,overall_content,overall_rating,review_list, blockchain_tx } = req.body;
 
         // Validate required fields
-        if (!content || !rating || !user_id || !category_id) {
+        if (!overall_content || !overall_rating || !user_id || !review_list) {
             return res.status(400).json({ message: 'All fields are required.' });
         }
 
         // Create a new review
-        const newReview = new Review({ user_id, category_id, content, rating,  });
+        const newReview = new Review({ user_id,overall_content,overall_rating,review_list, blockchain_tx });
         const savedReview = await newReview.save();
 
         return res.status(201).json({ message: 'Review created successfully.', review: savedReview });
