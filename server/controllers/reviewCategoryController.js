@@ -43,5 +43,50 @@ export const getAllReviewCategories = async (req, res) => {
     return res.status(500).json({ message: 'Server error' });
   }
 };
+// Function to update a review category
+export const updateReviewCategory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { category_name, category_description, status } = req.body;
 
-// You can add more functions to update or delete categories based on your needs
+    // Find and update the review category
+    const updatedCategory = await ReviewCategory.findByIdAndUpdate(
+      {_id: id},
+      { category_name, category_description, status },
+      { new: true, runValidators: true } // Returns updated document and validates schema
+    );
+
+    if (!updatedCategory) {
+      return res.status(404).json({ message: 'Review category not found' });
+    }
+
+    return res.status(200).json({
+      message: 'Review category updated successfully',
+      data: updatedCategory
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+// Function to delete a review category
+export const deleteReviewCategory = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deletedCategory = await ReviewCategory.findByIdAndDelete({_id: id});
+
+    if (!deletedCategory) {
+      return res.status(404).json({ message: 'Review category not found' });
+    }
+
+    return res.status(200).json({
+      message: 'Review category deleted successfully',
+      data: deletedCategory
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+// You can add more functions categories based on your needs
