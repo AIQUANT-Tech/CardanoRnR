@@ -1,4 +1,4 @@
-import ReviewCategory from "../models/ReviewCategories.js";
+import ReviewCategory from "./ReviewCategories.js";
 
 // Function to create a new review category
 export const createReviewCategory = async (req, res) => {

@@ -1,6 +1,6 @@
 import express from 'express';
 import { createReviewCategory, getAllReviewCategories,updateReviewCategory,
-    deleteReviewCategory, } from '../controllers/reviewCategoryController.js';
+    deleteReviewCategory, } from './reviewCategoryController.js';
 
 const router = express.Router();
 

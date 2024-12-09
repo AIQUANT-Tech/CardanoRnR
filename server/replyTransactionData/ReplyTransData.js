@@ -1,7 +1,16 @@
 import mongoose from 'mongoose';
 
 const ReviewTransaction = new mongoose.Schema({
-
+    review_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Review',
+        required: true
+    },
+    user_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
     content: {
         type: String,
         required: true,

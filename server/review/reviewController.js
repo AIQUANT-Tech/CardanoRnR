@@ -1,6 +1,5 @@
-import Review from '../models/Reviews.js'; // Adjust the path if needed
+import Review from './Reviews.js'; 
 
-// Create a new review
 export const createReview = async (req, res) => {
     try {
         const {

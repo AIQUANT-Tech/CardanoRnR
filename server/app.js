@@ -1,9 +1,9 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import reviewCategoryRoutes from './routes/reviewCategoryRoutes.js';
-import reviewRoutes from './routes/reviewRoutes.js';
-import userRoutes from './routes/userRoutes.js';
+import reviewCategoryRoutes from './reviewCatagory/reviewCategoryRoutes.js';
+import reviewRoutes from './review/reviewRoutes.js';
+import userRoutes from './user/userRoutes.js';
 dotenv.config();
 
 const app = express();

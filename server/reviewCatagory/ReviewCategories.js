@@ -15,7 +15,15 @@ const reviewCategorySchema = new Schema({
     type: Date,
     default: Date.now
   },
+  modified_at: {
+    type: Date,
+    default: Date.now
+  },
   created_by: {
+    type: String, 
+    required: true
+  },
+  modified_by: {
     type: String, 
     required: true
   },
