@@ -1,18 +1,16 @@
 import User from "./UserMast.js";
-import bcrypt from 'bcryptjs';
-
+import bcrypt from "bcryptjs";
+import { generateToken } from "../auth/jwtUtils.js"; 
 
 // Create a new user
 export const createUser = async (req, res) => {
     try {
         const { user_id, email, password_hash, display_name, role, status } = req.body;
 
-        // Validate required fields
         if (!user_id || !display_name || !email || !password_hash || !role) {
             return res.status(400).json({ message: "All fields are required." });
         }
 
-        // Ensure the role and status are valid
         if (!["End User", "Business User"].includes(role)) {
             return res.status(400).json({ message: "Invalid role provided." });
         }
@@ -59,8 +57,12 @@ export const loginUser = async (req, res) => {
         if (!isMatch) {
             return res.status(400).json({ message: "Invalid credentials." });
         }
+
+        const token = generateToken(user);
+
         return res.status(200).json({
             message: "Login successful",
+            token, 
             user: {
                 user_id: user.user_id,
                 email: user.email,
@@ -71,15 +73,17 @@ export const loginUser = async (req, res) => {
         });
     } catch (error) {
         console.error(error);
-        return res.status(500).json({ message: "Error retrieving users.", error: error.message });
+        return res.status(500).json({ message: "Error during login.", error: error.message });
     }
 };
 
-// Get all users
 export const getAllUsers = async (req, res) => {
     try {
-        // Fetch all users
-        const users = await User.find();
+        if (req.user.role !== "Business User") {
+            return res.status(403).json({ message: "Access denied." });
+        }
+
+        const users = await User.find().select("-password_hash"); 
 
         return res.status(200).json(users);
     } catch (error) {

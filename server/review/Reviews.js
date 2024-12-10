@@ -6,62 +6,57 @@ const Reviews = new mongoose.Schema({
         ref: 'User',
         required: true,
     },
-    overall_content: {
+    overall_review: {
         type: String,
         required: true,
-        description : 'OverallReview content'
+        description: 'OverallReview content'
     },
     overall_rating: {
-        type: Number,    
+        type: Number,
         required: true,
-        min : 1,
-        max : 5,
-        description : 'Rating given by the user (1-5 scale) overall'
+        min: 1,
+        max: 5,
+        description: 'Rating given by the user (1-5 scale) overall'
     },
-    review_list: [{
-        type: Array,    
+    category_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'ReviewCategory',
         required: true,
-        description : 'List of reviews',
-        category_id: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'ReviewCategory',
-            required: true,
-        },
-        content: {
-            type: String,
-            required: true,
-            description : 'Review content'
-        },
-        rating: {
-            type: Number,    
-            required: true,
-            min : 1,
-            max : 5,
-            description : 'Rating given by the user (1-5 scale)'
-        },
-    }],
+    },
+    review: {
+        type: String,
+        required: true,
+        description: 'Review content'
+    },
+    rating: {
+        type: Number,
+        required: true,
+        min: 1,
+        max: 5,
+        description: 'Rating given by the user (1-5 scale)'
+    },
     created_at: {
-        type: Date,    
+        type: Date,
         default: Date.now,
-        description : 'Review submission timestamp'
+        description: 'Review submission timestamp'
     },
     is_responded: {
         type: Boolean,
         default: false,
-        description : 'Response given or pending'
+        description: 'Response given or pending'
     },
-    blockchain_tx : {
-        type : String,   
+    blockchain_tx: {
+        type: String,
         default: '',
         required: true,
-        description : 'Blockchain transaction ID'
+        description: 'Blockchain transaction ID'
     },
     status: {
         type: String,
-        enum: ['Active', 'Inactive','Deleted'],
+        enum: ['Active', 'Inactive', 'Deleted'],
         default: 'Active',
     },
-  
+
 });
 
 
