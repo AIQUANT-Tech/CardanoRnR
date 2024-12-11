@@ -90,36 +90,159 @@ export const getAllReviews = async (req, res) => {
 };
 
 // Get a review by ID
-export const getReviewById = async (req, res) => {
+// export const getReviewById = async (req, res) => {
+//     try {
+//         const {
+//             id
+//         } = req.params;
+
+//         const review = await Review.findById({
+//             _id: id
+//         })
+//         // .populate('review_list.category_id');
+//         if (!review) {
+//             return res.status(404).json({
+//                 success: false,
+//                 message: 'Review not found'
+//             });
+//         }
+//         const data = {
+//             user_id: review.user_id,
+//             review_list: review.review_list
+//         };
+
+//         res.status(200).json({
+//             success: true,
+//             data
+//         });
+//     } catch (error) {
+//         res.status(500).json({
+//             success: false,
+//             message: 'Failed to fetch review',
+//             error: error.message
+//         });
+//     }
+// };
+
+// Get all reviews- Business user
+
+export const getReviewsForBusinessUser = async (req, res) => {
     try {
-        const {
-            id
-        } = req.params;
-
-        const review = await Review.findById({
-            _id: id
-        })
-        // .populate('review_list.category_id');
-        if (!review) {
-            return res.status(404).json({
-                success: false,
-                message: 'Review not found'
-            });
-        }
-        const data = {
-            user_id: review.user_id,
-            review_list: review.review_list
-        };
-
-        res.status(200).json({
-            success: true,
-            data
-        });
+      const { review_rating_info_rq } = req.body;
+  
+      if (!review_rating_info_rq) {
+        return res.status(400).json({ message: "Invalid request format." });
+      }
+  
+      const {
+        header: { request_type, user_name },
+      } = review_rating_info_rq;
+  
+      if (request_type !== "REVIEW_RATING_INFO") {
+        return res.status(400).json({ message: "Invalid request type." });
+      }
+  
+      const reviews = await Review.find()
+        .populate("user_id", "display_name") 
+        .populate("category_id", "category_name") 
+        .select(
+          "_id user_id category_id review is_responded rating overall_review status"
+        );      
+        
+        console.log(reviews);
+        
+  
+      const reviewRatingInfo = reviews.map((review) => ({
+        review_id: review._id.toString(),
+        user_id: review.user_id._id.toString(),
+        user_display_name: review.user_id.display_name,
+        category_id: review.category_id ? review.category_id._id.toString() : null,
+        review_responded: review.is_responded,
+        review: review.overall_review,
+        rating: review.rating,
+      }));      
+  
+      return res.status(200).json({
+        review_rating_info_rs: {
+          review_rating_info_by_user: reviewRatingInfo,
+        },
+      });
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Failed to fetch review',
-            error: error.message
-        });
+      console.error("Error fetching reviews:", error.message);
+      return res.status(500).json({
+        message: "Error fetching reviews.",
+        error: error.message,
+      });
     }
-};
+  };
+
+  //Get all reviews- end user
+  export const getReviewsForEndUser = async (req, res) => {
+    try {
+      const { review_rating_fetch_rq } = req.body;
+  
+      if (!review_rating_fetch_rq) {
+        return res.status(400).json({ message: "Invalid request format." });
+      }
+  
+      const {
+        header: { request_type, user_name },
+      } = review_rating_fetch_rq;
+  
+      if (request_type !== "FETCH_REVIEW_RATING") {
+        return res.status(400).json({ message: "Invalid request type." });
+      }
+  
+      const reviews = await Review.find({ status: "Active" })
+        .populate("category_id", "category_name category_description")
+        .select("overall_review overall_rating review rating category_id");
+  
+      if (!reviews || reviews.length === 0) {
+        return res.status(404).json({ message: "No reviews found." });
+      }
+  
+      const overallRatings = reviews.map((r) => r.overall_rating);
+      const reputationScore =
+        overallRatings.reduce((sum, rating) => sum + rating, 0) /
+        overallRatings.length;
+  
+      const reviewRatingDetailsOverall = reviews.map((r) => ({
+        review: r.overall_review,
+        rating: r.overall_rating,
+      }));
+  
+      const categoryWiseReviewRating = reviews.reduce((categories, review) => {
+        const categoryId = review.category_id?._id.toString();
+        if (!categories[categoryId]) {
+          categories[categoryId] = {
+            category_name: review.category_id.category_name,
+            category_desc: review.category_id.category_description,
+            review_rating_details_by_category: [],
+          };
+        }
+        categories[categoryId].review_rating_details_by_category.push({
+          review: review.review,
+          rating: review.rating,
+        });
+        return categories;
+      }, {});
+  
+      const categoryWiseReviewList = Object.values(categoryWiseReviewRating);
+  
+      return res.status(200).json({
+        review_rating_fetch_rs: {
+          overall_rating: reputationScore.toFixed(1),
+          overall_review: reviews[0]?.overall_review || "No overall review",
+          reputation_score: reputationScore.toFixed(1),
+          review_rating_details_overall: reviewRatingDetailsOverall,
+          category_wise_review_rating: categoryWiseReviewList,
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching reviews:", error.message);
+      return res.status(500).json({
+        message: "Error fetching reviews.",
+        error: error.message,
+      });
+    }
+  };
