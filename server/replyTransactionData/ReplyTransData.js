@@ -22,9 +22,8 @@ const ReviewTransaction = new mongoose.Schema({
         description :'Reply submission timestamp'
     },
     Status: {
-        type: String,
-        enum: ['Active', 'Inactive'],
-        required: true,
+        type: Boolean,
+        default: true,
         description :'Status of the reply (Active or Inactive)'
     }
 });
