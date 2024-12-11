@@ -125,56 +125,58 @@ export const getAllReviews = async (req, res) => {
 // };
 
 // Get all reviews- Business user
-
 export const getReviewsForBusinessUser = async (req, res) => {
-    try {
-      const { review_rating_info_rq } = req.body;
-  
-      if (!review_rating_info_rq) {
-        return res.status(400).json({ message: "Invalid request format." });
-      }
-  
-      const {
-        header: { request_type, user_name },
-      } = review_rating_info_rq;
-  
-      if (request_type !== "REVIEW_RATING_INFO") {
-        return res.status(400).json({ message: "Invalid request type." });
-      }
-  
-      const reviews = await Review.find()
-        .populate("user_id", "display_name") 
-        .populate("category_id", "category_name") 
-        .select(
-          "_id user_id category_id review is_responded rating overall_review status"
-        );      
-        
-        console.log(reviews);
-        
-  
-      const reviewRatingInfo = reviews.map((review) => ({
-        review_id: review._id.toString(),
-        user_id: review.user_id._id.toString(),
-        user_display_name: review.user_id.display_name,
-        category_id: review.category_id ? review.category_id._id.toString() : null,
-        review_responded: review.is_responded,
-        review: review.overall_review,
-        rating: review.rating,
-      }));      
-  
-      return res.status(200).json({
-        review_rating_info_rs: {
-          review_rating_info_by_user: reviewRatingInfo,
-        },
-      });
-    } catch (error) {
-      console.error("Error fetching reviews:", error.message);
-      return res.status(500).json({
-        message: "Error fetching reviews.",
-        error: error.message,
-      });
+  try {
+    const { review_rating_info_rq } = req.body;
+
+    if (!review_rating_info_rq) {
+      return res.status(400).json({ message: "Invalid request format." });
     }
-  };
+
+    const {
+      header: { user_name, product, request_type },
+    } = review_rating_info_rq;
+
+    if (request_type !== "REVIEW_RATING_INFO" || product !== "rnr") {
+      return res.status(400).json({ message: "Invalid request type or product." });
+    }
+
+    // Query all reviews with populated user and category details
+    const reviews = await Review.find()
+      .populate("user_id", "display_name") //`display_name` exists in User schema
+      .populate("category_id", "category_name") // `category_name` exists in Category schema
+      .select("_id user_id category_id review rating is_responded");
+
+    // If no reviews found
+    if (!reviews || reviews.length === 0) {
+      return res.status(404).json({ message: "No reviews found." });
+    }
+
+    // Map reviews to the required response format
+    const reviewRatingInfo = reviews.map((review) => ({
+      review_id: review._id.toString(),
+      user_id: review.user_id?._id.toString() || null,
+      user_display_name: review.user_id?.display_name || "Unknown User",
+      category_id: review.category_id?._id.toString() || null,
+      review_responded: !!review.is_responded,
+      review: review.review,
+      rating: review.rating?.toString() || "0",
+    }));
+
+    // Return the mapped data as response
+    return res.status(200).json({
+      review_rating_info_rs: {
+        review_rating_info_by_user: reviewRatingInfo,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching reviews for business user:", error.message);
+    return res.status(500).json({
+      message: "Error fetching reviews.",
+      error: error.message,
+    });
+  }
+};
 
   //Get all reviews- end user
   export const getReviewsForEndUser = async (req, res) => {
