@@ -48,7 +48,6 @@ const Reviews = new mongoose.Schema({
     blockchain_tx: {
         type: String,
         default: '',
-        required: true,
         description: 'Blockchain transaction ID'
     },
     status: {
