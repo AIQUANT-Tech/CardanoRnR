@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import reviewCategoryRoutes from './reviewCatagory/reviewCategoryRoutes.js';
+import reviewCategoryRoutes from './reviewCategory/reviewCategoryRoutes.js';
 import reviewRoutes from './review/reviewRoutes.js';
 import userRoutes from './user/userRoutes.js';
 dotenv.config();

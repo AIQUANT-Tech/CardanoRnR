@@ -51,10 +51,9 @@ const Reviews = new mongoose.Schema({
         description: 'Blockchain transaction ID'
     },
     status: {
-        type: String,
-        enum: ['Active', 'Inactive', 'Deleted'],
-        default: 'Active',
-    },
+        type: Boolean,
+        default: true,
+      },
 
 });
 
