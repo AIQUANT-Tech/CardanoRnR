@@ -15,10 +15,10 @@ export const createUser = async (req, res) => {
             return res.status(400).json({ message: "Invalid role provided." });
         }
 
-        if (status && !["Active", "Inactive"].includes(status)) {
-            return res.status(400).json({ message: "Invalid status provided." });
-        }
-
+        // Validate the status if provided
+    if (status !== undefined && typeof status !== "boolean") {
+        return res.status(400).json({ message: "Status must be true (Active) or false (Inactive)." });
+      }
         // Check if email is already registered
         const existingUser = await User.findOne({ email });
         if (existingUser) {
@@ -30,9 +30,10 @@ export const createUser = async (req, res) => {
 
         // Create the new user
         const newUser = new User({ user_id, email, password_hash: password, display_name, role, status });
-        const savedUser = await newUser.save();
+        const savedUser = await newUser.save();  
+        
 
-        return res.status(201).json({ message: "User created successfully.", user: savedUser });
+        return res.status(201).json({ message: "Success", user: savedUser });
     } catch (error) {
         console.error(error);
         return res.status(500).json({ message: "Error creating user.", error: error.message });
@@ -61,7 +62,7 @@ export const loginUser = async (req, res) => {
         const token = generateToken(user);
 
         return res.status(200).json({
-            message: "Login successful",
+            message: "Login success",
             token, 
             user: {
                 user_id: user.user_id,
@@ -85,6 +86,7 @@ export const getAllUsers = async (req, res) => {
 
         const users = await User.find().select("-password_hash"); 
 
+    
         return res.status(200).json(users);
     } catch (error) {
         console.error(error);

@@ -31,10 +31,8 @@ const UserMast = new mongoose.Schema({
     default: Date.now,
   },
   status: {
-    type: String,
-    required: true,
-    enum: ["Active", "Inactive"],
-    default: "Inactive",
+    type: Boolean,
+    default: true,
   },
 });
 

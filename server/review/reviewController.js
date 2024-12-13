@@ -1,6 +1,6 @@
 import Review from './Reviews.js';
 import User from "../user/UserMast.js";
-import ReviewCategory from '../reviewCatagory/ReviewCategories.js';
+import ReviewCategory from '../reviewCategory/ReviewCategories.js';
 
 export const createReview = async (req, res) => {
     try {
@@ -35,7 +35,7 @@ export const createReview = async (req, res) => {
       }
   
       // Check if the user exists and is active
-      const user = await User.findOne({ email: user_email_id, status: "Active" });
+      const user = await User.findOne({ email: user_email_id, status: true });
       if (!user) {
         return res.status(404).json({ message: "User not found or inactive." });
       }
@@ -47,9 +47,8 @@ export const createReview = async (req, res) => {
   
       // Fetch all valid categories
       const validCategories = await ReviewCategory.find({
-        category_id: { $in: categoryIds },
-        status: "Active",
-      });
+        category_id: { $in: categoryIds }
+            });      
   
       if (validCategories.length !== categoryIds.length) {
         return res
@@ -78,7 +77,7 @@ export const createReview = async (req, res) => {
           overall_review,
           overall_rating,
           blockchain_tx: " ",
-          status: "Active",
+          status: true,
         };
       });
   
@@ -86,7 +85,7 @@ export const createReview = async (req, res) => {
       const savedReviews = await Review.insertMany(reviewsToInsert);
   
       return res.status(201).json({
-        message: "Reviews created successfully.",
+        message: "Success.",
         reviews: savedReviews,
       });
     } catch (error) {
@@ -224,7 +223,7 @@ export const getReviewsForEndUser = async (req, res) => {
             return res.status(400).json({ message: "Invalid request type." });
         }
 
-        const reviews = await Review.find({ status: "Active" }).select(
+        const reviews = await Review.find({ status: "true" }).select(
             "overall_review overall_rating review rating category_id"
         );
 
