@@ -5,7 +5,7 @@ import {
   editReviewCategory,
   deleteReviewCategory,
 } from '../reviewCategory/reviewCategoryController.js';
-import ReviewCategory from '../reviewCategory/ReviewCategories.js';
+import ReviewCategory from '../rev/ReviewCategories.js';
 import { jest } from '@jest/globals';
 
 describe('Review Category Controller Tests', () => {
