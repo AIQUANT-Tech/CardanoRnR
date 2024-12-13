@@ -39,6 +39,15 @@ export const createReview = async (req, res) => {
       if (!user) {
         return res.status(404).json({ message: "User not found or inactive." });
       }
+
+      //If User alrady reviewed then 
+      //----------------------------------------------------------------
+      const presentReview = await Review.findOne({ user_id: user._id });
+      //-----------------------------------------------------------------
+      
+      if(presentReview){
+        return res.status(404).json({ message: "User already Reviewed!! "});
+      }
   
       // Extract all category IDs from category_wise_review_rating
       const categoryIds = category_wise_review_rating.map(
