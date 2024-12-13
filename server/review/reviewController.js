@@ -40,7 +40,7 @@ export const createReview = async (req, res) => {
         return res.status(404).json({ message: "User not found or inactive." });
       }
 
-      //If User alrady reviewed then 
+      //If User already reviewed then 
       //----------------------------------------------------------------
       const presentReview = await Review.findOne({ user_id: user._id });
       //-----------------------------------------------------------------
