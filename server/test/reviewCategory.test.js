@@ -1,6 +1,6 @@
 import request from 'supertest';
 import app from '../app.js'; 
-import ReviewCategory from '../models/ReviewCategories.js';
+import ReviewCategory from '../reviewCategory/ReviewCategories.js';
 import mongoose from 'mongoose';
 
 const mockingoose = require("mockingoose");
