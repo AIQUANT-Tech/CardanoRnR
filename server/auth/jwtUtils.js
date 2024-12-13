@@ -16,6 +16,21 @@ export const generateToken = (user) => {
     );
 };
 
+// Middleware to allow only Business Users
+export const allowBusinessUser = (req, res, next) => {
+    if (req.user.role !== "Business User") {
+        return res.status(403).json({ message: "Access denied. Only Business Users can perform this action." });
+    }
+    next();
+};
+
+export const allowEndUser = (req, res, next) => {
+    if (req.user.role !== "End User") {
+        return res.status(403).json({ message: "Access denied. Only Users can perform this action." });
+    }
+    next();
+};
+
 export const verifyToken = (req, res, next) => {
     const token = req.header("Authorization")?.replace("Bearer ", "");
 
