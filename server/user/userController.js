@@ -2,6 +2,7 @@ import User from "./UserMast.js";
 import bcrypt from "bcryptjs";
 import { generateToken } from "../auth/jwtUtils.js"; 
 
+
 // Create a new user
 export const createUser = async (req, res) => {
     try {
