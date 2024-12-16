@@ -1,4 +1,6 @@
-import ReviewCategory from "./ReviewCategories.js";
+import ReviewCategory from './ReviewCategories.js';
+import responses from '../utils/responses.js';
+import roles from '../utils/roles.js';
 
 // Function to create a new review category
 export const createReviewCategory = async (req, res) => {
@@ -7,7 +9,7 @@ export const createReviewCategory = async (req, res) => {
 
     // Validate request format
     if (!review_category_crud_rq || !review_category_crud_rq.category_list) {
-      return res.status(400).json({ message: "Invalid request structure." });
+      return res.status(400).json({ review_category_crud_rs: {status:responses.validation.invalid_request_structure} });
     }
 
     const { category_list } = review_category_crud_rq;
@@ -20,7 +22,7 @@ export const createReviewCategory = async (req, res) => {
       if (!category_name || !category_desc || !Status) {
         return res
           .status(400)
-          .json({ message: "All fields are required in each category." });
+          .json({review_category_crud_rs: {status:responses.validation.allFieldsRequired} });
       }
 
       // Prepare category for insertion
@@ -39,12 +41,12 @@ export const createReviewCategory = async (req, res) => {
 
     // Return success response
     return res.status(201).json({
-      message: "Review categories created successfully.",
+      review_category_crud_rs: {status:responses.success.categoryCreated},
       data: createdCategories,
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: "Server error", error: error.message });
+    return res.status(500).json({ review_category_crud_rs: {status:responses.error.ServerError}, error: error.message });
   }
 };
 
@@ -71,7 +73,7 @@ export const getAllReviewCategories = async (req, res) => {
     const { review_category_fetch_rq } = req.body;
 
     if (!review_category_fetch_rq) {
-      return res.status(400).json({ message: "Invalid request format" });
+      return res.status(400).json({ review_category_crud_rs: {status:responses.validation.invalidRequest}});
     }
 
     const {
@@ -79,20 +81,20 @@ export const getAllReviewCategories = async (req, res) => {
     } = review_category_fetch_rq;
 
     if (request_type !== "FETCH_REVIEW_CATEGORY") {
-      return res.status(400).json({ message: "Invalid request type" });
+      return res.status(400).json({review_category_crud_rs: {status:responses.validation.invalidRequest }});
     }
 
     let query = {};
     let projection = {};
 
-    if (user_name === "businessUser") {
+    if (user_name === roles.businessUser) {
       query = {}; 
       projection = { category_id: 1, category_name: 1, category_description: 1, status: 1, modified_by: 1, last_modified: 1 };
-    } else if (user_name === "endUser") {
+    } else if (user_name === roles.endUser) {
       query = { status: "Active" };
       projection = { category_id: 1, category_name: 1, category_description: 1 };
     } else {
-      return res.status(400).json({ message: "Invalid user_name in request header" });
+      return res.status(400).json( {review_category_crud_rs: {status:responses.validation.invalidUserName } });
     }
 
     // Fetch review categories
@@ -102,7 +104,7 @@ export const getAllReviewCategories = async (req, res) => {
       return res.status(404).json({
         review_category_fetch_rs: {
           category_list: [],
-          message: "No review categories found",
+         status:responses.validation.NoCategories
         },
       });
     }
@@ -111,7 +113,7 @@ export const getAllReviewCategories = async (req, res) => {
       category_id: category.category_id,
       category_name: category.category_name,
       category_desc: category.category_description,
-      ...(user_name === "businessUser" && {
+      ...(user_name === roles.businessUser && {
         modified_by: category.modified_by || "N/A",
         last_modified: category.last_modified
           ? category.last_modified.toLocaleString()
@@ -123,7 +125,7 @@ export const getAllReviewCategories = async (req, res) => {
     return res.status(200).json({
       review_category_fetch_rs: {
         category_list: categoryList,
-        message: "Review categories retrieved successfully",
+        status:responses.success.success
       },
     });
   } catch (error) {
@@ -131,7 +133,7 @@ export const getAllReviewCategories = async (req, res) => {
     return res.status(500).json({
       review_category_fetch_rs: {
         category_list: [],
-        message: "Server error",
+        status:responses.error.ServerError,
         error: error.message,
       },
     });
@@ -143,7 +145,7 @@ export const editReviewCategory = async (req, res) => {
   try {
     const { review_category_crud_rq } = req.body;
     if (!review_category_crud_rq) {
-      return res.status(400).json({ message: "Invalid request format" });
+      return res.status(400).json({ review_category_crud_rs: {status:responses.validation.invalidRequest} });
     }
 
     const {
@@ -155,13 +157,13 @@ export const editReviewCategory = async (req, res) => {
     } = review_category_crud_rq;
 
     if (request_type !== "EDIT_REVIEW_CATEGORY") {
-      return res.status(400).json({ message: "Invalid request type" });
+      return res.status(400).json({review_category_crud_rs: {status:responses.validation.invalidRequest}});
     }
 
     if (!category_id || !category_name || !category_desc || !Status) {
       return res
         .status(400)
-        .json({ message: "Missing required fields: category_id, category_name, category_desc, Status" });
+        .json({ review_category_crud_rs: {status:responses.validation.invalidCredentials} });
     }
 
     const updatedCategory = await ReviewCategory.findOneAndUpdate(
@@ -175,7 +177,7 @@ export const editReviewCategory = async (req, res) => {
     );
 
     if (!updatedCategory) {
-      return res.status(404).json({ message: "Review category not found" });
+      return res.status(404).json({ review_category_crud_rs: {status:responses.NoCategories} });
     }
 
     return res.status(200).json({
@@ -185,8 +187,8 @@ export const editReviewCategory = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error("Error updating review category:", error.message);
-    return res.status(500).json({ message: "Server error", error: error.message });
+    console.error({review_category_crud_rs : {status:responses.error.updateCategory}});
+    return res.status(500).json({ review_category_crud_rs: {status:responses.error.ServerError}, error: error.message });
   }
 };
 
@@ -197,7 +199,7 @@ export const deleteReviewCategory = async (req, res) => {
     const { review_category_crud_rq } = req.body;
 
     if (!review_category_crud_rq) {
-      return res.status(400).json({ message: "Invalid request format" });
+      return res.status(400).json({ review_category_crud_rs: {status:responses.invalidRequest} });
     }
 
     const {
@@ -206,11 +208,11 @@ export const deleteReviewCategory = async (req, res) => {
     } = review_category_crud_rq;
 
     if (request_type !== "DELETE_REVIEW_CATEGORY") {
-      return res.status(400).json({ message: "Invalid request type" });
+      return res.status(400).json({review_category_crud_rs: {status:responses.validation.invalidRequest} });
     }
 
     if (!Array.isArray(category_list) || category_list.length === 0) {
-      return res.status(400).json({ message: "Category list is required and must contain at least one category_id" });
+      return res.status(400).json({ review_category_crud_rs: {status:responses.validation.categoryListRequired} });
     }
 
     const categoryIds = category_list.map((category) => category.category_id);
@@ -218,18 +220,18 @@ export const deleteReviewCategory = async (req, res) => {
     const deletedCategories = await ReviewCategory.deleteMany({ category_id: { $in: categoryIds } });
 
     if (deletedCategories.deletedCount === 0) {
-      return res.status(404).json({ message: "No review categories found to delete" });
+      return res.status(404).json({ review_category_crud_rs: {status:responses.validation.deleteCategory} });
     }
 
     return res.status(200).json({
       delete_category_crud_rs: {
-      status: 'success',
+        review_category_crud_rs: {status:responses.success.success},
       deletedCount: deletedCategories.deletedCount,
       }
     });
   } catch (error) {
-    console.error("Error deleting review categories:", error.message);
-    return res.status(500).json({ message: "Server error", error: error.message });
+    console.error({review_category_crud_rs: {status:responses.error.deleteCategory}, error :error.message});
+    return res.status(500).json({review_category_crud_rs: {status:responses.error.ServerError}, error: error.message });
   }
 };
 
