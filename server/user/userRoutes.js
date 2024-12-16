@@ -5,10 +5,10 @@ import { verifyToken, allowBusinessUser, allowEndUser } from '../auth/jwtUtils.j
 const router = express.Router();
 
 // Route to create a user
-router.post("/users",allowEndUser, createUser);
+router.post("/users", createUser);
 
 // Login users
-router.get("/login", allowEndUser, loginUser);
+router.get("/login", loginUser);
 
 // Route to get all users
 router.get("/users", verifyToken, allowBusinessUser, getAllUsers);
