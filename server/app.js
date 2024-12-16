@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import reviewCategoryRoutes from './reviewCategory/reviewCategoryRoutes.js';
 import reviewRoutes from './review/reviewRoutes.js';
 import userRoutes from './user/userRoutes.js';
+import replyTransData from './replyTransactionData/replyTransDataRoutes.js';
 dotenv.config();
 
 const app = express();
@@ -18,7 +19,8 @@ app.use(cors());
 
 app.use('/api/reviewcategory', reviewCategoryRoutes);
 app.use('/api/review', reviewRoutes);
-app.use("/api/user", userRoutes);
+app.use('/api/user', userRoutes);
+app.use('/api/reply', replyTransData);
 app.listen(process.env.PORT, () => {
   console.log(`Server is running on port ${process.env.PORT}`);
 });
