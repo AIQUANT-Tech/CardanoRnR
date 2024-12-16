@@ -1,6 +1,9 @@
 import User from "./UserMast.js";
 import bcrypt from "bcryptjs";
 import { generateToken } from "../auth/jwtUtils.js"; 
+import responses from '../utils/responses.js';
+import roles from '../utils/roles.js';
+
 
 // Create a new user
 export const createUser = async (req, res) => {
@@ -11,7 +14,7 @@ export const createUser = async (req, res) => {
             return res.status(400).json({user_crud_rs: {status:responses.validation.allFieldsRequired} });
         }
 
-        if (!["End User", "Business User"].includes(role)) {
+        if (![roles.endUser, roles.endUser].includes(role)) {
             return res.status(400).json({ user_crud_rs: {status:responses.validation.invalidRole} });
         }
 
@@ -80,7 +83,7 @@ export const loginUser = async (req, res) => {
 
 export const getAllUsers = async (req, res) => {
     try {
-        if (req.user.role !== "Business User") {
+        if (req.user.role !== roles.businessUser) {
             return res.status(403).json({ user_crud_rs: {status:responses.validation.accessDeniedBusinessUser} });
         }
 
