@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import responses from '../utils/responses.js';
 
 
 const generateRandomSecret = () => {
@@ -19,14 +20,14 @@ export const generateToken = (user) => {
 // Middleware to allow only Business Users
 export const allowBusinessUser = (req, res, next) => {
     if (req.user.role !== "Business User") {
-        return res.status(403).json({ message: "Access denied. Only Business Users can perform this action." });
+        return res.status(403).json({ user_crud_rs: {status:responses.validation.accessDeniedBusinessUser} });
     }
     next();
 };
 
 export const allowEndUser = (req, res, next) => {
     if (req.user.role !== "End User") {
-        return res.status(403).json({ message: "Access denied. Only Users can perform this action." });
+        return res.status(403).json({ user_crud_rs: {status:responses.validation.accessDeniedBusinessUser} });
     }
     next();
 };
@@ -35,7 +36,7 @@ export const verifyToken = (req, res, next) => {
     const token = req.header("Authorization")?.replace("Bearer ", "");
 
     if (!token) {
-        return res.status(401).json({ message: "Access denied. No token provided." });
+        return res.status(401).json({ user_crud_rs: {status:responses.validation.accessDenied} });
     }
 
     try {
@@ -43,6 +44,6 @@ export const verifyToken = (req, res, next) => {
         req.user = decoded;
         next();
     } catch (error) {
-        return res.status(400).json({ message: "Invalid or expired token." });
+        return res.status(400).json({ user_crud_rs: {status:responses.validation.Token}});
     }
 };
