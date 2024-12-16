@@ -1,173 +1,121 @@
-import request from 'supertest';
-import app from '../app.js';
-import Review from '../models/Reviews.js';
-import mongoose from 'mongoose';
+import { createReview } from '../review/reviewController.js';
+import Review from '../review/Reviews.js';
+import User from '../user/UserMast.js';
+import ReviewCategory from '../reviewCategory/ReviewCategories.js';
+import { jest } from '@jest/globals';
 
-const mockingoose = require("mockingoose");
+describe('createReview', () => {
+  let req, res;
 
-jest.mock('../models/Reviews.js');
+  beforeEach(() => {
+    req = {
+      body: {
+        new_review_rating_create_rq: {
+          header: {
+            request_type: 'CREATE_NEW_REVIEW_RATING',
+            user_name: 'testUser',
+          },
+          user_email_id: 'test@example.com',
+          overall_rating: 4,
+          overall_review: 'Great product',
+          category_wise_review_rating: [
+            {
+              category_id: 'cat1',
+              review: 'Good quality',
+              rating: 5,
+            },
+          ],
+        },
+      },
+    };
 
-describe('Review Controller Tests', () => {
-    beforeAll(() => {
-        mockingoose.resetAll();
+    res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+
+    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('should return 400 if request format is invalid', async () => {
+    req.body = {};
+    await createReview(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Invalid request format' });
+  });
+
+  it('should return 400 if request_type is invalid', async () => {
+    req.body.new_review_rating_create_rq.header.request_type = 'INVALID_TYPE';
+    await createReview(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Invalid request type' });
+  });
+
+  it('should return 400 if required fields are missing', async () => {
+    req.body.new_review_rating_create_rq.user_email_id = null;
+    await createReview(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Missing or invalid input fields.' });
+  });
+
+  it('should return 400 if category_wise_review_rating is empty', async () => {
+    req.body.new_review_rating_create_rq.category_wise_review_rating = [];
+    await createReview(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Missing or invalid input fields.' });
+  });
+
+  it('should return 404 if user is not found or inactive', async () => {
+    jest.spyOn(User, 'findOne').mockResolvedValue(null);
+    await createReview(req, res);
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({ message: 'User not found or inactive.' });
+  });
+
+  it('should return 404 if user has already reviewed', async () => {
+    jest.spyOn(User, 'findOne').mockResolvedValue({ _id: 'userId' });
+    jest.spyOn(Review, 'findOne').mockResolvedValue({ _id: 'existingReview' });
+    await createReview(req, res);
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({ message: 'User already Reviewed!! ' });
+  });
+
+  it('should return 404 if one or more categories are not found', async () => {
+    jest.spyOn(User, 'findOne').mockResolvedValue({ _id: 'userId' });
+    jest.spyOn(Review, 'findOne').mockResolvedValue(null);
+    jest.spyOn(ReviewCategory, 'find').mockResolvedValue([]);
+    await createReview(req, res);
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({ message: 'One or more categories not found or inactive.' });
+  });
+
+  it('should create and save reviews successfully', async () => {
+    jest.spyOn(User, 'findOne').mockResolvedValue({ _id: 'userId' });
+    jest.spyOn(Review, 'findOne').mockResolvedValue(null);
+    jest.spyOn(ReviewCategory, 'find').mockResolvedValue([
+      { category_id: 'cat1', _id: 'cat1', status: true },
+    ]);
+    jest.spyOn(Review, 'insertMany').mockResolvedValue([{ _id: 'reviewId' }]);
+
+    await createReview(req, res);
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.json).toHaveBeenCalledWith({
+      message: 'Success.',
+      reviews: [{ _id: 'reviewId' }],
     });
+  });
 
-    afterAll(async () => {
-        await mongoose.connection.close();
+  it('should handle server errors gracefully', async () => {
+    jest.spyOn(User, 'findOne').mockRejectedValue(new Error('Database error'));
+    await createReview(req, res);
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({
+      message: 'Error creating reviews.',
+      error: 'Database error',
     });
-
-    describe('POST /api/review/reviews - Create Review', () => {
-        it('should create a review when valid data is provided', async () => {
-            const validData = {
-                _id: "6752d9f82bef84430b254187",
-                user_id: "675287fd1dbb7d45a290dd19",
-                overall_content: "Amazing experience overall.",
-                overall_rating: 3,
-                review_list: [
-                    [
-                        {
-                            category_id: "6751907fb59022490aeacda0",
-                            content: "Great customer service.",
-                            rating: 2
-                        },
-                        {
-                            category_id: "67528525f08b6bc15cc93169",
-                            content: "Good product quality.",
-                            rating: 1
-                        }
-                    ]
-                ],
-                is_responded: false,
-                blockchain_tx: " ",
-                status: "Active",
-                created_at: "2024-12-06T11:03:20.625Z",
-            }
-             
-
-            mockingoose(Review).toReturn(validData, 'save');
-
-            const response = await request(app)
-                .post('/api/review/reviews')
-                .send(validData);
-
-            expect(response.status).toBe(201);
-            expect(response.body.message).toBe('Review created successfully.');
-        });
-
-        it('should return an error if required fields are missing', async () => {
-
-            const response = await request(app)
-                .post('/api/review/reviews')
-                .send({});
-
-            expect(response.status).toBe(400);
-            expect(response.body.message).toBe('All fields are required.');
-        });
-
-        it('should return server error if there is an exception', async () => {
-            const validData = {
-                _id: "6752d9f82bef84430b254187",
-                user_id: "675287fd1dbb7d45a290dd19",
-                overall_content: "Amazing experience overall.",
-                overall_rating: 3,
-                review_list: [
-                    [
-                        {
-                            category_id: "6751907fb59022490aeacda0",
-                            content: "Great customer service.",
-                            rating: 2
-                        },
-                        {
-                            category_id: "67528525f08b6bc15cc93169",
-                            content: "Good product quality.",
-                            rating: 1
-                        }
-                    ]
-                ],
-                is_responded: false,
-                blockchain_tx: " ",
-                status: "Active",
-                created_at: "2024-12-06T11:03:20.625Z",
-            }
-            mockingoose(Review).toReturn(new Error('Database error'), 'save');
-
-            const response = await request(app)
-                .post('/api/review/reviews')
-                .send(validData);
-
-            expect(response.status).toBe(201);
-            // expect(response.body.message).toBe('Error creating review.');
-        });
-    });
-
-    describe('GET /api/review/reviews - Get All Reviews', () => {
-        it('should return all reviews', async () => {
-            const mockReviews = [
-                {
-                    _id: "6752d9f82bef84430b254187",
-                    user_id: "675287fd1dbb7d45a290dd19",
-                    overall_content: "Amazing experience overall.",
-                    overall_rating: 3,
-                    review_list: [
-                        [
-                            {
-                                category_id: "6751907fb59022490aeacda0",
-                                content: "Great customer service.",
-                                rating: 2
-                            },
-                            {
-                                category_id: "67528525f08b6bc15cc93169",
-                                content: "Good product quality.",
-                                rating: 1
-                            }
-                        ]
-                    ],
-                    is_responded: false,
-                    blockchain_tx: " ",
-                    status: "Active",
-                    created_at: "2024-12-06T11:03:20.625Z",
-                },
-                {
-                    _id: "6752de33e833470b36335ca4",
-                    user_id: "67516815101f5e5af47792ad",
-                    overall_content: "BAD EXP overall.",
-                    overall_rating: 3,
-                    review_list: [
-                        [
-                            {
-                                category_id: "6751907fb59022490aeacda0",
-                                content: "Worst service.",
-                                rating: 2
-                            },
-                            {
-                                category_id: "67528525f08b6bc15cc93169",
-                                content: "wooo quality.",
-                                rating: 1
-                            }
-                        ]
-                    ],
-                    is_responded: false,
-                    blockchain_tx: " ",
-                    status: "Active",
-                    created_at: "2024-12-06T11:21:23.013Z",
-                }
-            ];
-
-            mockingoose(Review).toReturn(mockReviews, 'find');
-
-            const response = await request(app).get('/api/review/reviews');
-
-            expect(response.status).toBe(200);
-            // expect(response.body).toEqual(mockReviews);
-        });
-
-        it('should return a server error if there is a database issue', async () => {
-            mockingoose(Review).toReturn(new Error('Database error'), 'find');
-
-            const response = await request(app).get('/api/review/reviews');
-
-            expect(response.status).toBe(200);
-            // expect(response.body.message).toBe('Database error');
-        });
-    });
+  });
 });
