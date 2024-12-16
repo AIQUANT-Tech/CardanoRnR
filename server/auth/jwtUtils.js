@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import responses from '../utils/responses.js';
-
+import roles from '../utils/roles.js';
 
 const generateRandomSecret = () => {
     return crypto.randomBytes(64).toString('hex'); 
@@ -19,14 +19,14 @@ export const generateToken = (user) => {
 
 // Middleware to allow only Business Users
 export const allowBusinessUser = (req, res, next) => {
-    if (req.user.role !== "Business User") {
+    if (req.user.role !== roles.businessUser) {
         return res.status(403).json({ user_crud_rs: {status:responses.validation.accessDeniedBusinessUser} });
     }
     next();
 };
 
 export const allowEndUser = (req, res, next) => {
-    if (req.user.role !== "End User") {
+    if (req.user.role !== roles.endUser ) {
         return res.status(403).json({ user_crud_rs: {status:responses.validation.accessDeniedBusinessUser} });
     }
     next();
