@@ -129,7 +129,7 @@ export const getAllReviewCategories = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error fetching review categories:", error.message);
+    console.error({review_category_fetch_rs: {status:responses.error.retrieveCategories},error : error.message});
     return res.status(500).json({
       review_category_fetch_rs: {
         category_list: [],
@@ -182,7 +182,7 @@ export const editReviewCategory = async (req, res) => {
 
     return res.status(200).json({
       review_category_crud_rs: {
-        status: 'success',
+        status: responses.success.success,
         data: updatedCategory
       }
     });
