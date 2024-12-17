@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const ReviewTransaction = new mongoose.Schema({
+const ReplyTransaction = new mongoose.Schema({
     review_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Review',
@@ -28,5 +28,5 @@ const ReviewTransaction = new mongoose.Schema({
     }
 });
 
-const reviewTrans = new mongoose.model('ReplyTransData', ReviewTransaction);
-export default reviewTrans;
+const replyTrans = new mongoose.model('ReplyTransData', ReplyTransaction);
+export default replyTrans;
