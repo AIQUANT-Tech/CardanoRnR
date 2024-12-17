@@ -21,16 +21,18 @@ const Reviews = new mongoose.Schema({
     category_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'ReviewCategory',
-        required: true,
+        // required: true,
+        default: null
     },
     review: {
         type: String,
-        required: true,
-        description: 'Review content'
+        // required: true,
+        description: 'Review content',
+        default: ''
     },
     rating: {
         type: Number,
-        required: true,
+        // required: true,
         min: 1,
         max: 5,
         description: 'Rating given by the user (1-5 scale)'
