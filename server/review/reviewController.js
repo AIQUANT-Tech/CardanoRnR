@@ -1,13 +1,14 @@
 import Review from './Reviews.js';
 import User from "../user/UserMast.js";
 import ReviewCategory from '../reviewCategory/ReviewCategories.js';
-
+import responses from '../utils/responses.js';
+import roles from '../utils/roles.js';
 export const createReview = async (req, res) => {
     try {
       const { new_review_rating_create_rq } = req.body;
   
       if (!new_review_rating_create_rq) {
-        return res.status(400).json({ message: "Invalid request format" });
+        return res.status(400).json({new_review_rating_create_rs: {status: responses.validation.invalidRequest }});
       }
   
       const {
@@ -19,7 +20,7 @@ export const createReview = async (req, res) => {
       } = new_review_rating_create_rq;
   
       if (request_type !== "CREATE_NEW_REVIEW_RATING") {
-        return res.status(400).json({ message: "Invalid request type" });
+        return res.status(400).json({new_review_rating_create_rs: {status: responses.validation.invalidRequest } });
       }
   
       if (
@@ -31,13 +32,13 @@ export const createReview = async (req, res) => {
       ) {
         return res
           .status(400)
-          .json({ message: "Missing or invalid input fields." });
+          .json({ new_review_rating_create_rs: {status: responses.validation.allFieldsRequired } });
       }
   
       // Check if the user exists and is active
       const user = await User.findOne({ email: user_email_id, status: true });
       if (!user) {
-        return res.status(404).json({ message: "User not found or inactive." });
+        return res.status(404).json({ new_review_rating_create_rs: {status: responses.validation.NotFound } });
       }
       
     //   if(presentReview){
@@ -57,7 +58,7 @@ export const createReview = async (req, res) => {
       if (validCategories.length !== categoryIds.length) {
         return res
           .status(404)
-          .json({ message: "One or more categories not found or inactive." });
+          .json({ new_review_rating_create_rs: {status: responses.validation.NotFound } });
       }
   
       // Prepare review documents for insertion
@@ -99,14 +100,14 @@ export const createReview = async (req, res) => {
       const savedReviews = await Review.insertMany(reviewsToInsert);
   
       return res.status(201).json({
-        message: "Success.",
+        new_review_rating_create_rs: {status: responses.success.success },
         reviews: savedReviews,
         overall: savedOverall
       });
     } catch (error) {
       console.error("Error creating reviews:", error.message);
       return res.status(500).json({
-        message: "Error creating reviews.",
+        new_review_rating_create_rs: {status: responses.error.createReview },
         error: error.message,
       });
     }
@@ -126,7 +127,7 @@ export const getAllReviews = async (req, res) => {
     } catch (error) {
         console.error(error);
         return res.status(500).json({
-            message: 'Error retrieving reviews.',
+          new_review_rating_create_rs: {status: responses.error.retrieveReview},
             error: error.message
         });
     }
@@ -173,7 +174,7 @@ export const getReviewsForBusinessUser = async (req, res) => {
     const { review_rating_info_rq } = req.body;
 
     if (!review_rating_info_rq) {
-      return res.status(400).json({ message: "Invalid request format." });
+      return res.status(400).json({ review_rating_info_rs: {status: responses.validation.invalidRequest}});
     }
 
     const {
@@ -181,7 +182,7 @@ export const getReviewsForBusinessUser = async (req, res) => {
     } = review_rating_info_rq;
 
     if (request_type !== "REVIEW_RATING_INFO" || product !== "rnr") {
-      return res.status(400).json({ message: "Invalid request type or product." });
+      return res.status(400).json({ review_rating_info_rs: {status: responses.validation.invalidRequest}});
     }
 
     // Query all reviews with populated user and category details
@@ -192,7 +193,7 @@ export const getReviewsForBusinessUser = async (req, res) => {
 
     // If no reviews found
     if (!reviews || reviews.length === 0) {
-      return res.status(404).json({ message: "No reviews found." });
+      return res.status(404).json({ review_rating_info_rs: {status: responses.validation.NoReview} });
     }
 
     // Map reviews to the required response format
@@ -215,7 +216,7 @@ export const getReviewsForBusinessUser = async (req, res) => {
   } catch (error) {
     console.error("Error fetching reviews for business user:", error.message);
     return res.status(500).json({
-      message: "Error fetching reviews.",
+      review_rating_info_rs: {status: responses.error.failedFetchReview},
       error: error.message,
     });
   }
@@ -227,7 +228,7 @@ export const getReviewsForEndUser = async (req, res) => {
         const { review_rating_fetch_rq } = req.body;
 
         if (!review_rating_fetch_rq) {
-            return res.status(400).json({ message: "Invalid request format." });
+            return res.status(400).json({ review_rating_fetch_rs: {status: responses.validation.invalidRequest} });
         }
 
         const {
@@ -235,7 +236,7 @@ export const getReviewsForEndUser = async (req, res) => {
         } = review_rating_fetch_rq;
 
         if (request_type !== "FETCH_REVIEW_RATING") {
-            return res.status(400).json({ message: "Invalid request type." });
+            return res.status(400).json({ review_rating_fetch_rs: {status: responses.validation.invalidRequest} });
         }
 
         const reviews = await Review.find({ status: "true" }).select(
@@ -243,7 +244,7 @@ export const getReviewsForEndUser = async (req, res) => {
         );
 
         if (!reviews || reviews.length === 0) {
-            return res.status(404).json({ message: "No reviews found." });
+            return res.status(404).json({ review_rating_fetch_rs: {status: responses.validation.reviewNotFound} });
         }
 
         const validOverallRatings = reviews
@@ -316,7 +317,7 @@ export const getReviewsForEndUser = async (req, res) => {
     } catch (error) {
         console.error("Error fetching reviews:", error.message);
         return res.status(500).json({
-            message: "Error fetching reviews.",
+          review_rating_fetch_rs: {status: responses.error.failedFetchReview},
             error: error.message,
         });
     }
