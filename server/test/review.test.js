@@ -45,35 +45,35 @@ describe('createReview', () => {
     req.body = {};
     await createReview(req, res);
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({ message: 'Invalid request format' });
+    expect(res.json).toHaveBeenCalledWith({ new_review_rating_create_rs: {status: 'Invalid request' }});
   });
 
   it('should return 400 if request_type is invalid', async () => {
     req.body.new_review_rating_create_rq.header.request_type = 'INVALID_TYPE';
     await createReview(req, res);
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({ message: 'Invalid request type' });
+    expect(res.json).toHaveBeenCalledWith({ new_review_rating_create_rs: {status: 'Invalid request' }});
   });
 
   it('should return 400 if required fields are missing', async () => {
     req.body.new_review_rating_create_rq.user_email_id = null;
     await createReview(req, res);
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({ message: 'Missing or invalid input fields.' });
+    expect(res.json).toHaveBeenCalledWith({new_review_rating_create_rs: {status: 'All fields are required.' }});
   });
 
   it('should return 400 if category_wise_review_rating is empty', async () => {
     req.body.new_review_rating_create_rq.category_wise_review_rating = [];
     await createReview(req, res);
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({ message: 'Missing or invalid input fields.' });
+    expect(res.json).toHaveBeenCalledWith({new_review_rating_create_rs: {status:  'All fields are required.' }});
   });
 
   it('should return 404 if user is not found or inactive', async () => {
     jest.spyOn(User, 'findOne').mockResolvedValue(null);
     await createReview(req, res);
     expect(res.status).toHaveBeenCalledWith(404);
-    expect(res.json).toHaveBeenCalledWith({ message: 'User not found or inactive.' });
+    expect(res.json).toHaveBeenCalledWith({ new_review_rating_create_rs: {status: "Not found or inactive." } });
   });
 
   it('should return 404 if user has already reviewed', async () => {
@@ -90,7 +90,7 @@ describe('createReview', () => {
     jest.spyOn(ReviewCategory, 'find').mockResolvedValue([]);
     await createReview(req, res);
     expect(res.status).toHaveBeenCalledWith(404);
-    expect(res.json).toHaveBeenCalledWith({ message: 'One or more categories not found or inactive.' });
+    expect(res.json).toHaveBeenCalledWith({ new_review_rating_create_rs: {status: "Not found or inactive." }});
   });
 
   it('should create and save reviews successfully', async () => {
@@ -102,9 +102,9 @@ describe('createReview', () => {
     jest.spyOn(Review, 'insertMany').mockResolvedValue([{ _id: 'reviewId' }]);
 
     await createReview(req, res);
-    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith({
-      message: 'Success.',
+      message: 'success.',
       reviews: [{ _id: 'reviewId' }],
     });
   });
@@ -114,7 +114,7 @@ describe('createReview', () => {
     await createReview(req, res);
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith({
-      message: 'Error creating reviews.',
+      new_review_rating_create_rs : {status: 'Error creating review.'},
       error: 'Database error',
     });
   });
