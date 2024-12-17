@@ -8,7 +8,7 @@ const router = express.Router();
 router.post('/reviews', verifyToken, allowEndUser, createReview);
 
 // Route to get all reviews
-router.get('/reviews', verifyToken, getAllReviews);
+router.get('/reviews', getAllReviews);
 
 // Get a review by ID
 // router.get('/reviews/:id', getReviewById);
