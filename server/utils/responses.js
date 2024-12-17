@@ -1,3 +1,5 @@
+import { createReview } from "../review/reviewController";
+
 const responses = {
   validation: {
     allFieldsRequired: "All fields are required.",
@@ -16,7 +18,10 @@ const responses = {
     NoCategories: "No review categories found",
     categoryListRequired: "Category list is required and must contain at least one category_id",
     deleteCategory: "No Review Categories found to Delete",
-
+    NotFound: "Not found or inactive.",
+    userAlreadyReviewed: "User already reviewed!",
+    NoReview : "No Reviews found",
+    reviewNotFound: "Review not found.",
 
   },
   success: {
@@ -37,9 +42,10 @@ const responses = {
     updateCategory: "Error updating review category.",
     deleteCategory: "Error deleting review category.",
     updateUser: "Error updating user.",
+    createReview: "Error creating review.",
+    retrieveReview: "Error retrieving review.",
+    failedFetchReview: "Failed to fetch review.",
   },
-
-
 
 };
 export default responses;
