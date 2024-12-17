@@ -39,15 +39,10 @@ export const createReview = async (req, res) => {
       if (!user) {
         return res.status(404).json({ message: "User not found or inactive." });
       }
-
-      //If User already reviewed then 
-      //----------------------------------------------------------------
-      const presentReview = await Review.findOne({ user_id: user._id });
-      //-----------------------------------------------------------------
       
-      if(presentReview){
-        return res.status(404).json({ message: "User already Reviewed!! "});
-      }
+    //   if(presentReview){
+    //     return res.status(404).json({ message: "User already Reviewed!! "});
+    //   }
   
       // Extract all category IDs from category_wise_review_rating
       const categoryIds = category_wise_review_rating.map(
@@ -90,12 +85,23 @@ export const createReview = async (req, res) => {
         };
       });
   
+      const overallReview = new Review({ 
+        user_id, 
+        category_id: null, 
+        overall_review, 
+        overall_rating,
+        blockchain_tx: " ",
+        status: true,
+     });
+        const savedOverall = await overallReview.save();  
+
       // Insert all reviews
       const savedReviews = await Review.insertMany(reviewsToInsert);
   
       return res.status(201).json({
         message: "Success.",
         reviews: savedReviews,
+        overall: savedOverall
       });
     } catch (error) {
       console.error("Error creating reviews:", error.message);
