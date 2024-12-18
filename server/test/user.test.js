@@ -45,21 +45,21 @@ describe('User Controller Tests', () => {
       req.body.email = null;
       await createUser(req, res);
       expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({ message: 'All fields are required.' });
+      expect(res.json).toHaveBeenCalledWith({ user_crud_rs : {status: 'All fields are required.' }});
     });
 
     it('should return 400 if role is invalid', async () => {
       req.body.role = 'InvalidRole';
       await createUser(req, res);
       expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Invalid role provided.' });
+      expect(res.json).toHaveBeenCalledWith({ user_crud_rs : {status: 'Invalid role provided.' }});
     });
 
     it('should return 400 if email is already registered', async () => {
       jest.spyOn(User, 'findOne').mockResolvedValue({ email: 'test@example.com' });
       await createUser(req, res);
       expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Email is already registered.' });
+      expect(res.json).toHaveBeenCalledWith({ user_crud_rs : {status: "Email is already registered." }});
     });
 
     it('should create a user successfully', async () => {
@@ -78,7 +78,7 @@ describe('User Controller Tests', () => {
       await createUser(req, res);
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith({
-        message: 'Success',
+        user_crud_rs : {status: 'success'},
         user: {
           user_id: 'user123',
           email: 'test@example.com',
@@ -111,14 +111,14 @@ describe('User Controller Tests', () => {
       req.body.email = null;
       await loginUser(req, res);
       expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Email and password are required.' });
+      expect(res.json).toHaveBeenCalledWith({ user_crud_rs : {status: 'Email and password are required.'} });
     });
 
     it('should return 400 if credentials are invalid', async () => {
       jest.spyOn(User, 'findOne').mockResolvedValue(null);
       await loginUser(req, res);
       expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Invalid credentials.' });
+      expect(res.json).toHaveBeenCalledWith({ user_crud_rs : {status: "Invalid credentials fields."} });
     });
 
     it('should return 400 if password does not match', async () => {
@@ -127,7 +127,7 @@ describe('User Controller Tests', () => {
 
       await loginUser(req, res);
       expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Invalid credentials.' });
+      expect(res.json).toHaveBeenCalledWith({ user_crud_rs : {status: "Invalid credentials fields."} });
     });
 
     it('should login successfully and return a token', async () => {
@@ -147,7 +147,7 @@ describe('User Controller Tests', () => {
       await loginUser(req, res);
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
-        message: 'Login success',
+        user_crud_rs : {status: "success"},
         token: 'mockToken',
         user: {
           user_id: 'user123',
@@ -163,7 +163,7 @@ describe('User Controller Tests', () => {
       jest.spyOn(User, 'findOne').mockRejectedValue(new Error('Database error'));
       await loginUser(req, res);
       expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Error during login.', error: 'Database error' });
+      expect(res.json).toHaveBeenCalledWith({ user_crud_rs : {status: 'Error during login.'}, error: 'Database error' });
     });
   });
 
@@ -181,7 +181,7 @@ describe('User Controller Tests', () => {
       req.user.role = 'End User';
       await getAllUsers(req, res);
       expect(res.status).toHaveBeenCalledWith(403);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Access denied.' });
+      expect(res.json).toHaveBeenCalledWith({ user_crud_rs : {status: "Access denied. Only Business Users can perform this action." }});
     });
   
     it('should retrieve all users successfully', async () => {
@@ -207,7 +207,7 @@ describe('User Controller Tests', () => {
   
       await getAllUsers(req, res);
       expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Error retrieving users.', error: 'Database error' });
+      expect(res.json).toHaveBeenCalledWith({ user_crud_rs : {status: "Error retrieving users." }, error: 'Database error' });
     });
   });
 });  
