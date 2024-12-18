@@ -5,7 +5,7 @@ import { verifyToken, allowBusinessUser, allowEndUser } from '../auth/jwtUtils.j
 const router = express.Router();
 
 // Route to create a review
-router.post('/reviews', verifyToken, allowEndUser, createReview);
+router.post('/CreateReview', verifyToken, allowEndUser, createReview);
 
 // Route to get all reviews
 router.get('/reviews', getAllReviews);
