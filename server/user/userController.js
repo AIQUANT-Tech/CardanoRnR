@@ -9,7 +9,7 @@ import roles from '../utils/roles.js';
 // Create a new user
 export const createUser = async (req, res) => {
     try {
-        const { user_id, email, password_hash, display_name, role, status } = req.body;
+        const { user_id, email, password_hash, display_name, role } = req.body;
 
         if (!user_id || !display_name || !email || !password_hash || !role) {
             return res.status(400).json({user_crud_rs: {status:responses.validation.allFieldsRequired} });
@@ -19,10 +19,6 @@ export const createUser = async (req, res) => {
             return res.status(400).json({ user_crud_rs: {status:responses.validation.invalidRole} });
         }
 
-        // Validate the status if provided
-    if (status !== undefined && typeof status !== "boolean") {
-        return res.status(400).json({ user_crud_rs: {status:responses.validation.statusTypeInvalid} });
-      }
         // Check if email is already registered
         const existingUser = await User.findOne({ email });
         if (existingUser) {
@@ -33,7 +29,7 @@ export const createUser = async (req, res) => {
         const password = await bcrypt.hash(password_hash, salt);
 
         // Create the new user
-        const newUser = new User({ user_id, email, password_hash: password, display_name, role, status });
+        const newUser = new User({ user_id, email, password_hash: password, display_name, role });
         const savedUser = await newUser.save();  
         
 
