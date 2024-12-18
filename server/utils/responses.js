@@ -1,5 +1,3 @@
-import { createReview } from "../review/reviewController";
-
 const responses = {
   validation: {
     allFieldsRequired: "All fields are required.",

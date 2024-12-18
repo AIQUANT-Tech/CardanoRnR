@@ -187,8 +187,8 @@ export const getReviewsForBusinessUser = async (req, res) => {
 
     // Query all reviews with populated user and category details
     const reviews = await Review.find()
-      .populate("user_id", "display_name") //`display_name` exists in User schema
-      .populate("category_id", "category_name") // `category_name` exists in Category schema
+      .populate("user_id", "display_name") 
+      .populate("category_id", "category_name") 
       .select("_id user_id category_id review rating is_responded");
 
     // If no reviews found
