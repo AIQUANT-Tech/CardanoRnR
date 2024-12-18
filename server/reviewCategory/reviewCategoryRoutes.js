@@ -17,7 +17,7 @@ router.get('/review-categories',verifyToken, allowBusinessUser, getAllReviewCate
 router.put('/review-categories/:id',verifyToken, allowBusinessUser, editReviewCategory);
 
 // delete
-router.delete('/review-categories/:id',verifyToken, allowBusinessUser, deleteReviewCategory);
+router.delete('/review-categories',verifyToken, allowBusinessUser, deleteReviewCategory);
 
 
 

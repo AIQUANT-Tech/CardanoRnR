@@ -14,10 +14,10 @@ router.get('/reviews', getAllReviews);
 // router.get('/reviews/:id', getReviewById);
 
 //Get all review - business user
-router.get('/reviews/business', getReviewsForBusinessUser);
+router.get('/reviews/business/FetchReviews', verifyToken, allowBusinessUser, getReviewsForBusinessUser);
 
 //Get all review - end user
-router.get('/reviews/user', getReviewsForEndUser);
+router.get('/reviews/user/FetchReviews', verifyToken, allowEndUser, getReviewsForEndUser);
 
 
 export default router;
