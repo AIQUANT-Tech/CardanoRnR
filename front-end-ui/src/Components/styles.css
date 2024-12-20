@@ -1,0 +1,91 @@
+.sidebar {
+    width: 240px;
+    background-color: #f8f8f8;
+    padding: 16px;
+}
+
+.sidebar img {
+    height: 50px;
+    width: 50px;
+}
+
+.logo {
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.sidebar .MuiListItemIcon-root {
+    color: #555;
+    /* Customize icon color */
+}
+
+.sidebar .MuiListItemText-root {
+    font-size: 14px;
+}
+
+/* Header styles */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.header-icons .MuiIconButton-root {
+    color: #555;
+}
+
+/* Table styles */
+.categories-table {
+    padding: 16px;
+}
+
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.MuiTableCell-root {
+    font-size: 14px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e0e0e0;
+    text-align: left;
+}
+
+.MuiTableCell-head {
+    font-weight: bold;
+    background-color: #f5f5f5;
+    color: #DA9C9C!important;
+    font-weight: 600!important;
+}
+
+.MuiTableRow-root:hover {
+    background-color: #f9f9f9;
+}
+
+
+.add-category-button {
+    background-color: #ff4081;
+    color: white;
+}
+
+.add-category-button:hover {
+    background-color: #e91e63;
+}
+
+.status {
+    color: #00FF11;
+    font-weight: bold;
+}
+
+.action-icon {
+    cursor: pointer;
+    margin-right: 8px;
+    color: #00FF11;
+}
+
+.delete-icon {
+    color: red;
+}
