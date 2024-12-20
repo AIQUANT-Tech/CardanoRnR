@@ -1,0 +1,332 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+
+
+.signupBackground {
+        /* background-image: url("./loginbackground.jpg"); */
+        background-size: cover;
+        background-position: center;
+        height: 100vh;
+        /* display: flex;
+        justify-content: center;
+        align-items: center; */
+        background: linear-gradient(to right, #DA9C9C, #A25DD0);
+        user-select: none;
+}
+
+.signupBackground .header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        color: #ffffff;
+        font-size: 40px;
+        padding: 25px;
+        font-family: 'Nunito';
+        font-weight: 500;
+        user-select: none;
+}
+
+.signupBackground .header h3 {
+        font-size: 40px;
+        font-weight: 400;
+}
+
+.signupBackground .signup-container {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-around;
+
+}
+
+.signupBackground .signup-container img {
+        width: 500px;
+        height: 400px;
+}
+
+.signupBackground.signup-container.main-frm {
+        width: 40%;
+}
+
+.signupBackground .signup-container.main-frm .form-lbl {
+        font-size: 24px;
+}
+
+.signupBackground .signup-container .main-frm .btn {
+        background-color: #DA9C9C !important;
+        border-radius: 50px !important;
+        border-color: #DA9C9C;
+        width: 100%;
+        color: #ffffff !important;
+        font-size: 24px !important;
+        font-family: 'Nunito';
+
+        background: linear-gradient(0deg, #DA9C9C, #DA9C9C), #DA9C9C;
+        box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25), inset 0px 4px 4px rgba(0, 0, 0, 0.25);
+        /* Note: backdrop-filter has minimal browser support */
+        border-radius: 100px;
+        border-color: #000000;
+}
+
+.main-frm {
+        width: 40vw;
+        display: flex;
+        flex-direction: column;
+}
+
+.main-frm label {
+        font-size: 25px;
+        font-weight: 600;
+}
+
+.form-control-plaintext .form-floating .form-control-plaintext {
+        padding-bottom: 50px;
+
+}
+
+
+/* .btn {
+        background-color: #DA9C9C !important;
+        border-radius: 50px !important;
+        border-color: #DA9C9C;
+        width: 100%;
+        color: #ffffff !important;
+        font-size: 24px !important;
+} */
+
+/* ///////// */
+.home-page-container {
+        justify-content: space-evenly;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        width: 100vw;
+        user-select: none;
+}
+
+.home-page-container .left-part {
+        width: 100%;
+}
+
+.home-page-container .right-part {
+        width: 100%;
+        padding: 50px;
+}
+
+.home-page-container .left-part img {
+        height: 100vh;
+        width: 100%;
+        background-color: #3e2053;
+}
+
+.home-page-container .right-part .btn {
+        background-color: #DA9C9C !important;
+        border-radius: 50px !important;
+        border-color: #DA9C9C;
+        width: 100%;
+        color: #000000 !important;
+        font-size: 50px !important;
+        font-weight: 600;
+        font-family: 'Nunito';
+
+        background: linear-gradient(0deg, #DA9C9C, #DA9C9C), #DA9C9C;
+        box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25), inset 0px 4px 4px rgba(0, 0, 0, 0.25);
+        /* Note: backdrop-filter has minimal browser support */
+        border-radius: 100px;
+}
+
+.home-page-container .right-part .sign-up-link a {
+        color: #DA9C9C;
+        text-decoration: none;
+        font-weight: bold;
+}
+
+.home-page-container .right-part .sign-up-link {
+        display: flex;
+        justify-content: center;
+        position: relative;
+        top: 90px;
+        font-family: 'Nunito';
+}
+
+.home-page-container .right-part .signin {
+        /* Sign In As */
+        height: 84px;
+        left: 820px;
+        right: 31px;
+        top: calc(50% - 84px/2 - 94px);
+        padding-bottom: 20px;
+        font-family: 'Nunito';
+}
+
+.home-page-container .right-part .signin h3 {
+        font-family: 'Nunito';
+        font-weight: 800;
+        letter-spacing: 3.8px;
+}
+
+*
+/*
+ ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+*/
+
+.login-container {
+        display: flex;
+        height: 100vh;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        overflow: hidden;
+}
+
+.login-container .navBar {
+        width: 100%;
+        padding: 0px 20px 0px 100px;
+        /* height: 200px; */
+}
+
+.login-container .navBar .justify-content-end {
+font-size: 30px;
+gap: 40px;
+}
+
+.login-component .login-form {
+        width: 50%;
+        padding: 20px 20px 0px 105px;
+        background-color: white;
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+
+}
+
+.login-component .login-form .login-section {
+        padding: 50px 500px 150px 150px;
+        font-size: 40px;     
+}
+
+.login-component {
+        display: flex;
+        flex-direction: row;
+        width: 100vw;
+}
+
+.login-form h1 {
+        font-size: 44px;
+        color: #333;
+        margin-bottom: 10px;
+}
+
+.login-form p {
+        font-size: 44px;
+        color: #666;
+}
+
+.login-form a {
+        color: #e08785;
+        text-decoration: none;
+}
+
+.login-form label {   
+        width: 300px;
+        padding: 20px;
+}
+
+.login-form input {
+        border-radius: 60px!important;
+        border-color: #e08785;
+        font-family: initial;
+        margin-left: 20px!important;
+}
+
+.form-group {
+        
+}
+
+.form-group label {
+        display: block;
+        font-size: 44px;
+        color: #333;
+        font-display: flex;
+}
+
+.form-group input {
+        width: 100%;
+        font-size: 44px;
+        border-radius: 5px;
+        
+}
+
+
+.password-wrapper {
+        display: flex;
+        align-items: center;
+}
+
+.password-wrapper input {
+        flex: 1;
+}
+
+.password-wrapper .toggle-visibility {
+        background: none;
+        border: none;
+        font-size: 46px;
+        cursor: pointer;
+}
+
+.options {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        margin-bottom: 15px;
+        font-size: 30px;
+        margin-top: 5%;
+        gap: 160px;
+}
+.options input[type="checkbox"] {
+        margin-right: 10px;
+}
+
+.toggle-password{
+        border: none;
+        background-color: transparent;
+}
+
+.options label {
+        display: flex;
+        align-items: center;
+        width: 300px;
+}
+
+.sign-in-button {
+        width: 100%;
+        padding: 10px;
+        font-size: 46px;
+        color: white;
+        background-color: #e08785;
+        border: none;
+        border-radius: 90px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        margin-top: 90px;
+;
+}
+
+.sign-in-button:hover {
+        background-color: #d17473;
+}
+
+.login-image {
+        width: 50%;
+        align-items: center;
+        justify-content: center;
+}
+
+.login-image img {
+        width: 100%;
+        max-height: 90vh;
+        border-radius: 10px;
+}
