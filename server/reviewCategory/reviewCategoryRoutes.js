@@ -11,7 +11,7 @@ const router = express.Router();
 router.post('/createReviewCategory',verifyToken, allowBusinessUser, createReviewCategory);
 
 // Route for getting all review categories
-router.get('/getReviewCategoryInfo',verifyToken, allowBusinessUser, getAllReviewCategories);
+router.post('/getReviewCategoryInfo', getAllReviewCategories);
 
 // Update
 router.put('/editReviewCategory',verifyToken, allowBusinessUser, editReviewCategory);
