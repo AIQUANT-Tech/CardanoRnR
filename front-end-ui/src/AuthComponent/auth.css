@@ -172,8 +172,7 @@
 */
 
 .login-container {
-        display: flex;
-        height: 100vh;
+        display: flex;;
         align-items: center;
         justify-content: center;
         flex-direction: column;
@@ -182,8 +181,8 @@
 
 .login-container .navBar {
         width: 100%;
-        padding: 0px 20px 0px 100px;
-        /* height: 200px; */
+        padding: 0px 20px 75px 100px;
+        height: 10vh;
 }
 
 .login-container .navBar .justify-content-end {
@@ -193,19 +192,21 @@ gap: 40px;
 
 .login-component .login-form {
         width: 50%;
-        padding: 20px 20px 0px 105px;
+        padding: 0px 0px 0px;
         background-color: white;
-        border-radius: 10px;
+        border-radius: 0px;
         display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: flex-start;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: nowrap;
+        overflow: hidden;
 
 }
 
 .login-component .login-form .login-section {
-        padding: 50px 500px 150px 150px;
-        font-size: 40px;     
+        width: 95%;
+        font-size: 20px;
 }
 
 .login-component {
@@ -221,8 +222,9 @@ gap: 40px;
 }
 
 .login-form p {
-        font-size: 44px;
+        font-size: 30px;
         color: #666;
+        padding-left: 100px;
 }
 
 .login-form a {
@@ -232,19 +234,55 @@ gap: 40px;
 
 .login-form label {   
         width: 300px;
-        padding: 20px;
+        /* padding-left: 80px; */
+                
 }
 
 .login-form input {
-        border-radius: 60px!important;
         border-color: #e08785;
+        border-radius: 60px!important;
         font-family: initial;
-        margin-left: 20px!important;
 }
 
-.form-group {
+
+.input-group {
+        margin-bottom: 20px;
+        font-size: 30px;
+        /* height: 30px; */
+        padding-left: 100px;
+}
+.input-group #email{
+        /* min-width: 295px; */
+        width: 452px;
+        margin-left: 0px;
+        border: 2px solid #e08785;
+        padding-left: 30px;
+        outline: none;
+        margin-top: 15px;
         
 }
+.password-input{
+        width: 452px;
+        border: 2px solid #e08785;
+        border-radius: 60px!important;
+        padding-left: 30px;
+        margin-top: 15px;
+}
+
+.password-input input {
+        
+        margin-left: 0px;
+        border: none;
+        outline: none;
+}
+.password-input #password {
+        outline: none;
+        padding-left: 0px;
+        border: none;
+        outline: none;
+
+}
+
 
 .form-group label {
         display: block;
@@ -284,7 +322,7 @@ gap: 40px;
         margin-bottom: 15px;
         font-size: 30px;
         margin-top: 5%;
-        gap: 160px;
+        gap: 100px;
 }
 .options input[type="checkbox"] {
         margin-right: 10px;
@@ -300,19 +338,42 @@ gap: 40px;
         align-items: center;
         width: 300px;
 }
+.options .rememberMe {
+        display: flex;
+        align-items: center;
+        font-size: 20px;
+        margin-top: 5px;
+        padding-left: 100px;
+}
+.options .forgot-password {
+        display: flex;
+        align-items: center;
+        font-size: 20px;
+        margin-top: 5px;
+        padding-left: 40px;
+}
 
 .sign-in-button {
+        background-color: #DA9C9C !important;
+        border-radius: 50px !important;
+        border-color: #DA9C9C;
         width: 100%;
-        padding: 10px;
-        font-size: 46px;
-        color: white;
-        background-color: #e08785;
-        border: none;
-        border-radius: 90px;
-        cursor: pointer;
-        transition: background-color 0.3s;
-        margin-top: 90px;
+        color: #ffffff !important;
+        font-size: 40px !important;
+        font-weight: 600;
+        font-family: 'Nunito';
+
+        background: linear-gradient(0deg, #DA9C9C, #DA9C9C), #DA9C9C;
+        box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25), inset 0px 4px 4px rgba(0, 0, 0, 0.25);
+        /* Note: backdrop-filter has minimal browser support */
+        outline: none;
+        border : none;
 ;
+}
+
+.sign-in-button-container{
+        padding-left: 95px;
+        padding-right: 60px;
 }
 
 .sign-in-button:hover {
@@ -323,10 +384,10 @@ gap: 40px;
         width: 50%;
         align-items: center;
         justify-content: center;
+        overflow: hidden;
 }
 
 .login-image img {
         width: 100%;
-        max-height: 90vh;
-        border-radius: 10px;
+        height: 87.5vh;;
 }

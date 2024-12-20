@@ -3,6 +3,7 @@ import { Navbar, Nav } from "react-bootstrap";
 import workspace from "../AuthComponent/image/LogIn.jpg";
 import "./auth.css";
 function LoginPage() {
+  const togglePasswordVisibility =()=>{}
   return (
     <div className="login-container">
       <div className="navBar">
@@ -27,7 +28,7 @@ function LoginPage() {
           Don’t have an account? <a href="/signUp">Sign up</a>
         </p>
         <form>
-          <div className="input-group">
+          <div className="input-group email">
             <label htmlFor="email">Email Id</label>
             <input type="email" id="email" placeholder="deniel123@gmail.com" />
           </div>
@@ -36,7 +37,7 @@ function LoginPage() {
             <label htmlFor="password">Password</label>
             <div className="password-input">
               <input type="password" id="password" placeholder="********" />
-              <button type="button" className="toggle-password">
+              <button type="button" className="toggle-password" onClick={togglePasswordVisibility}>
               <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" 
                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" 
                stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye">
@@ -53,7 +54,10 @@ function LoginPage() {
               Forget password?
             </a>
           </div>
+          <div className="sign-in-button-container">
           <button type="submit" className="sign-in-button">Sign In</button>
+          </div>
+          
         </form>
         </div>
         
