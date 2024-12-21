@@ -18,18 +18,20 @@
 .signupBackground .header {
         display: flex;
         flex-direction: column;
-        align-items: center;
+        align-items:center;
         color: #ffffff;
         font-size: 40px;
         padding: 25px;
         font-family: 'Nunito';
-        font-weight: 500;
+        font-weight: 1000;
         user-select: none;
+        border-bottom: 0px;
+
 }
 
 .signupBackground .header h3 {
         font-size: 40px;
-        font-weight: 400;
+        font-weight: 1000;
 }
 
 .signupBackground .signup-container {
@@ -61,14 +63,55 @@
         color: #ffffff !important;
         font-size: 24px !important;
         font-family: 'Nunito';
-
         background: linear-gradient(0deg, #DA9C9C, #DA9C9C), #DA9C9C;
         box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25), inset 0px 4px 4px rgba(0, 0, 0, 0.25);
         /* Note: backdrop-filter has minimal browser support */
         border-radius: 100px;
         border-color: #000000;
 }
+.form-control {
+        display: block;
+        width: 100%;
+        padding: .375rem .75rem;
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: var(--bs-body-color);
+        appearance: none;
+        background-color: var(--bs-body-bg);
+        background-clip: padding-box;
+        border: var(--bs-border-width) solid var(--bs-border-color);
+        border-radius: 20px;
+        transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+}
 
+.form-control::placeholder {
+        color: #999; /* Light gray placeholder text */
+        opacity: 1; /* Ensure it is fully visible */
+        font-size: 0.9rem; /* Optional: Adjust the font size */
+      }
+      
+      /* Placeholder on focus */
+      .form-control:focus::placeholder {
+        color: #000000; /* Slightly darker gray when focused */
+      }
+
+
+.form-floating .label {
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 10;
+        height: 100%;
+        overflow: hidden;
+        text-align: start;
+        text-overflow: "Nunito";
+        white-space: nowrap;
+        pointer-events: none;
+        border: var(--bs-border-width) solid transparent;
+        transform-origin: 0 0;
+        transition: opacity .1s ease-in-out, transform .1s ease-in-out;
+    }
 .main-frm {
         width: 40vw;
         display: flex;
@@ -81,9 +124,35 @@
 }
 
 .form-control-plaintext .form-floating .form-control-plaintext {
-        padding-bottom: 50px;
+        padding-top: 1rem;
+        padding-bottom: 1.25rem;
+        padding-left: 250px;
 
 }
+#floatingEmail.form-control{
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+        padding-left: 200px;
+        display: flex;
+
+}
+#floatingPassword.form-control{
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+        padding-left: 200px;
+}
+#floatingConfirmPassword.form-control{
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+        padding-left: 200px;
+}
+#floatingDisplayName.form-control{
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+        padding-left: 200px;
+}
+
+
 
 
 /* .btn {
@@ -95,7 +164,7 @@
         font-size: 24px !important;
 } */
 
-/* ///////// */
+/* //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// */
 .home-page-container {
         justify-content: space-evenly;
         display: flex;
@@ -181,8 +250,9 @@
 
 .login-container .navBar {
         width: 100%;
-        padding: 0px 20px 75px 100px;
+        padding: 0px 10px 75px 92px;
         height: 10vh;
+        overflow: hidden;
 }
 
 .login-container .navBar .justify-content-end {
@@ -220,6 +290,10 @@ gap: 40px;
         color: #333;
         margin-bottom: 10px;
 }
+.navbar #home {
+        color: var(--bs-navbar-brand-hover-color);
+        margin-left: ;
+    }
 
 .login-form p {
         font-size: 30px;
@@ -250,15 +324,15 @@ gap: 40px;
         font-size: 30px;
         /* height: 30px; */
         padding-left: 100px;
+        margin : none;
 }
 .input-group #email{
-        /* min-width: 295px; */
         width: 452px;
         margin-left: 0px;
         border: 2px solid #e08785;
         padding-left: 30px;
-        outline: none;
-        margin-top: 15px;
+        margin-top: 10px;
+
         
 }
 .password-input{
@@ -389,5 +463,6 @@ gap: 40px;
 
 .login-image img {
         width: 100%;
-        height: 87.5vh;;
+        height: 87.5vh;
+        overflow: hidden;
 }
