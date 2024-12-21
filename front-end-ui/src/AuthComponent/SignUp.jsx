@@ -10,11 +10,48 @@ const SignUp = () => {
     displayName: "",
   });
 
-  const handelSubmit = (e) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
+  // Handle Form Submission
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(formData);
+    setError("");
+    setSuccessMessage("");
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("http://localhost:8080/api/user/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: new Date().getTime().toString(), // Unique user ID
+          email: formData.email,
+          password_hash: formData.password, // Backend expects `password_hash`
+          display_name: formData.displayName,
+          role: "Business User", // Default role for sign-up
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.user_crud_rs?.status || "Sign-Up failed. Please try again.");
+      }
+
+      setSuccessMessage("Account created successfully!");
+      setFormData({ email: "", password: "", displayName: "" }); // Reset form
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
+  // Handle Input Changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -32,16 +69,17 @@ const SignUp = () => {
         <div>
           <img src={signupImage} alt="Sign Up" />
         </div>
-        <form onSubmit={handelSubmit} className="main-frm">
+        <form onSubmit={handleSubmit} className="main-frm">
           {/* Floating Label for Email */}
           <Form.Floating className="mb-3">
-            <Form.Control 
+            <Form.Control
               id="floatingEmail"
               type="email"
               name="email"
               placeholder="Please enter your email id"
               value={formData.email}
               onChange={handleChange}
+              className={`form-control ${error ? "is-invalid" : ""}`}
             />
             <label htmlFor="floatingEmail">User Email :</label>
           </Form.Floating>
@@ -55,6 +93,7 @@ const SignUp = () => {
               placeholder="Please enter your password"
               value={formData.password}
               onChange={handleChange}
+              className={`form-control ${error ? "is-invalid" : ""}`}
             />
             <label htmlFor="floatingPassword">Password :</label>
           </Form.Floating>
@@ -68,13 +107,20 @@ const SignUp = () => {
               placeholder="Enter your display name"
               value={formData.displayName}
               onChange={handleChange}
+              className={`form-control ${error ? "is-invalid" : ""}`}
             />
             <label htmlFor="floatingDisplayName">Display Name :</label>
           </Form.Floating>
 
+          {/* Error Message */}
+          {error && <p className="text-danger">{error}</p>}
+
+          {/* Success Message */}
+          {successMessage && <p className="text-success">{successMessage}</p>}
+
           {/* Submit Button */}
-          <button type="submit" className="btn">
-            Create Account
+          <button type="submit" className="btn" disabled={isSubmitting}>
+            {isSubmitting ? "Creating Account..." : "Create Account"}
           </button>
         </form>
       </Container>
