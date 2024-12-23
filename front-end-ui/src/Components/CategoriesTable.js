@@ -85,15 +85,15 @@ const CategoriesTable = () => {
   const handleAddCategories = async (newCategories) => {    
     const categoryList = newCategories.map((category, index) => ({
       category_id: index + 1,
-      category_name: category.name,
-      category_desc: category.desc,
-      Status: category.status,
+      category_name: category.category_name,
+      category_desc: category.category_desc,
+      Status: category.Status,
     }));
 
     const payload = {
       review_category_crud_rq: {
         header: {
-          user_name: 'businessUser',
+          user_name: 'Business User',
           product: 'rnr',
           request_type: 'CREATE_REVIEW_CATEGORY',
         },
@@ -306,7 +306,10 @@ const CategoriesTable = () => {
       <AddCategoriesModal
         open={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onSubmit={handleAddCategories}
+        onSubmit={(categories) => {
+            console.log('Received categories:', categories);
+            handleAddCategories(categories.review_category_crud_rq.category_list);
+          }}
       />
       {selectedCategory && (
         <EditCategoryModal
