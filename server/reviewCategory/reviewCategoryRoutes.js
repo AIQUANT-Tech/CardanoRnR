@@ -8,16 +8,16 @@ import { verifyToken, allowBusinessUser } from '../auth/jwtUtils.js';
 const router = express.Router();
 
 // Route for creating a new review category
-router.post('/createReviewCategory',verifyToken, allowBusinessUser, createReviewCategory);
+router.post('/createReviewCategory', createReviewCategory);
 
 // Route for getting all review categories
 router.post('/getReviewCategoryInfo', getAllReviewCategories);
 
 // Update
-router.put('/editReviewCategory',verifyToken, allowBusinessUser, editReviewCategory);
+router.put('/editReviewCategory', editReviewCategory);
 
 // delete
-router.delete('/deleteReviewCategory',verifyToken, allowBusinessUser, deleteReviewCategory);
+router.delete('/deleteReviewCategory', deleteReviewCategory);
 
 
 
