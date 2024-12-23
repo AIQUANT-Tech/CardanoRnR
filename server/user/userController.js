@@ -15,7 +15,8 @@ export const createUser = async (req, res) => {
             return res.status(400).json({user_crud_rs: {status:responses.validation.allFieldsRequired} });
         }
 
-        if (![roles.endUser, roles.endUser].includes(role)) {
+        if (![roles.endUser, roles.endUser].includes(role) || ![roles.businessUser, roles.businessUser].includes(role)
+        ) {
             return res.status(400).json({ user_crud_rs: {status:responses.validation.invalidRole} });
         }
 
