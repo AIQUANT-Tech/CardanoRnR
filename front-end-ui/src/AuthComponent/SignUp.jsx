@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Container, Form } from "react-bootstrap";
 import signupImage from './image/signup.png';
+import { useNavigate } from 'react-router-dom';
 import "./auth.css";
 
 const SignUp = () => {
@@ -13,6 +14,7 @@ const SignUp = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const navigate = useNavigate();
 
   // Handle Form Submission
   const handleSubmit = async (e) => {
@@ -43,6 +45,8 @@ const SignUp = () => {
       }
 
       setSuccessMessage("Account created successfully!");
+        navigate('/login');
+      
       setFormData({ email: "", password: "", displayName: "" }); // Reset form
     } catch (error) {
       setError(error.message);
