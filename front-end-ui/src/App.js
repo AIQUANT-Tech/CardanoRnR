@@ -5,6 +5,7 @@ import HomePage from './AuthComponent/homePage';
 import SignUp from './AuthComponent/SignUp';
 import ReviewCategories from './Pages/ReviewCategories/ReviewCategories';
 import ReviewsPage from './Pages/UserReview/userHome';
+import ReviewsReply from './Pages/ReviewReply/ReviewReply';
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Route path="/signUp" element={<SignUp />} />
         <Route path="/categories" element={<ReviewCategories />} />
         <Route path="/user" element={<ReviewsPage />} />
+        <Route path="/chatreply" element={<ReviewsReply />} />
       </Routes>
     </BrowserRouter>
   );

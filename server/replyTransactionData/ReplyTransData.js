@@ -23,8 +23,8 @@ const ReplyTransaction = new mongoose.Schema({
     },
     Status: {
         type: Boolean,
-        default: true,
-        description :'Status of the reply (Active or Inactive)'
+        default: false,
+        description :'Status of the reply (Sent or Unsent)'
     }
 });
 
