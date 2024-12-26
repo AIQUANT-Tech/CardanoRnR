@@ -1,23 +1,22 @@
 import React from "react";
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
   DialogActions,
   Button,
-  Typography,
+  Box,
 } from "@mui/material";
 
-const RatingReviewModal = ({ open, onClose, title, children, closeButtonText }) => {
+const RatingReviewModal = ({
+  open,
+  onClose,
+  header,
+  children,
+  closeButtonText,
+}) => {
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-      {title && (
-        <DialogTitle>
-          <Typography variant="h6" fontWeight="bold">
-            {title}
-          </Typography>
-        </DialogTitle>
-      )}
+      {header && <Box sx={{ padding: 2, borderBottom: "1px solid #ccc" }}>{header}</Box>}
       <DialogContent>{children}</DialogContent>
       <DialogActions>
         <Button
