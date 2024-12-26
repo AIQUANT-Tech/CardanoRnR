@@ -11,24 +11,22 @@ import {
 } from "@mui/material";
 
 const WriteReviewModal = () => {
-  const [open, setOpen] = useState(false); // State to manage modal open/close
-  const [email, setEmail] = useState(""); // State to manage email input
+  const [open, setOpen] = useState(false); 
+  const [email, setEmail] = useState(""); 
 
-  // Open the modal
   const handleOpen = () => {
     setOpen(true);
   };
 
-  // Close the modal
+
   const handleClose = () => {
     setOpen(false);
   };
 
-  // Handle sign-in button click
+
   const handleSignIn = () => {
     console.log("Email entered:", email);
-    // Add your logic for sign-in or email validation here
-    setOpen(false); // Close the modal after processing
+    setOpen(false); 
   };
 
   return (
@@ -49,7 +47,7 @@ const WriteReviewModal = () => {
       </Button>
 
       {/* Modal Dialog */}
-      <Dialog open={open} onClose={handleClose}>
+      <Dialog open={open}>
         <DialogTitle>
           <Typography variant="h6" fontWeight="bold">
             Want to write a review?
