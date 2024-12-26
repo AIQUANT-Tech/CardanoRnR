@@ -293,6 +293,7 @@ export const getReviewsForEndUser = async (req, res) => {
         
         const categories = await ReviewCategory.find({
             _id: { $in: categoryIds },
+            status: true,
         }).select("category_id category_name category_description"); 
 
         
