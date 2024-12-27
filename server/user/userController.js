@@ -3,8 +3,11 @@ import bcrypt from "bcryptjs";
 import { generateToken } from "../auth/jwtUtils.js"; 
 import responses from '../utils/responses.js';
 import roles from '../utils/roles.js';
+import nodemailer from "nodemailer";
+import crypto from "crypto";
 
 
+let otps = {};
 
 // Create a new user
 export const createUser = async (req, res) => {
@@ -80,7 +83,7 @@ export const loginUser = async (req, res) => {
 
 export const getAllUsers = async (req, res) => {
     try {
-        if (req.user.role !== roles.businessUser) {
+        if (req.body.role !== roles.businessUser) {
             return res.status(403).json({ user_crud_rs: {status:responses.validation.accessDeniedBusinessUser} });
         }
 
@@ -93,3 +96,61 @@ export const getAllUsers = async (req, res) => {
         return res.status(500).json({ user_crud_rs: {status:responses.error.retrieveUsers}, error: error.message });
     }
 };
+
+export const validateEndUser = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ user_crud_rs: { status: responses.validation.emailRequired } });
+        }
+
+        // Check if the user exists
+        const user = await User.findOne({ email: email, role: "End User" });
+        if (!user) {
+            return res.status(404).json({ user_crud_rs: { status: responses.validation.NotFound } });
+        }
+
+        return res.status(200).json({ user_crud_rs: { status: responses.success.success } });
+    } catch (error) {
+        console.error("Error in validateEndUser:", error);
+        return res.status(500).json({ user_crud_rs: { status: responses.error.sendingOTP }, error: error.message });
+    }
+};
+
+// // Verify OTP
+// export const verifyEndUserOTP = async (req, res) => {
+//     try {
+//         const { email, otp } = req.body;
+
+//         if (!email || !otp) {
+//             return res.status(400).json({ user_crud_rs: { status: responses.validation.emailOtpRequired } });
+//         }
+
+//         // Check if the OTP exists and is valid
+//         const storedOtpDetails = otps[email];
+//         if (!storedOtpDetails) {
+//             return res.status(400).json({ user_crud_rs: { status: responses.validation.otpNotFound } });
+//         }
+
+//         const { otp: storedOtp, timestamp } = storedOtpDetails;
+
+//         // Check if the OTP is expired (10 minutes validity)
+//         const isExpired = Date.now() - timestamp > 10 * 60 * 1000; // 10 minutes
+//         if (isExpired) {
+//             delete otps[email];
+//             return res.status(400).json({ user_crud_rs: { status: responses.validation.otpExpired } });
+//         }
+
+//         // Verify the OTP
+//         if (storedOtp === otp) {
+//             delete otps[email]; // OTP is valid, remove it
+//             return res.status(200).json({ user_crud_rs: { status: responses.success.otpVerified } });
+//         }
+
+//         return res.status(400).json({ user_crud_rs: { status: responses.validation.invalidOtp } });
+//     } catch (error) {
+//         console.error("Error in verifyEndUserOTP:", error);
+//         return res.status(500).json({ user_crud_rs: { status: responses.error.verifyingOTP }, error: error.message });
+//     }
+// };

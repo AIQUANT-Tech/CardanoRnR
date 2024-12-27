@@ -1,5 +1,5 @@
 import express from "express";
-import { createUser, getAllUsers, loginUser } from "./userController.js";
+import { createUser, getAllUsers, loginUser, validateEndUser } from "./userController.js";
 import { verifyToken, allowBusinessUser, allowEndUser } from '../auth/jwtUtils.js';
 
 const router = express.Router();
@@ -11,6 +11,12 @@ router.post("/users", createUser);
 router.post("/login", loginUser);
 
 // Route to get all users
-router.get("/users", verifyToken, allowBusinessUser, getAllUsers);
+router.get("/users", getAllUsers);
+
+//Route to validate end user
+router.post("/validate", validateEndUser);
+
+//Route to validate end user
+// router.post("/verify", verifyEndUserOTP);
 
 export default router;
