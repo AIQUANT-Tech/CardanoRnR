@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { Filter, MessageCircle, Paperclip, Send } from "lucide-react";
 import {
   Box,
   Typography,
@@ -11,19 +10,18 @@ import {
   TableRow,
   Button,
   IconButton,
-  TextField,
-  Paper,
   Select,
   MenuItem,
-  Divider,
-  Avatar,
-  Alert,
+  Paper,
   Snackbar,
+  Alert,
 } from "@mui/material";
+import { Filter, MessageCircle } from "lucide-react";
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
 import CustomPagination from "../../Components/Custom-Pagination";
 import axios from "axios";
+import ChatPanel from "../../Components/Message"; // Import ChatPanel
 
 const CustomerReviewManagement = () => {
   const [selectedReview, setSelectedReview] = useState(null);
@@ -31,7 +29,6 @@ const CustomerReviewManagement = () => {
   const [replyThread, setReplyThread] = useState([]);
   const [replyContent, setReplyContent] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
@@ -42,7 +39,6 @@ const CustomerReviewManagement = () => {
   const fetchReviews = async () => {
     try {
       setIsLoading(true);
-      // Add your API endpoint here
       const response = await axios.post(
         "http://localhost:8080/api/review/reviews/business/FetchReviews",
         {
@@ -57,7 +53,6 @@ const CustomerReviewManagement = () => {
       );
       setReviews(response.data.review_rating_info_rs.review_rating_info_by_user);
     } catch (err) {
-      setError("Failed to fetch reviews");
       handleSnackbar("Failed to fetch reviews", "error");
     } finally {
       setIsLoading(false);
@@ -70,7 +65,7 @@ const CustomerReviewManagement = () => {
       const response = await axios.post("", {
         review_reply_thread_rq: {
           header: {
-            user_name: localStorage.getItem("user_name"), // Assuming you store user_name in localStorage
+            user_name: localStorage.getItem("user_name"),
           },
           review_id: reviewId,
         },
@@ -124,7 +119,6 @@ const CustomerReviewManagement = () => {
     });
   };
 
-  // Effect to fetch initial reviews
   useEffect(() => {
     fetchReviews();
   }, []);
@@ -135,9 +129,7 @@ const CustomerReviewManagement = () => {
         <Sidebar />
       </Box>
 
-      {/* Main Content */}
       <Box ml="20%" width="85%" display="flex" flexDirection="column">
-        {/* Fixed Header */}
         <Box
           position="fixed"
           width="80%"
@@ -148,7 +140,6 @@ const CustomerReviewManagement = () => {
           <Header />
         </Box>
 
-        {/* Content Section */}
         <Box mt={8} display="flex" flex={1}>
           <Box
             flex={selectedReview ? 0.7 : 1}
@@ -180,7 +171,6 @@ const CustomerReviewManagement = () => {
               </Box>
             </Box>
 
-            {/* Reviews Table */}
             <TableContainer component={Paper}>
               <Table>
                 <TableHead>
@@ -234,81 +224,17 @@ const CustomerReviewManagement = () => {
 
           {/* Chat Panel */}
           {selectedReview && (
-            <Box
-              flex={0.3}
-              bgcolor="white"
-              boxShadow={1}
-              display="flex"
-              flexDirection="column"
-              height="calc(100vh - 64px)"
-            >
-              <Box p={2} borderBottom="1px solid #ddd">
-                <Typography variant="subtitle1" fontWeight="bold" padding={2}>
-                  Response
-                </Typography>
-              </Box>
-              <Box flex={1} p={2} overflow="auto">
-                <Box display="flex" gap={2} mb={2}>
-                  <Avatar>{selectedReview.avatar}</Avatar>
-                  <Box>
-                    <Typography variant="body1" fontWeight="bold">
-                      {selectedReview.customerName}
-                    </Typography>
-                    <Typography variant="body2" color="textSecondary">
-                      {selectedReview.date}
-                    </Typography>
-                    <Typography variant="body2" mt={1}>
-                      {selectedReview.review}
-                    </Typography>
-                  </Box>
-                </Box>
-                {/* Reply Thread */}
-                {replyThread.map((reply, index) => (
-                  <Box key={index} display="flex" gap={2} mb={2} mt={2}>
-                    <Avatar>{reply.replied_by[0]}</Avatar>
-                    <Box>
-                      <Typography variant="body1" fontWeight="bold">
-                        {reply.replied_by}
-                      </Typography>
-                      <Typography variant="body2" mt={1}>
-                        {reply.reply}
-                      </Typography>
-                    </Box>
-                  </Box>
-                ))}
-              </Box>
-              <Divider />
-              <Box p={2} display="flex" gap={1}>
-                <TextField
-                  fullWidth
-                  variant="outlined"
-                  placeholder="Type here"
-                  size="small"
-                  value={replyContent}
-                  onChange={(e) => setReplyContent(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSubmitReply();
-                    }
-                  }}
-                />
-                <IconButton>
-                  <Paperclip />
-                </IconButton>
-                <IconButton
-                  onClick={handleSubmitReply}
-                  disabled={!replyContent.trim()}
-                >
-                  <Send />
-                </IconButton>
-              </Box>
-            </Box>
+            <ChatPanel
+              selectedReview={selectedReview}
+              replyThread={replyThread}
+              replyContent={replyContent}
+              setReplyContent={setReplyContent}
+              handleSubmitReply={handleSubmitReply}
+            />
           )}
         </Box>
       </Box>
 
-      {/* Snackbar for notifications */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
