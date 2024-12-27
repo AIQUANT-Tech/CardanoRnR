@@ -14,7 +14,7 @@ const Header = () => {
       case '/profile':
         return 'User Profile';
       case '/chatreply':
-        return 'Chat & Reply';
+        return 'Customer Review Management';
       default:
         return 'Dashboard';
     }
