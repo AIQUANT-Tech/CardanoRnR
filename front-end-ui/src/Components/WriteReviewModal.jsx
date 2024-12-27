@@ -9,29 +9,68 @@ import {
   DialogContent,
   DialogTitle,
 } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import { EditIcon } from "lucide-react";
+import ReviewModal from "./ReviewModal";
 
 const WriteReviewModal = () => {
-  const [open, setOpen] = useState(false); 
-  const [email, setEmail] = useState(""); 
+  const [openReviewModal, setOpenReviewModal] = useState(false);
+  const [openModal, setOpenModal] = useState(false);
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleOpen = () => {
-    setOpen(true);
+    setOpenReviewModal(true);
   };
 
 
   const handleClose = () => {
-    setOpen(false);
+    setOpenReviewModal(false);
   };
 
 
-  const handleSignIn = () => {
-    console.log("Email entered:", email);
-    setOpen(false); 
-  };
+  const handleSignIn = async () => {
+    console.log(email);
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        setError("Please enter a valid email address.");
+        return;
+    }
+    if (!email) {
+        setError("Email is required");
+        return;
+    }
+
+    try {
+        const response = await fetch("http://localhost:8080/api/user/validate", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email }),
+        });
+
+        const data = await response.json();
+
+        if (data?.user_crud_rs?.status === "success") {
+            console.log("Sign-in successful");
+            setOpenModal(true); 
+            setOpenReviewModal(false);
+        } else {
+            setError("Invalid email or user not found.");
+        }
+    } catch (error) {
+        console.error("Error during sign-in:", error);
+        setError("Something went wrong. Please try again later.");
+    }
+    setOpenReviewModal(false);
+    setEmail("");
+    setError("");
+};
 
   return (
     <div>
-      {/* Button to trigger modal */}
       <Button
         variant="contained"
         color="primary"
@@ -42,12 +81,13 @@ const WriteReviewModal = () => {
           paddingY: 1,
           textTransform: "none",
         }}
+        startIcon={<EditIcon />}
       >
         Write a Review
       </Button>
 
       {/* Modal Dialog */}
-      <Dialog open={open}>
+      <Dialog open={openReviewModal}>
         <DialogTitle>
           <Typography variant="h6" fontWeight="bold">
             Want to write a review?
@@ -71,6 +111,8 @@ const WriteReviewModal = () => {
               },
             }}
             sx={{ marginTop: 2 }}
+            error={!!error}
+            helperText={error}
           />
         </DialogContent>
         <DialogActions>
@@ -98,6 +140,7 @@ const WriteReviewModal = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      <ReviewModal open={openModal} setOpen={setOpenModal} />
     </div>
   );
 };
