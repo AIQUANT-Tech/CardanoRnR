@@ -8,6 +8,6 @@ const router = express.Router();
 router.post('/ReplyToReviews', createReply);
 
 //fetch reply
-router.get('/ReplyToReviews', fetchReviewReplyThread);
+router.post('/ReplyToReview', fetchReviewReplyThread);
 
 export default router;

@@ -13,7 +13,7 @@ export const createReply = async (req, res) => {
             return res.status(400).json({ error: 'Missing required fields: user_name, review_id, or content.' });
         }
 
-        const user = await User.findOne({ user_id: user_name });
+        const user = await User.findOne({ _id: user_name });
         if (!user) {
             return res.status(404).json({ error: 'User not found.' });
         }
@@ -47,7 +47,7 @@ export const fetchReviewReplyThread = async (req, res) => {
             return res.status(400).json({ error: 'Missing required fields: user_name or review_id.' });
         }
 
-        const user = await User.findOne({ user_id: user_name });
+        const user = await User.findOne({ _id: user_name });
         if (!user) {
             return res.status(404).json({ error: 'User not found.' });
         }

@@ -15,11 +15,13 @@ import {
   Paper,
   Snackbar,
   Alert,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import { Filter, MessageCircle } from "lucide-react";
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
-import CustomPagination from "../../Components/Custom-Pagination";
+import Pagination from "../../Components/Custom-Pagination"; // Import Pagination
 import axios from "axios";
 import ChatPanel from "../../Components/Message"; // Import ChatPanel
 
@@ -34,8 +36,10 @@ const CustomerReviewManagement = () => {
     message: "",
     severity: "success",
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 4;  // Set items per page to 4
 
-  // Function to fetch reviews
+  // Fetch reviews
   const fetchReviews = async () => {
     try {
       setIsLoading(true);
@@ -59,15 +63,18 @@ const CustomerReviewManagement = () => {
     }
   };
 
-  // Function to fetch reply thread
+  // Fetch reply thread
   const fetchReplyThread = async (reviewId) => {
+    console.log(selectedReview);
     try {
-      const response = await axios.post("", {
+      const response = await axios.post("http://localhost:8080/api/reply/ReplyToReview", {
         review_reply_thread_rq: {
           header: {
-            user_name: localStorage.getItem("user_name"),
+            user_name: selectedReview.user_id,
+            product: "rnr",
+            request_type: "REVIEW_RATING_INFO",
           },
-          review_id: reviewId,
+          review_id: selectedReview.review_id,
         },
       });
       setReplyThread(response.data.review_reply_rs.review_reply_info);
@@ -76,25 +83,26 @@ const CustomerReviewManagement = () => {
     }
   };
 
-  // Function to handle chat open
+  // Handle chat open
   const handleChatOpen = async (review) => {
     setSelectedReview(review);
     await fetchReplyThread(review.id);
   };
 
-  // Function to handle reply submission
+  // Handle reply submission
   const handleSubmitReply = async () => {
     if (!replyContent.trim()) return;
-
     try {
       const response = await axios.post(
-        "http://localhost:8080/api/review-reply",
+        "http://localhost:8080/api/reply/ReplyToReviews",
         {
           review_reply_thread_rq: {
             header: {
-              user_name: localStorage.getItem("user_name"),
+              user_name: selectedReview.user_id,
+              product: "rnr",
+              request_type: "REVIEW_RATING_INFO",
             },
-            review_id: selectedReview.id,
+            review_id: selectedReview.review_id,
             content: replyContent,
           },
         }
@@ -110,7 +118,7 @@ const CustomerReviewManagement = () => {
     }
   };
 
-  // Function to handle snackbar
+  // Handle snackbar
   const handleSnackbar = (message, severity) => {
     setSnackbar({
       open: true,
@@ -119,51 +127,75 @@ const CustomerReviewManagement = () => {
     });
   };
 
+  const handlePageChange = (pageNum) => {
+    setCurrentPage(pageNum);
+  };
+
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentReviews = reviews.slice(startIndex, startIndex + itemsPerPage);
+
   useEffect(() => {
     fetchReviews();
   }, []);
 
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm")); // Check if screen size is small
+
   return (
     <Box display="flex" width="100vw" height="100vh" bgcolor="grey.100">
-      <Box height="100vh" position="fixed">
+      {/* Sidebar */}
+      <Box height="100vh" position="fixed" width={isMobile ? "100%" : "20%"}>
         <Sidebar />
       </Box>
 
-      <Box ml="20%" width="85%" display="flex" flexDirection="column">
+      <Box
+        ml={isMobile ? 0 : "20%"}
+        width={isMobile ? "100%" : "80%"}
+        display="flex"
+        flexDirection="column"
+        height="100vh"
+        overflow="hidden"
+      >
+        {/* Header */}
         <Box
           position="fixed"
           width="80%"
           zIndex={1000}
           bgcolor="white"
-          boxShadow={1}
+          sx={{ height: "64px" }} // Fixed header height
         >
           <Header />
         </Box>
 
-        <Box mt={8} display="flex" flex={1}>
+        {/* Main Content Area */}
+        <Box
+          mt="64px"  // Adjust for header height
+          display="flex"
+          flex={1}
+          flexDirection={isMobile ? "column" : "row"} // Stack on mobile
+          overflow="auto"
+        >
           <Box
-            flex={selectedReview ? 0.7 : 1}
+            flex={selectedReview ? (isMobile ? 1 : 0.7) : 1}
             transition="all 0.3s ease"
-            p={2}
             bgcolor="white"
             boxShadow={1}
+            sx={{
+              height: "calc(100vh - 64px)", // Adjust height to take the remaining space
+              overflow: "auto",
+            }}
           >
             <Typography variant="h6" mb={2} padding={2}>
               Customer Review Management
             </Typography>
+
             <Box display="flex" justifyContent="space-between" mb={2}>
               <Typography variant="body2" color="textSecondary">
                 Total: {reviews.length} Reviews
               </Typography>
               <Box display="flex" gap={2}>
-                <Select
-                  defaultValue="Date Created"
-                  variant="outlined"
-                  size="small"
-                >
-                  <MenuItem value="Date Created">
-                    Sort by: Date Created
-                  </MenuItem>
+                <Select defaultValue="Date Created" variant="outlined" size="small">
+                  <MenuItem value="Date Created">Sort by: Date Created</MenuItem>
                 </Select>
                 <Button variant="outlined" startIcon={<Filter size={16} />}>
                   Filter
@@ -183,7 +215,7 @@ const CustomerReviewManagement = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {reviews.map((review) => (
+                  {currentReviews.map((review) => (
                     <TableRow key={review.id} hover>
                       <TableCell>{review.user_display_name}</TableCell>
                       <TableCell>{review.rating}</TableCell>
@@ -219,22 +251,40 @@ const CustomerReviewManagement = () => {
                 </TableBody>
               </Table>
             </TableContainer>
-            <CustomPagination />
+
+            <Pagination
+              currentPage={currentPage}
+              totalItems={reviews.length}
+              itemsPerPage={itemsPerPage}
+              onPageChange={handlePageChange}
+            />
           </Box>
 
           {/* Chat Panel */}
           {selectedReview && (
-            <ChatPanel
-              selectedReview={selectedReview}
-              replyThread={replyThread}
-              replyContent={replyContent}
-              setReplyContent={setReplyContent}
-              handleSubmitReply={handleSubmitReply}
-            />
+            <Box
+              flex={selectedReview ? 0.3 : 0}
+              sx={{
+                width: isMobile ? "100%" : "30%",
+                transition: "all 0.3s ease",
+                height: "calc(100vh - 64px)",
+                overflowY: "auto",
+                boxShadow: 1,
+              }}
+            >
+              <ChatPanel
+                selectedReview={selectedReview}
+                replyThread={replyThread}
+                replyContent={replyContent}
+                setReplyContent={setReplyContent}
+                handleSubmitReply={handleSubmitReply}
+              />
+            </Box>
           )}
         </Box>
       </Box>
 
+      {/* Snackbar for notifications */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
