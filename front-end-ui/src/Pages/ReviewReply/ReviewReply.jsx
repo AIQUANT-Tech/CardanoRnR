@@ -218,8 +218,8 @@ const CustomerReviewManagement = () => {
                   {currentReviews.map((review) => (
                     <TableRow key={review.id} hover>
                       <TableCell>{review.user_display_name}</TableCell>
-                      <TableCell>{review.rating}</TableCell>
-                      <TableCell>{review.review}</TableCell>
+                      <TableCell>{review.rating ?? review.overall_rating}</TableCell>
+                      <TableCell>{review.review ?? review.overall_review}</TableCell>
                       <TableCell>
                         <Box
                           display="inline-block"
