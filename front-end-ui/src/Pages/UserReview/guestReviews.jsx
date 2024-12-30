@@ -12,10 +12,11 @@ import EditIcon from "@mui/icons-material/Edit";
 import RatingReviewModal from "../../Components/RatingReviewModal";
 import WriteReviewModal from "../../Components/WriteReviewModal";
 import FullReviewModal from "../../Components/FullReviewModal";
+import { format } from 'date-fns';
+
 
 const GuestReviews = () => {
     const [reviews, setReviews] = useState([]);
-    const [visibleCount, setVisibleCount] = useState(3);
     const [openReviewModal, setOpenReviewModal] = useState(false);
     const [openMoreReviewsModal, setOpenMoreReviewsModal] = useState(false);
     const [selectedReview, setSelectedReview] = useState(null);
@@ -43,9 +44,11 @@ const GuestReviews = () => {
                 );
 
                 const data = await response.json();
+
                 const fetchedReviews =
                     data.review_rating_fetch_rs?.review_rating_details_overall || [];
-                setReviews(fetchedReviews);
+                setReviews(fetchedReviews);  
+             
             } catch (error) {
                 console.error("Error fetching reviews:", error);
             }
@@ -54,9 +57,9 @@ const GuestReviews = () => {
         fetchReviews();
     }, []);
 
-    const handleShowMore = () => {
-        setOpenMoreReviewsModal(true);
-    };
+    // const handleShowMore = () => {
+    //     setOpenMoreReviewsModal(true);
+    // };
 
     const handleShowReview = (review) => {
         setSelectedReview(review);
@@ -64,7 +67,7 @@ const GuestReviews = () => {
 
     const handleCloseModal = () => {
         setSelectedReview(null);
-    };
+    };    
 
     return (
         <Box sx={{ maxWidth: 1200, margin: "0 auto", padding: 4 }}>
@@ -92,7 +95,7 @@ const GuestReviews = () => {
                 </WriteReviewModal>
             </Box>
 
-            {reviews.slice(0, visibleCount).map((review, index) => (
+            {reviews.slice(2).map((review, index) => (
                 <Card
                     key={index}
                     sx={{
@@ -129,30 +132,35 @@ const GuestReviews = () => {
                                 <Typography variant="body2" paragraph>
                                     Rating: {review.rating}/5
                                 </Typography>
+
+                                {review.created_at && (
+                                    <Typography variant="body2" mt={2} color="text.secondary">
+                                        Created At: {format(new Date(review.created_at), 'MMM dd, yyyy hh:mm a')}
+                                    </Typography>
+                                )}
                             </Grid>
                         </Grid>
                     </CardContent>
                 </Card>
             ))}
 
-            {visibleCount < reviews.length && (
-                <Box textAlign="center" mt={3}>
-                    <Button
-                        variant="outlined"
-                        onClick={() => setVisibleCount(visibleCount + 3)}
-                        sx={{
-                            borderColor: "#00bcd4",
-                            color: "#00bcd4",
-                            borderRadius: 20,
-                            padding: "8px 16px",
-                            fontWeight: "bold",
-                            textTransform: "none",
-                        }}
-                    >
-                        + More Reviews
-                    </Button>
-                </Box>
-            )}
+            <Box textAlign="center" mt={3}>
+                <Button
+                    variant="outlined"
+                    // onClick={() => setVisibleCount(visibleCount + 3)}
+                    onClick={() => setOpenMoreReviewsModal(true)}
+                    sx={{
+                        borderColor: "#00bcd4",
+                        color: "#00bcd4",
+                        borderRadius: 20,
+                        padding: "8px 16px",
+                        fontWeight: "bold",
+                        textTransform: "none",
+                    }}
+                >
+                    + More Reviews
+                </Button>
+            </Box>
 
             <RatingReviewModal
                 open={openMoreReviewsModal}

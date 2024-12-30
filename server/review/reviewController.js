@@ -220,7 +220,7 @@ export const getReviewsForBusinessUser = async (req, res) => {
       user_id: review.user_id?._id?.toString() || null,
       user_display_name: review.user_id?.display_name || "Unknown User",
       category_id: review.category_id?._id?.toString() || null,
-      review_responded: !!review.is_responded, // Convert to boolean
+      review_responded: !!review.is_responded, 
       review: review.review || "",
       rating: review.rating?.toString() || "0",
     }));
@@ -263,7 +263,7 @@ export const getReviewsForEndUser = async (req, res) => {
     }
 
     const reviews = await Review.find({ status: "true", })
-    .select("user_id overall_review overall_rating review rating category_id")
+    .select("_id user_id overall_review overall_rating review rating category_id created_at")
     .populate("user_id", "display_name");    
 
     if (!reviews || reviews.length === 0) {
@@ -287,8 +287,10 @@ export const getReviewsForEndUser = async (req, res) => {
     const reviewRatingDetailsOverall = reviews
       .filter((r) => !r.category_id)
       .map((r) => ({
+        review_id: r._id,
         user_name: r.user_id?.display_name || "Anonymous",
         user_id: r.user_id?._id,
+        created_at: r.created_at,
         review: r.overall_review,
         rating: r.overall_rating,
       }));
@@ -329,13 +331,14 @@ export const getReviewsForEndUser = async (req, res) => {
       return categories;
     }, {});
 
-    const categoryWiseReviewList = Object.values(categoryWiseReviewRating);
+    const categoryWiseReviewList = Object.values(categoryWiseReviewRating);    
 
     return res.status(200).json({
       review_rating_fetch_rs: {
         overall_rating: totalOverallRating,
         overall_review: reviews[0]?.overall_review || "No overall review",
-        user_id: reviews[0]?.user_id,
+        created_at: reviews[0]?.created_at,
+        user_id: reviews[0]?.user_id?._id,
         reputation_score: reputationScore,
         review_rating_details_overall: reviewRatingDetailsOverall,
         category_wise_review_rating: categoryWiseReviewList,
@@ -373,7 +376,7 @@ export const getUserReviews = async (req, res) => {
 
     // Fetch all reviews for the user
     const reviews = await Review.find({ user_id: user_id, status: "true" }).select(
-      "overall_review overall_rating review rating category_id"
+      "overall_review overall_rating review rating category_id created_at"
     );
 
     if (!reviews || reviews.length === 0) {
@@ -442,6 +445,7 @@ export const getUserReviews = async (req, res) => {
         },
         overall_review: reviews[0]?.overall_review || "No overall review",
         overall_rating: totalOverallRating,
+        created_at: reviews[0].created_at,
         category_wise_reviews: categoryWiseReviewList,
       },
     });

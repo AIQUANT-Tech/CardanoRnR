@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Box, Typography, Modal, CircularProgress } from "@mui/material";
+import { format } from 'date-fns';
 
 const FullReviewModal = ({ open, onClose, review }) => {
     const [fullReviewDetails, setFullReviewDetails] = useState(null);
@@ -79,6 +80,12 @@ const FullReviewModal = ({ open, onClose, review }) => {
                         <Typography variant="body2" mt={1}>
                             Overall Rating: {fullReviewDetails.overall_rating}/5
                         </Typography>
+                        
+                        {fullReviewDetails.created_at && (
+                            <Typography variant="body2" mt={2} color="text.secondary">
+                                Created At: {format(new Date(fullReviewDetails.created_at), 'MMM dd, yyyy hh:mm a')}
+                            </Typography>
+                        )}
 
                         <Typography variant="h6" fontWeight="bold" mt={3} gutterBottom>
                             Category-wise Reviews
