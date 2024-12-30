@@ -4,133 +4,134 @@ import ReviewCategory from '../reviewCategory/ReviewCategories.js';
 import responses from '../utils/responses.js';
 import roles from '../utils/roles.js';
 export const createReview = async (req, res) => {
-    try {
-      const { new_review_rating_create_rq } = req.body;
-  
-      if (!new_review_rating_create_rq) {
-        return res.status(400).json({new_review_rating_create_rs: {status: responses.validation.invalidRequest }});
-      }
-  
-      const {
-        header: { request_type, user_name },
-        user_email_id,
-        overall_rating,
-        overall_review,
-        category_wise_review_rating,
-      } = new_review_rating_create_rq;
-  
-      if (request_type !== "CREATE_NEW_REVIEW_RATING") {
-        return res.status(400).json({new_review_rating_create_rs: {status: responses.validation.invalidRequest } });
-      }
-  
-      if (
-        !user_email_id ||
-        !overall_rating ||
-        !overall_review ||
-        !Array.isArray(category_wise_review_rating) ||
-        category_wise_review_rating.length === 0
-      ) {
-        return res
-          .status(400)
-          .json({ new_review_rating_create_rs: {status: responses.validation.allFieldsRequired } });
-      }
-  
-      // Check if the user exists and is active
-      const user = await User.findOne({ email: user_email_id, status: true });
-      if (!user) {
-        return res.status(404).json({ new_review_rating_create_rs: {status: responses.validation.NotFound } });
-      }
-      
+  try {
+    const { new_review_rating_create_rq } = req.body;
+
+    if (!new_review_rating_create_rq) {
+      return res.status(400).json({ new_review_rating_create_rs: { status: responses.validation.invalidRequest } });
+    }
+
+    const {
+      header: { request_type, user_name },
+      user_email_id,
+      overall_rating,
+      overall_review,
+      category_wise_review_rating,
+    } = new_review_rating_create_rq;
+
+    if (request_type !== "CREATE_NEW_REVIEW_RATING") {
+      return res.status(400).json({ new_review_rating_create_rs: { status: responses.validation.invalidRequest } });
+    }
+
+    if (
+      !user_email_id ||
+      !overall_rating ||
+      !overall_review ||
+      !Array.isArray(category_wise_review_rating) ||
+      category_wise_review_rating.length === 0
+    ) {
+      return res
+        .status(400)
+        .json({ new_review_rating_create_rs: { status: responses.validation.allFieldsRequired } });
+    }
+
+    // Check if the user exists and is active
+    const user = await User.findOne({ email: user_email_id, status: true });
+
+    if (!user) {
+      return res.status(404).json({ new_review_rating_create_rs: { status: responses.validation.NotFound } });
+    }
+
     //   if(presentReview){
     //     return res.status(404).json({ message: "User already Reviewed!! "});
     //   }
-  
-      // Extract all category IDs from category_wise_review_rating
-      const categoryIds = category_wise_review_rating.map(
-        (catReview) => catReview.category_id
+
+    // Extract all category IDs from category_wise_review_rating
+    const categoryIds = category_wise_review_rating.map(
+      (catReview) => catReview.category_id
+    );
+
+    // Fetch all valid categories
+    const validCategories = await ReviewCategory.find({
+      category_id: { $in: categoryIds }
+    });
+
+    if (validCategories.length !== categoryIds.length) {
+      return res
+        .status(404)
+        .json({ new_review_rating_create_rs: { status: responses.validation.NotFound } });
+    }
+
+    // Prepare review documents for insertion
+    const user_id = user._id;
+    const reviewsToInsert = category_wise_review_rating.map((categoryReview) => {
+      const category = validCategories.find(
+        (cat) => cat.category_id === categoryReview.category_id.toString()
       );
-  
-      // Fetch all valid categories
-      const validCategories = await ReviewCategory.find({
-        category_id: { $in: categoryIds }
-            });      
-  
-      if (validCategories.length !== categoryIds.length) {
-        return res
-          .status(404)
-          .json({ new_review_rating_create_rs: {status: responses.validation.NotFound } });
-      }
-  
-      // Prepare review documents for insertion
-      const user_id = user._id;
-      const reviewsToInsert = category_wise_review_rating.map((categoryReview) => {
-        const category = validCategories.find(
-          (cat) => cat.category_id === categoryReview.category_id.toString()
+
+      if (!category) {
+        throw new Error(
+          `Category with ID ${categoryReview.category_id} not found.`
         );
-  
-        if (!category) {
-          throw new Error(
-            `Category with ID ${categoryReview.category_id} not found.`
-          );
-        }
-  
-        return {
-          user_id,
-          category_id: category._id,
-          review: categoryReview.review,
-          rating: categoryReview.rating,
-          overall_review,
-          overall_rating,
-          blockchain_tx: " ",
-          status: true,
-        };
-      });
-  
-      const overallReview = new Review({ 
-        user_id, 
-        category_id: null, 
-        overall_review, 
+      }
+
+      return {
+        user_id,
+        category_id: category._id,
+        review: categoryReview.review,
+        rating: categoryReview.rating,
+        overall_review,
         overall_rating,
         blockchain_tx: " ",
         status: true,
-     });
-        const savedOverall = await overallReview.save();  
+      };
+    });
 
-      // Insert all reviews
-      const savedReviews = await Review.insertMany(reviewsToInsert);
-  
-      return res.status(201).json({
-        new_review_rating_create_rs: {status: responses.success.success },
-        reviews: savedReviews,
-        overall: savedOverall
-      });
-    } catch (error) {
-      console.error("Error creating reviews:", error.message);
-      return res.status(500).json({
-        new_review_rating_create_rs: {status: responses.error.createReview },
-        error: error.message,
-      });
-    }
-  };
-  
-  
+    const overallReview = new Review({
+      user_id,
+      category_id: null,
+      overall_review,
+      overall_rating,
+      blockchain_tx: " ",
+      status: true,
+    });
+    const savedOverall = await overallReview.save();
+
+    // Insert all reviews
+    const savedReviews = await Review.insertMany(reviewsToInsert);
+
+    return res.status(201).json({
+      new_review_rating_create_rs: { status: responses.success.success },
+      reviews: savedReviews,
+      overall: savedOverall
+    });
+  } catch (error) {
+    console.error("Error creating reviews:", error.message);
+    return res.status(500).json({
+      new_review_rating_create_rs: { status: responses.error.createReview },
+      error: error.message,
+    });
+  }
+};
+
+
 
 // Get all reviews
 export const getAllReviews = async (req, res) => {
-    try {
-        // Fetch all reviews with populated user and category fields
-        const reviews = await Review.find()
-        //.populate('user', 'name email') 
-        //.populate('category'); 
+  try {
+    // Fetch all reviews with populated user and category fields
+    const reviews = await Review.find()
+    //.populate('user', 'name email') 
+    //.populate('category'); 
 
-        return res.status(200).json(reviews);
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({
-          new_review_rating_create_rs: {status: responses.error.retrieveReview},
-            error: error.message
-        });
-    }
+    return res.status(200).json(reviews);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      new_review_rating_create_rs: { status: responses.error.retrieveReview },
+      error: error.message
+    });
+  }
 };
 
 // Get a review by ID
@@ -199,8 +200,8 @@ export const getReviewsForBusinessUser = async (req, res) => {
 
     // Query all reviews and populate relevant details
     const reviews = await Review.find()
-      .populate("user_id", "display_name") 
-      .populate("category_id", "category_name") 
+      .populate("user_id", "display_name")
+      .populate("category_id", "category_name")
       .select("_id user_id category_id review rating is_responded");
 
     // Check if no reviews are found
@@ -246,102 +247,210 @@ export const getReviewsForBusinessUser = async (req, res) => {
 
 //Get all reviews- end user
 export const getReviewsForEndUser = async (req, res) => {
-    try {
-        const { review_rating_fetch_rq } = req.body;
+  try {
+    const { review_rating_fetch_rq } = req.body;
 
-        if (!review_rating_fetch_rq) {
-            return res.status(400).json({ review_rating_fetch_rs: {status: responses.validation.invalidRequest} });
-        }
-
-        const {
-            header: { request_type },
-        } = review_rating_fetch_rq;
-
-        if (request_type !== "FETCH_REVIEW_RATING") {
-            return res.status(400).json({ review_rating_fetch_rs: {status: responses.validation.invalidRequest} });
-        }
-
-        const reviews = await Review.find({ status: "true" }).select(
-            "overall_review overall_rating review rating category_id"
-        );
-
-        if (!reviews || reviews.length === 0) {
-            return res.status(404).json({ review_rating_fetch_rs: {status: responses.validation.reviewNotFound} });
-        }
-
-        const validOverallRatings = reviews
-            .map((r) => r.overall_rating)
-            .filter((rating) => typeof rating === "number" && !isNaN(rating));
-
-
-        const totalOverallRating = validOverallRatings.length > 0
-            ? validOverallRatings.reduce((sum, overall_rating) => sum + overall_rating, 0) / validOverallRatings.length
-            : 0.0;
-
-
-        const reputationScore =
-            validOverallRatings.length > 0
-                ? validOverallRatings.reduce((sum, rating) => sum + rating, 0) / validOverallRatings.length
-                : 0.0;
-
-        const reviewRatingDetailsOverall = reviews.map((r) => ({
-            review: r.overall_review,
-            rating: r.overall_rating,
-        }));
-
-        const categoryIds = [...new Set(reviews.map((r) => r.category_id))];
-        
-        const categories = await ReviewCategory.find({
-            _id: { $in: categoryIds },
-            status: true,
-        }).select("category_id category_name category_description"); 
-
-        
-        const categoryDetailsMap = categories.reduce((map, category) => {
-            map[category._id.toString()] = {
-                category_name: category.category_name,
-                category_desc: category.category_description,
-            };
-            return map;
-        }, {});
-
-        const categoryWiseReviewRating = reviews.reduce((categories, review) => {
-            const category = categoryDetailsMap[review.category_id];
-            if (!category) return categories;
-
-            const categoryId = review.category_id.toString();
-            if (!categories[categoryId]) {
-                categories[categoryId] = {
-                    category_name: category.category_name,
-                    category_desc: category.category_desc,
-                    review_rating_details_by_category: [],
-                };
-            }
-
-            categories[categoryId].review_rating_details_by_category.push({
-                review: review.review,
-                rating: review.rating,
-            });
-
-            return categories;
-        }, {});
-
-        const categoryWiseReviewList = Object.values(categoryWiseReviewRating);
-
-        return res.status(200).json({
-            review_rating_fetch_rs: {
-                overall_rating: totalOverallRating,
-                overall_review: reviews[0]?.overall_review || "No overall review",
-                reputation_score: reputationScore,
-                review_rating_details_overall: reviewRatingDetailsOverall,
-                category_wise_review_rating: categoryWiseReviewList,
-            },
-        });
-    } catch (error) {
-        console.error("Error fetching reviews:", error.message);
-        return res.status(500).json({
-          review_rating_fetch_rs: {status: responses.error.failedFetchReview},
-            error: error.message,
-        });
+    if (!review_rating_fetch_rq) {
+      return res.status(400).json({ review_rating_fetch_rs: { status: responses.validation.invalidRequest } });
     }
+
+    const {
+      header: { request_type },
+    } = review_rating_fetch_rq;
+
+    if (request_type !== "FETCH_REVIEW_RATING") {
+      return res.status(400).json({ review_rating_fetch_rs: { status: responses.validation.invalidRequest } });
+    }
+
+    const reviews = await Review.find({ status: "true", })
+    .select("user_id overall_review overall_rating review rating category_id")
+    .populate("user_id", "display_name");    
+
+    if (!reviews || reviews.length === 0) {
+      return res.status(404).json({ review_rating_fetch_rs: { status: responses.validation.reviewNotFound } });
+    }
+
+    const validOverallRatings = reviews
+      .map((r) => r.overall_rating)
+      .filter((rating) => typeof rating === "number" && !isNaN(rating));
+
+    const totalOverallRating = validOverallRatings.length > 0
+      ? validOverallRatings.reduce((sum, overall_rating) => sum + overall_rating, 0) / validOverallRatings.length
+      : 0.0;
+
+
+    const reputationScore =
+      validOverallRatings.length > 0
+        ? validOverallRatings.reduce((sum, rating) => sum + rating, 0) / validOverallRatings.length
+        : 0.0;
+
+    const reviewRatingDetailsOverall = reviews
+      .filter((r) => !r.category_id)
+      .map((r) => ({
+        user_name: r.user_id?.display_name || "Anonymous",
+        user_id: r.user_id?._id,
+        review: r.overall_review,
+        rating: r.overall_rating,
+      }));
+
+    const categoryIds = [...new Set(reviews.map((r) => r.category_id))];
+
+    const categories = await ReviewCategory.find({
+      _id: { $in: categoryIds },
+    }).select("category_id category_name category_description");
+
+
+    const categoryDetailsMap = categories.reduce((map, category) => {
+      map[category._id.toString()] = {
+        category_name: category.category_name,
+        category_desc: category.category_description,
+      };
+      return map;
+    }, {});
+
+    const categoryWiseReviewRating = reviews.reduce((categories, review) => {
+      const category = categoryDetailsMap[review.category_id];
+      if (!category) return categories;
+
+      const categoryId = review.category_id.toString();
+      if (!categories[categoryId]) {
+        categories[categoryId] = {
+          category_name: category.category_name,
+          category_desc: category.category_desc,
+          review_rating_details_by_category: [],
+        };
+      }
+
+      categories[categoryId].review_rating_details_by_category.push({
+        review: review.review,
+        rating: review.rating,
+      });
+
+      return categories;
+    }, {});
+
+    const categoryWiseReviewList = Object.values(categoryWiseReviewRating);
+
+    return res.status(200).json({
+      review_rating_fetch_rs: {
+        overall_rating: totalOverallRating,
+        overall_review: reviews[0]?.overall_review || "No overall review",
+        user_id: reviews[0]?.user_id,
+        reputation_score: reputationScore,
+        review_rating_details_overall: reviewRatingDetailsOverall,
+        category_wise_review_rating: categoryWiseReviewList,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching reviews:", error.message);
+    return res.status(500).json({
+      review_rating_fetch_rs: { status: responses.error.failedFetchReview },
+      error: error.message,
+    });
+  }
+};
+
+export const getUserReviews = async (req, res) => {
+  try {
+    const { user_id } = req.body;
+
+    if (!user_id) {
+      return res.status(400).json({
+        status: "fail",
+        message: "User ID is required",
+      });
+    }
+
+    // Fetch the user to ensure the user exists
+    const user = await User.findById(user_id);
+
+    if (!user) {
+      return res.status(404).json({
+        status: "fail",
+        message: "User not found",
+      });
+    }
+
+    // Fetch all reviews for the user
+    const reviews = await Review.find({ user_id: user_id, status: "true" }).select(
+      "overall_review overall_rating review rating category_id"
+    );
+
+    if (!reviews || reviews.length === 0) {
+      return res.status(404).json({
+        status: "fail",
+        message: "No reviews found for the user",
+      });
+    }
+
+    // Calculate overall rating
+    const validOverallRatings = reviews
+      .map((r) => r.overall_rating)
+      .filter((rating) => typeof rating === "number" && !isNaN(rating));
+
+    const totalOverallRating =
+      validOverallRatings.length > 0
+        ? validOverallRatings.reduce((sum, rating) => sum + rating, 0) /
+          validOverallRatings.length
+        : 0.0;
+
+    // Fetch category details for reviews
+    const categoryIds = [...new Set(reviews.map((r) => r.category_id))];
+
+    const categories = await ReviewCategory.find({
+      _id: { $in: categoryIds },
+    }).select("category_id category_name category_description");
+
+    const categoryDetailsMap = categories.reduce((map, category) => {
+      map[category._id.toString()] = {
+        category_name: category.category_name,
+        category_desc: category.category_description,
+      };
+      return map;
+    }, {});
+
+    // Organize category-wise review ratings
+    const categoryWiseReviews = reviews.reduce((categories, review) => {
+      const category = categoryDetailsMap[review.category_id];
+      if (!category) return categories;
+
+      const categoryId = review.category_id.toString();
+      if (!categories[categoryId]) {
+        categories[categoryId] = {
+          category_name: category.category_name,
+          category_desc: category.category_desc,
+          reviews: [],
+        };
+      }
+
+      categories[categoryId].reviews.push({
+        review: review.review,
+        rating: review.rating,
+      });
+
+      return categories;
+    }, {});
+
+    const categoryWiseReviewList = Object.values(categoryWiseReviews);
+
+    return res.status(200).json({
+      status: "success",
+      data: {
+        user: {
+          user_id: user._id,
+          user_name: user.name,
+        },
+        overall_review: reviews[0]?.overall_review || "No overall review",
+        overall_rating: totalOverallRating,
+        category_wise_reviews: categoryWiseReviewList,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching user reviews:", error.message);
+    return res.status(500).json({
+      status: "error",
+      message: "Failed to fetch reviews",
+      error: error.message,
+    });
+  }
 };

@@ -7,19 +7,18 @@ import {
     CardContent,
     Avatar,
     Grid,
-    TextField,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import RatingReviewModal from "../../Components/RatingReviewModal";
-import { useNavigate } from "react-router-dom";
 import WriteReviewModal from "../../Components/WriteReviewModal";
+import FullReviewModal from "../../Components/FullReviewModal";
 
 const GuestReviews = () => {
     const [reviews, setReviews] = useState([]);
     const [visibleCount, setVisibleCount] = useState(3);
     const [openReviewModal, setOpenReviewModal] = useState(false);
     const [openMoreReviewsModal, setOpenMoreReviewsModal] = useState(false);
-
+    const [selectedReview, setSelectedReview] = useState(null);
 
     useEffect(() => {
         const fetchReviews = async () => {
@@ -59,14 +58,22 @@ const GuestReviews = () => {
         setOpenMoreReviewsModal(true);
     };
 
+    const handleShowReview = (review) => {
+        setSelectedReview(review);
+    };
+
+    const handleCloseModal = () => {
+        setSelectedReview(null);
+    };
+
     return (
         <Box sx={{ maxWidth: 1200, margin: "0 auto", padding: 4 }}>
-            {/* Write a Review Button */}
             <Box textAlign="right" mb={3}>
                 <WriteReviewModal
                     open={openReviewModal}
                     onClose={() => setOpenReviewModal(false)}
-                    title="Want to write a review?">
+                    title="Want to write a review?"
+                >
                     <Button
                         variant="contained"
                         sx={{
@@ -94,11 +101,12 @@ const GuestReviews = () => {
                         padding: 2,
                         borderRadius: 3,
                         backgroundColor: "#fff",
+                        cursor: "pointer",
                     }}
+                    onClick={() => handleShowReview(review)}
                 >
                     <CardContent>
                         <Grid container spacing={2}>
-                            {/* Avatar */}
                             <Grid item xs={12} md={2} textAlign="center">
                                 <Avatar
                                     sx={{
@@ -111,11 +119,9 @@ const GuestReviews = () => {
                                     {review.review.charAt(0)}
                                 </Avatar>
                                 <Typography variant="body2" fontWeight="bold" mt={1}>
-                                    User {index + 1}
+                                    {review.user_name}
                                 </Typography>
                             </Grid>
-
-                            {/* Review Content */}
                             <Grid item xs={12} md={10}>
                                 <Typography variant="h6" fontWeight="bold">
                                     {review.review}
@@ -133,7 +139,7 @@ const GuestReviews = () => {
                 <Box textAlign="center" mt={3}>
                     <Button
                         variant="outlined"
-                        onClick={handleShowMore}
+                        onClick={() => setVisibleCount(visibleCount + 3)}
                         sx={{
                             borderColor: "#00bcd4",
                             color: "#00bcd4",
@@ -147,15 +153,23 @@ const GuestReviews = () => {
                     </Button>
                 </Box>
             )}
+
             <RatingReviewModal
-                    open={openMoreReviewsModal}
-                    onClose={() => setOpenMoreReviewsModal(false)}
-                    title="All Guest Reviews"
-                    sx={{
-                        padding: "8px 16px",
-                        fontWeight: "bold",
-                        textTransform: "none",
-                    }}/>
+                open={openMoreReviewsModal}
+                onClose={() => setOpenMoreReviewsModal(false)}
+                title="All Guest Reviews"
+                sx={{
+                    padding: "8px 16px",
+                    fontWeight: "bold",
+                    textTransform: "none",
+                }}
+            />
+
+            <FullReviewModal
+                open={!!selectedReview}
+                onClose={handleCloseModal}
+                review={selectedReview}
+            />
         </Box>
     );
 };
