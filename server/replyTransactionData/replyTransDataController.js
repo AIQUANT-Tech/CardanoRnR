@@ -18,6 +18,19 @@ export const createReply = async (req, res) => {
             return res.status(404).json({ error: 'User not found.' });
         }
 
+        if (user.role === "Business User") {
+            const review = await Review.findOne({ _id: review_id });
+            if (!review) {
+                return res.status(404).json({ error: 'Review not found.' });
+            }
+
+            if( review.is_responded != true ){
+                review.is_responded = true;
+                await review.save();
+            }
+
+        }
+
         const newReply = new ReplyTransData({
             review_id: review_id, 
             user_id: user._id,
@@ -81,18 +94,18 @@ export const fetchReviewReplyThread = async (req, res) => {
 };
 
 // Fetch replies for a specific review_id
-export const getRepliesByReviewId = async (req, res) => {
-    const { review_id } = req.body;
+export const getReplies = async (req, res) => {
+    // const { review_id } = req.body;
 
-    if (!review_id) {
-        return res.status(400).json({
-            success: false,
-            message: "review_id is required.",
-        });
-    }
+    // if (!review_id) {
+    //     return res.status(400).json({
+    //         success: false,
+    //         message: "review_id is required.",
+    //     });
+    // }
 
     try {
-        const replies = await ReplyTransData.find({ review_id: review_id });
+        const replies = await ReplyTransData.find();
 
         if (replies.length === 0) {
             return res.status(404).json({

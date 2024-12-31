@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
     Dialog,
-    DialogContent,
-    DialogActions,
     Button,
     Box,
     Typography,
@@ -15,6 +13,7 @@ import {
 import { EditIcon } from "lucide-react";
 import WriteReviewModal from "./WriteReviewModal";
 import FullReviewModal from "./FullReviewModal";
+import StarIcon from "@mui/icons-material/Star";
 import { format } from "date-fns";
 
 const debounce = (func, delay) => {
@@ -99,11 +98,11 @@ const RatingReviewModal = ({
 
         if (selectedOption === "Newest") {
             sortedReviews = [...filteredReviews].sort(
-                (a, b) => new Date(b.date) - new Date(a.date)
+                (a, b) => new Date(b.created_at) - new Date(a.created_at)
             );
         } else if (selectedOption === "Oldest") {
             sortedReviews = [...filteredReviews].sort(
-                (a, b) => new Date(a.date) - new Date(b.date)
+                (a, b) => new Date(a.created_at) - new Date(b.created_at)
             );
         } else if (selectedOption === "Highest Rating") {
             sortedReviews = [...filteredReviews].sort((a, b) => b.rating - a.rating);
@@ -147,22 +146,27 @@ const RatingReviewModal = ({
                         }}
                         sx={{ flexGrow: 1, marginRight: 2 }}
                     />
-
-                    <Button
-                        variant="contained"
-                        sx={{
-                            backgroundColor: "#00bcd4",
-                            color: "#fff",
-                            borderRadius: 20,
-                            textTransform: "none",
-                            padding: "8px 16px",
-                            fontWeight: "bold",
-                        }}
-                        startIcon={<EditIcon />}
-                        onClick={() => setOpenReviewModal(true)}
+                    <WriteReviewModal
+                        open={openReviewModal}
+                        onClose={() => setOpenReviewModal(false)}
+                        title="Want to write a review?"
                     >
-                        Write A Review
-                    </Button>
+                        <Button
+                            variant="contained"
+                            sx={{
+                                backgroundColor: "#00bcd4",
+                                color: "#fff",
+                                borderRadius: 20,
+                                textTransform: "none",
+                                padding: "8px 16px",
+                                fontWeight: "bold",
+                            }}
+                            startIcon={<EditIcon />}
+                            onClick={() => setOpenReviewModal(true)}
+                        >
+                            Write A Review
+                        </Button>
+                    </WriteReviewModal>
                 </Box>
 
                 <Box display="flex" gap={2} mb={2}>
@@ -183,25 +187,6 @@ const RatingReviewModal = ({
                         <option value="Highest Rating">Sort by: Highest Rating</option>
                         <option value="Lowest Rating">Sort by: Lowest Rating</option>
                     </TextField>
-                </Box>
-
-                <Box display="flex" gap={2} mb={2}>
-                    {"Reviewers Ratings Languages Time".split(" ").map((filter, index) => (
-                        <TextField
-                            key={index}
-                            select
-                            size="small"
-                            SelectProps={{ native: true }}
-                            sx={{
-                                minWidth: 150,
-                                backgroundColor: "#f9f9f9",
-                                borderRadius: 20,
-                            }}
-                        >
-                            <option value="All">All</option>
-                            <option value="Custom">Custom</option>
-                        </TextField>
-                    ))}
                 </Box>
 
                 <Box>
@@ -235,12 +220,9 @@ const RatingReviewModal = ({
                                         </Typography>
                                     </Grid>
 
-                                    <Grid item xs={12} md={10}>
-                                        <Typography variant="h6" fontWeight="bold">
+                                    <Grid item xs={12} md={10} position="relative">
+                                        <Typography variant="h10" fontWeight="bold">
                                             {review.review}
-                                        </Typography>
-                                        <Typography variant="body2" paragraph>
-                                            Rating: {review.rating}/5
                                         </Typography>
                                         {review.created_at && (
                                             <Typography
@@ -254,6 +236,27 @@ const RatingReviewModal = ({
                                                 )}
                                             </Typography>
                                         )}
+
+                                        {/* Rating as Stars */}
+                                        <Box
+                                            bottom={19}
+                                            left={8}
+                                            display="flex"
+                                            alignItems="center"
+                                        >
+                                            {[1, 2, 3, 4, 5].map((star) => (
+                                                <StarIcon
+                                                    key={star}
+                                                    sx={{
+                                                        color:
+                                                            star <= review.rating
+                                                                ? "#fdd835"
+                                                                : "#e0e0e0",
+                                                        fontSize: 20,
+                                                    }}
+                                                />
+                                            ))}
+                                        </Box>
                                     </Grid>
                                 </Grid>
                             </CardContent>

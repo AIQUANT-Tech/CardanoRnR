@@ -202,7 +202,7 @@ export const getReviewsForBusinessUser = async (req, res) => {
     const reviews = await Review.find()
       .populate("user_id", "display_name")
       .populate("category_id", "category_name")
-      .select("_id user_id category_id review rating is_responded");
+      .select("_id user_id category_id review rating overall_review overall_rating is_responded");
 
     // Check if no reviews are found
     if (!reviews || reviews.length === 0) {
@@ -221,8 +221,8 @@ export const getReviewsForBusinessUser = async (req, res) => {
       user_display_name: review.user_id?.display_name || "Unknown User",
       category_id: review.category_id?._id?.toString() || null,
       review_responded: !!review.is_responded, 
-      review: review.review || "",
-      rating: review.rating?.toString() || "0",
+      review: review.review || review.overall_review,
+      rating: review.rating?.toString() || review.overall_rating?.toString(),
     }));
 
     // Return the response

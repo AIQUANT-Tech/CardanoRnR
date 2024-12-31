@@ -31,6 +31,7 @@ const CustomerReviewManagement = () => {
   const [replyThread, setReplyThread] = useState([]);
   const [replyContent, setReplyContent] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isThreadLoading, setIsThreadLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
@@ -65,12 +66,12 @@ const CustomerReviewManagement = () => {
 
   // Fetch reply thread
   const fetchReplyThread = async (reviewId) => {
-    console.log(selectedReview);
     try {
+      setIsThreadLoading(true);
       const response = await axios.post("http://localhost:8080/api/reply/ReplyToReview", {
         review_reply_thread_rq: {
           header: {
-            user_name: sessionStorage.getItem('user_id'),
+            user_name: selectedReview.user_id,
             product: "rnr",
             request_type: "REVIEW_RATING_INFO",
           },
@@ -80,12 +81,15 @@ const CustomerReviewManagement = () => {
       setReplyThread(response.data.review_reply_rs.review_reply_info);
     } catch (err) {
       handleSnackbar("Failed to fetch reply thread", "error");
+    } finally {
+      setIsThreadLoading(false); 
     }
   };
 
   // Handle chat open
   const handleChatOpen = async (review) => {
     setSelectedReview(review);
+    setReplyThread([]);
     await fetchReplyThread(review.id);
   };
 
@@ -93,12 +97,14 @@ const CustomerReviewManagement = () => {
   const handleSubmitReply = async () => {
     if (!replyContent.trim()) return;
     try {
+      const user = JSON.parse(localStorage.getItem('user'));
+
       const response = await axios.post(
         "http://localhost:8080/api/reply/ReplyToReviews",
         {
           review_reply_thread_rq: {
             header: {
-              user_name: selectedReview.user_id,
+              user_name: user.user_id,
               product: "rnr",
               request_type: "REVIEW_RATING_INFO",
             },
@@ -136,10 +142,10 @@ const CustomerReviewManagement = () => {
 
   useEffect(() => {
     fetchReviews();
-  }, []);
+  });
 
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm")); // Check if screen size is small
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm")); 
 
   return (
     <Box display="flex" width="100vw" height="100vh" bgcolor="grey.100">
@@ -216,11 +222,10 @@ const CustomerReviewManagement = () => {
                 </TableHead>
                 <TableBody>
                   {currentReviews.map((review) => (
-                    
                     <TableRow key={review.id} hover>
                       <TableCell>{review.user_display_name}</TableCell>
-                      <TableCell>{review.rating ?? review.overall_rating}</TableCell>
-                      <TableCell>{review.review ?? review.overall_review}</TableCell>
+                      <TableCell>{review.rating}</TableCell>
+                      <TableCell>{review.review}</TableCell>
                       <TableCell>
                         <Box
                           display="inline-block"
@@ -273,13 +278,19 @@ const CustomerReviewManagement = () => {
                 boxShadow: 1,
               }}
             >
-              <ChatPanel
-                selectedReview={selectedReview}
-                replyThread={replyThread}
-                replyContent={replyContent}
-                setReplyContent={setReplyContent}
-                handleSubmitReply={handleSubmitReply}
-              />
+              {isThreadLoading ? (
+                <Typography variant="body2" align="center" mt={2}>
+                  Loading replies...
+                </Typography>
+              ) : (
+                <ChatPanel
+                  selectedReview={selectedReview}
+                  replyThread={replyThread}
+                  replyContent={replyContent}
+                  setReplyContent={setReplyContent}
+                  handleSubmitReply={handleSubmitReply}
+                />
+              )}
             </Box>
           )}
         </Box>
