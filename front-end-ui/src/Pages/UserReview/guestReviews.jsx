@@ -124,7 +124,7 @@ const GuestReviews = () => {
         </WriteReviewModal>
       </Box>
 
-      {reviewsWithReplies.map((review, index) => (
+      {reviewsWithReplies.slice(0,4).map((review, index) => (
         <Card
           key={index}
           sx={{
@@ -194,6 +194,13 @@ const GuestReviews = () => {
                 )}
               </Grid>
             </Grid>
+                <Typography variant="body2" mt={2} color="primary"
+                sx={{
+                    position: "relative",
+                    left: "90%"
+                }}>
+                    See more...
+                  </Typography>
           </CardContent>
         </Card>
       ))}
