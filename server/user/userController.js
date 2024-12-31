@@ -68,7 +68,7 @@ export const loginUser = async (req, res) => {
             user_crud_rs: {status:responses.success.loginSuccess},
             token, 
             user: {
-                user_id: user.user_id,
+                user_id: user._id,
                 email: user.email,
                 display_name: user.display_name,
                 role: user.role,

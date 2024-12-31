@@ -30,11 +30,11 @@ const SignUp = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          user_id: new Date().getTime().toString(), // Unique user ID
+          user_id: new Date().getTime().toString(), 
           email: formData.email,
-          password_hash: formData.password, // Backend expects `password_hash`
+          password_hash: formData.password, 
           display_name: formData.displayName,
-          role: "Business User", // Default role for sign-up
+          role: "Business User", 
         }),
       });
 

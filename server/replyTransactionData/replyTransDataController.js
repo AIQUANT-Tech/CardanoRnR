@@ -79,3 +79,37 @@ export const fetchReviewReplyThread = async (req, res) => {
         return res.status(500).json({ error: 'Internal server error.' });
     }
 };
+
+// Fetch replies for a specific review_id
+export const getRepliesByReviewId = async (req, res) => {
+    const { review_id } = req.body;
+
+    if (!review_id) {
+        return res.status(400).json({
+            success: false,
+            message: "review_id is required.",
+        });
+    }
+
+    try {
+        const replies = await ReplyTransData.find({ review_id: review_id });
+
+        if (replies.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "No replies found for the given review_id.",
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: replies,
+        });
+    } catch (error) {
+        console.error("Error fetching replies:", error);
+        res.status(500).json({
+            success: false,
+            message: "Internal server error.",
+        });
+    }
+};

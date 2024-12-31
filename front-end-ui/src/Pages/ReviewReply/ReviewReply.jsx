@@ -70,7 +70,7 @@ const CustomerReviewManagement = () => {
       const response = await axios.post("http://localhost:8080/api/reply/ReplyToReview", {
         review_reply_thread_rq: {
           header: {
-            user_name: selectedReview.user_id,
+            user_name: sessionStorage.getItem('user_id'),
             product: "rnr",
             request_type: "REVIEW_RATING_INFO",
           },
@@ -216,6 +216,7 @@ const CustomerReviewManagement = () => {
                 </TableHead>
                 <TableBody>
                   {currentReviews.map((review) => (
+                    
                     <TableRow key={review.id} hover>
                       <TableCell>{review.user_display_name}</TableCell>
                       <TableCell>{review.rating ?? review.overall_rating}</TableCell>
