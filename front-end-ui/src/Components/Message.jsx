@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect} from "react";
 import {
   Box,
   Typography,
@@ -16,6 +16,11 @@ const ChatPanel = ({
   setReplyContent,
   handleSubmitReply,
 }) => {
+
+  useEffect(() => {
+    setReplyContent("");
+  }, [selectedReview]);
+
   return (
     <Box
       flex={0.3}

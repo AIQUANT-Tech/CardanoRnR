@@ -1,5 +1,5 @@
 import express from 'express';
-import { createReply, fetchReviewReplyThread, getRepliesByReviewId } from './replyTransDataController.js'
+import { createReply, fetchReviewReplyThread, getReplies } from './replyTransDataController.js'
 // import { verifyToken, allowBusinessUser, allowEndUser } from '../auth/jwtUtils.js';
 
 const router = express.Router();
@@ -11,6 +11,6 @@ router.post('/ReplyToReviews', createReply);
 router.post('/ReplyToReview', fetchReviewReplyThread);
 
 //fetch main reply
-router.post('/', getRepliesByReviewId);
+router.post('/', getReplies);
 
 export default router;

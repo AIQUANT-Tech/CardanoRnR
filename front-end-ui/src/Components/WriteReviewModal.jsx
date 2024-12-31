@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-  Box,
   Typography,
   Button,
   TextField,
@@ -9,7 +8,6 @@ import {
   DialogContent,
   DialogTitle,
 } from "@mui/material";
-import { useNavigate } from "react-router-dom";
 import { EditIcon } from "lucide-react";
 import ReviewModal from "./ReviewModal";
 
@@ -18,7 +16,6 @@ const WriteReviewModal = () => {
   const [openModal, setOpenModal] = useState(false);
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
-  const navigate = useNavigate();
 
   const handleOpen = () => {
     setOpenReviewModal(true);
@@ -58,6 +55,7 @@ const WriteReviewModal = () => {
             setOpenModal(true); 
             setOpenReviewModal(false);
         } else {
+            alert(data.user_crud_rs.status);
             setError("Invalid email or user not found.");
         }
     } catch (error) {

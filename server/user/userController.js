@@ -3,8 +3,7 @@ import bcrypt from "bcryptjs";
 import { generateToken } from "../auth/jwtUtils.js"; 
 import responses from '../utils/responses.js';
 import roles from '../utils/roles.js';
-import nodemailer from "nodemailer";
-import crypto from "crypto";
+import Review from '../review/Reviews.js';
 
 
 let otps = {};
@@ -109,6 +108,11 @@ export const validateEndUser = async (req, res) => {
         const user = await User.findOne({ email: email, role: "End User" });
         if (!user) {
             return res.status(404).json({ user_crud_rs: { status: responses.validation.NotFound } });
+        }
+
+        const review = await Review.findOne({ user_id: user._id});
+        if (review){
+            return res.status(404).json({user_crud_rs: { status: "Already submitted a review!" }})
         }
 
         return res.status(200).json({ user_crud_rs: { status: responses.success.success } });

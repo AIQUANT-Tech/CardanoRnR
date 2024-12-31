@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -9,186 +9,255 @@ import {
   DialogContent,
   DialogTitle,
   Grid,
-  Avatar,
 } from "@mui/material";
 import StarIcon from "@mui/icons-material/Star";
+import AddIcon from "@mui/icons-material/Add";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
-const ReviewModal = ({
-    open,
-    setOpen
-}) => {
+const ReviewModal = ({ open, setOpen }) => {
   const [overallRating, setOverallRating] = useState(0);
   const [hover, setHover] = useState(-1);
   const [overallReview, setOverallReview] = useState("");
-  const [categories, setCategories] = useState([
-    { name: "Pool", rating: 0, review: "" },
-    { name: "Room", rating: 0, review: "" },
-    { name: "Service", rating: 0, review: "" },
-  ]);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState([]);
+
+  useEffect(() => {
+    if (open) {
+      fetchCategories();
+    }
+  }, [open]);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:8080/api/reviewcategory/getReviewCategoryInfo",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            review_category_fetch_rq: {
+              header: {
+                user_name: "Business User",
+                product: "rnr",
+                request_type: "FETCH_REVIEW_CATEGORY",
+              },
+            },
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const fetchedCategories = data.review_category_fetch_rs.category_list.map(
+        (category) => ({
+          id: category.category_id,
+          name: category.category_name,
+          description: category.category_desc,
+          rating: 0,
+          review: "",
+        })
+      );
+
+      setCategories(fetchedCategories);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
+
+  const toggleCategorySelection = (category) => {
+    if (selectedCategories.includes(category)) {
+      setSelectedCategories(
+        selectedCategories.filter((c) => c.id !== category.id)
+      );
+    } else {
+      setSelectedCategories([...selectedCategories, category]);
+    }
+  };
 
   const handleCategoryRating = (index, rating) => {
-    const updatedCategories = [...categories];
+    const updatedCategories = [...selectedCategories];
     updatedCategories[index].rating = rating;
-    setCategories(updatedCategories);
+    setSelectedCategories(updatedCategories);
   };
 
   const handleCategoryReview = (index, review) => {
-    const updatedCategories = [...categories];
+    const updatedCategories = [...selectedCategories];
     updatedCategories[index].review = review;
-    setCategories(updatedCategories);
+    setSelectedCategories(updatedCategories);
   };
 
   const handleSubmit = () => {
     console.log("Overall Rating:", overallRating);
     console.log("Overall Review:", overallReview);
-    console.log("Category Ratings & Reviews:", categories);
+    console.log("Selected Category Ratings & Reviews:", selectedCategories);
   };
 
   const handleClose = () => {
     setOpen(false);
-  }
+  };
 
   return (
-    <div>
-      {/* Modal */}
-      <Dialog open={open} maxWidth="md" fullWidth>
-        <DialogTitle>
-          <Typography variant="h6" fontWeight="bold">
-            Overall Rating & Reviews
-          </Typography>
-        </DialogTitle>
-        <DialogContent>
-          <Typography color="textSecondary" gutterBottom>
-            Thank you in advance for your feedback.
-          </Typography>
+    <Dialog open={open} maxWidth="md" fullWidth>
+      <DialogTitle>
+        <Typography variant="h6" fontWeight="bold">
+          Overall Rating & Reviews
+        </Typography>
+      </DialogTitle>
+      <DialogContent>
+        <Typography color="textSecondary" gutterBottom>
+          Thank you in advance for your feedback.
+        </Typography>
 
-          {/* Overall Rating */}
-          <Typography variant="body1" fontWeight="bold" mt={2}>
-            Overall Rating
+        {/* Overall Rating */}
+        <Typography variant="body1" fontWeight="bold" mt={2}>
+          Overall Rating
+        </Typography>
+        <Box display="flex" alignItems="center" mb={2}>
+          {[1, 2, 3, 4, 5].map((star) => (
+            <StarIcon
+              key={star}
+              onClick={() => setOverallRating(star)}
+              onMouseEnter={() => setHover(star)}
+              onMouseLeave={() => setHover(-1)}
+              sx={{
+                cursor: "pointer",
+                color: hover >= star || overallRating >= star ? "#fdd835" : "#e0e0e0",
+                fontSize: 32,
+              }}
+            />
+          ))}
+          <Typography sx={{ marginLeft: 2 }}>
+            {hover !== -1 ? hover : overallRating} / 5
           </Typography>
-          <Box display="flex" alignItems="center" mb={2}>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <StarIcon
-                key={star}
-                onClick={() => setOverallRating(star)}
-                onMouseEnter={() => setHover(star)}
-                onMouseLeave={() => setHover(-1)}
-                sx={{
-                  cursor: "pointer",
-                  color:
-                    (hover || overallRating) >= star
-                      ? "#fdd835" 
-                      : "#e0e0e0", 
-                  fontSize: 32,
-                }}
-              />
-            ))}
-            <Typography sx={{ marginLeft: 2 }}>
-              {hover !== -1 ? hover : overallRating} / 5
+        </Box>
+
+        {/* Overall Review */}
+        <TextField
+          fullWidth
+          multiline
+          rows={3}
+          value={overallReview}
+          onChange={(e) => setOverallReview(e.target.value)}
+          label="Overall Review"
+          placeholder="Write your overall experience..."
+          InputProps={{
+            style: {
+              backgroundColor: "#f9f9f9",
+              borderRadius: 10,
+            },
+          }}
+        />
+
+        {/* Select Categories to Review */}
+        {overallRating > 0 && overallReview.trim() && (
+          <>
+            <Typography variant="body1" fontWeight="bold" mt={3}>
+              Select Categories to Review
             </Typography>
-          </Box>
-
-          {/* Overall Review */}
-          <TextField
-            fullWidth
-            multiline
-            rows={3}
-            value={overallReview}
-            onChange={(e) => setOverallReview(e.target.value)}
-            label="Overall Review"
-            placeholder="Write your overall experience..."
-            InputProps={{
-              style: {
-                backgroundColor: "#f9f9f9",
-                borderRadius: 10,
-              },
-            }}
-          />
-
-          {/* Category Ratings & Reviews */}
-          {overallRating > 0 && overallReview.trim() && (
-            <>
-              <Typography
-                variant="body1"
-                fontWeight="bold"
-                mt={3}
-                gutterBottom
-              >
-                Categorised Rating & Reviews
-              </Typography>
-              {categories.map((category, index) => (
-                <Box key={index} mt={2}>
-                  <Typography variant="body2" fontWeight="bold">
+            <Box
+            display="flex"
+            flexWrap="wrap"
+            gap={1}
+            mt={1}>
+              {categories.map((category) => (
+                <Grid item xs={12} key={category.id}>
+                  <Button
+                    variant="outlined"
+                    onClick={() => toggleCategorySelection(category)}
+                    sx={{
+                      textTransform: "none",
+                      borderRadius: 10,
+                      backgroundColor: selectedCategories.includes(category)
+                        ? "#d1e7dd"
+                        : "#fff",
+                    }}
+                  >
                     {category.name}
-                  </Typography>
-                  <Box display="flex" alignItems="center">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <StarIcon
-                        key={star}
-                        onClick={() =>
-                          handleCategoryRating(index, star)
-                        }
-                        onMouseEnter={() => setHover(star)}
-                        onMouseLeave={() => setHover(-1)}
-                        sx={{
-                          cursor: "pointer",
-                          color:
-                            (hover || category.rating) >= star
-                              ? "#fdd835"
-                              : "#e0e0e0",
-                          fontSize: 28,
-                        }}
-                      />
-                    ))}
-                    <Typography sx={{ marginLeft: 2 }}>
-                      {category.rating} / 5
-                    </Typography>
-                  </Box>
-                  <TextField
-                    fullWidth
-                    multiline
-                    rows={2}
-                    value={category.review}
-                    onChange={(e) =>
-                      handleCategoryReview(index, e.target.value)
-                    }
-                    label={`Review for ${category.name}`}
-                    placeholder={`Write your experience about ${category.name}...`}
-                    sx={{ marginTop: 1 }}
-                  />
-                </Box>
+                    {selectedCategories.includes(category) ? (
+                      <CheckCircleIcon color="success" />
+                    ) : (
+                      <AddIcon color="primary" />
+                    )}
+                  </Button>
+                </Grid>
               ))}
-            </>
-          )}
-        </DialogContent>
+            </Box>
+          </>
+        )}
 
-        <DialogActions>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleSubmit}
-            sx={{
-              textTransform: "none",
-              borderRadius: 20,
-            }}
-            disabled={!overallRating || !overallReview.trim()}
-          >
-            Submit
-          </Button>
-          <Button
-            variant="outlined"
-            color="secondary"
-            onClick={handleClose}
-            sx={{
-              textTransform: "none",
-              borderRadius: 20,
-            }}
-          >
-            Cancel
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </div>
+        {/* Selected Category Ratings & Reviews */}
+        {selectedCategories.length > 0 && (
+          <>
+            <Typography variant="body1" fontWeight="bold" mt={3}>
+              Categorised Rating & Reviews
+            </Typography>
+            {selectedCategories.map((category, index) => (
+              <Box key={category.id} mt={2} p={2}>
+                <Typography variant="body2" fontWeight="bold">
+                  {category.name}
+                </Typography>
+                <Box display="flex" alignItems="center">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <StarIcon
+                      key={star}
+                      onClick={() => handleCategoryRating(index, star)}
+                      sx={{
+                        cursor: "pointer",
+                        color: category.rating >= star ? "#fdd835" : "#e0e0e0",
+                        fontSize: 28,
+                      }}
+                    />
+                  ))}
+                  <Typography sx={{ marginLeft: 2 }}>
+                    {category.rating} / 5
+                  </Typography>
+                </Box>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={2}
+                  value={category.review}
+                  onChange={(e) => handleCategoryReview(index, e.target.value)}
+                  label={`Review for ${category.name}`}
+                  placeholder={`Write your experience about ${category.name}...`}
+                  sx={{ marginTop: 1 }}
+                />
+              </Box>
+            ))}
+          </>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleSubmit}
+          sx={{
+            textTransform: "none",
+            borderRadius: 20,
+          }}
+          disabled={!overallRating || !overallReview.trim()}
+        >
+          Submit
+        </Button>
+        <Button
+          variant="outlined"
+          color="secondary"
+          onClick={handleClose}
+          sx={{
+            textTransform: "none",
+            borderRadius: 20,
+          }}
+        >
+          Cancel
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 };
 
