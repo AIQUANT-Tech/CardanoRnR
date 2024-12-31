@@ -28,7 +28,6 @@ const WriteReviewModal = () => {
 
 
   const handleSignIn = async () => {
-    console.log(email);
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
         setError("Please enter a valid email address.");
@@ -63,7 +62,6 @@ const WriteReviewModal = () => {
         setError("Something went wrong. Please try again later.");
     }
     setOpenReviewModal(false);
-    setEmail("");
     setError("");
 };
 
@@ -138,7 +136,7 @@ const WriteReviewModal = () => {
           </Button>
         </DialogActions>
       </Dialog>
-      <ReviewModal open={openModal} setOpen={setOpenModal} />
+      <ReviewModal open={openModal} setOpen={setOpenModal} email={email} setEmail={setEmail}/>
     </div>
   );
 };

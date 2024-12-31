@@ -37,6 +37,7 @@ const RatingReviewModal = ({
     const [searchQuery, setSearchQuery] = useState("");
     const [sortOption, setSortOption] = useState("Newest");
     const [selectedReview, setSelectedReview] = useState(null);
+    const [visibleReviews, setVisibleReviews] = useState(4); // Track number of visible reviews
 
     useEffect(() => {
         const fetchReviews = async () => {
@@ -121,6 +122,10 @@ const RatingReviewModal = ({
         setSelectedReview(null);
     };
 
+    const handleLoadMore = () => {
+        setVisibleReviews((prevVisible) => prevVisible + 5); // Load 5 more reviews
+    };
+
     return (
         <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
             <Box sx={{ padding: 2, borderBottom: "1px solid #ccc" }}>
@@ -190,7 +195,7 @@ const RatingReviewModal = ({
                 </Box>
 
                 <Box>
-                    {filteredReviews.map((review, index) => (
+                    {filteredReviews.slice(0, visibleReviews).map((review, index) => (
                         <Card
                             key={index}
                             sx={{
@@ -264,11 +269,26 @@ const RatingReviewModal = ({
                     ))}
                 </Box>
 
+                {filteredReviews.length > visibleReviews && (
+                    <Button
+                        variant="outlined"
+                        color="primary"
+                        onClick={handleLoadMore}
+                        sx={{
+                            marginLeft: "40%",
+                            textTransform: "none",
+                            borderRadius: 20,
+                        }}
+                    >
+                        Show More Reviews
+                    </Button>
+                )}
+
                 <Button
                     variant="outlined"
                     color="secondary"
                     onClick={onClose}
-                    sx={{ textTransform: "none", borderRadius: 20 }}
+                    sx={{ textTransform: "none", borderRadius: 20}}
                 >
                     {closeButtonText || "Cancel"}
                 </Button>

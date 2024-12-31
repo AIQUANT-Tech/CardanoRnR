@@ -119,7 +119,7 @@ const ReviewsPage = () => {
                                 Reputation Score
                             </Typography>
                             <Typography variant="h2" fontWeight="bold" color="#333">
-                                {reputation_score * 20}/100
+                                {(reputation_score * 20).toFixed(2)}<br></br>/100
                             </Typography>
                         </Box>
                         <Typography color="textSecondary" sx={{padding: 5}}>
