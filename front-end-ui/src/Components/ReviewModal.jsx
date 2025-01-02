@@ -126,7 +126,7 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
         const data = await response.json();
         console.log("Review submitted successfully:", data);
         setOpen(false);
-        setOpenSnackbar(true); // Show success message
+        setOpenSnackbar(true); 
       } else {
         const errorData = await response.json();
         console.error("Error submitting review:", errorData);
@@ -134,7 +134,8 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
     } catch (error) {
       console.error("Error:", error);
     }
-    setEmail(""); // Clear email after submission
+    setEmail(""); 
+    window.location.reload();
   };
 
   const handleClose = () => {
