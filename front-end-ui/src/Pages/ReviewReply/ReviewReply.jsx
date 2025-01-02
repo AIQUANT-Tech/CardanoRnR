@@ -145,8 +145,31 @@ const CustomerReviewManagement = () => {
   // Handle chat open
   const handleChatOpen = async (review) => {
     setSelectedReview(review);
-    setReplyThread([]); // Reset the reply thread
-    await fetchReplyThread(review.id); // Fetch the thread for the selected review
+    setReplyThread([]); // Clear previous replies
+
+    // Fetch the reply thread after selecting the review to ensure the data is refreshed
+    setIsThreadLoading(true); // Set the loading state to true to show a loading indicator
+    try {
+      const response = await axios.post(
+        "http://localhost:8080/api/reply/ReplyToReview",
+        {
+          review_reply_thread_rq: {
+            header: {
+              user_name: review.user_id, // Make sure to use the correct user_id
+              product: "rnr",
+              request_type: "REVIEW_RATING_INFO",
+            },
+            review_id: review.review_id, // Use review_id to fetch the correct thread
+          },
+        }
+      );
+      
+      setReplyThread(response.data.review_reply_rs.review_reply_info); // Set the new thread data
+    } catch (err) {
+      handleSnackbar("Failed to fetch reply thread", "error");
+    } finally {
+      setIsThreadLoading(false); // Set loading to false when the data fetch is complete
+    }
   };
 
   // Handle reply submission
@@ -353,11 +376,7 @@ const CustomerReviewManagement = () => {
                           display="inline-block"
                           px={2}
                           py={0.5}
-                          color={
-                            review.review_responded
-                              ? "success.main"
-                              : "error.main"
-                          }
+                          color={review.review_responded ? "success.main" : "error.main"}
                           width={"150"}
                         >
                           {review.review_responded ? "Sent" : "Un Sent"}
