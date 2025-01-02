@@ -1,10 +1,23 @@
 import React from 'react';
-import { useLocation } from 'react-router-dom'; // Import useLocation
+import { useLocation, useNavigate } from 'react-router-dom';
 import { IconButton, Typography } from '@mui/material';
 import './styles.css';
 
 const Header = () => {
   const location = useLocation();
+
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    navigate("/profile");
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("user");
+
+    navigate("/");
+  }
 
   // Function to determine header title based on the path
   const getHeaderTitle = (path) => {
@@ -12,7 +25,7 @@ const Header = () => {
       case '/categories':
         return 'Review Categories';
       case '/profile':
-        return 'User Profile';
+        return 'My Profile';
       case '/chatreply':
         return 'Customer Review Management';
       default:
@@ -31,14 +44,14 @@ const Header = () => {
             <circle cx="18" cy="8" r="3" />
           </svg>
         </IconButton>
-        <IconButton>
+        <IconButton onClick={handleClick}>
           <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-circle-user">
             <circle cx="12" cy="12" r="10" />
             <circle cx="12" cy="10" r="3" />
             <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662" />
           </svg>
         </IconButton>
-        <IconButton>
+        <IconButton onClick={handleLogout}>
           <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-log-out">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
             <polyline points="16 17 21 12 16 7" />
