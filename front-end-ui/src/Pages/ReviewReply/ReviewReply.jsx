@@ -18,7 +18,7 @@ import {
   useMediaQuery,
   useTheme,
   TextField,
-  InputAdornment
+  InputAdornment,
 } from "@mui/material";
 import { MessageCircle } from "lucide-react";
 import Sidebar from "../../Components/Sidebar";
@@ -43,6 +43,7 @@ const CustomerReviewManagement = () => {
   const [sortBy, setSortBy] = useState("Date Created");
   const [filterStatus, setFilterStatus] = useState("All");
   const [searchQuery, setSearchQuery] = useState(""); // State for search query
+  const [chatPanelOpen, setChatPanelOpen] = useState(false); // Manage chat panel visibility
   const itemsPerPage = 4;
   const debounceTimeout = 200; // Time delay for debounce
 
@@ -146,6 +147,7 @@ const CustomerReviewManagement = () => {
   const handleChatOpen = async (review) => {
     setSelectedReview(review);
     setReplyThread([]); // Clear previous replies
+    setChatPanelOpen(true); // Open the chat panel
 
     // Fetch the reply thread after selecting the review to ensure the data is refreshed
     setIsThreadLoading(true); // Set the loading state to true to show a loading indicator
@@ -163,7 +165,7 @@ const CustomerReviewManagement = () => {
           },
         }
       );
-      
+
       setReplyThread(response.data.review_reply_rs.review_reply_info); // Set the new thread data
     } catch (err) {
       handleSnackbar("Failed to fetch reply thread", "error");
@@ -172,12 +174,13 @@ const CustomerReviewManagement = () => {
     }
   };
 
-  // Handle reply submission
+  // Handle reply submission and update response status
   const handleSubmitReply = async () => {
     if (!replyContent.trim()) return; // Don't submit if the reply is empty
     try {
       const user = JSON.parse(localStorage.getItem("user"));
 
+      // Send the reply
       const response = await axios.post(
         "http://localhost:8080/api/reply/ReplyToReviews",
         {
@@ -194,8 +197,21 @@ const CustomerReviewManagement = () => {
       );
 
       if (response.data.review_reply_rq.status === "success") {
-        setReplyContent(""); // Clear the reply content after sending
-        await fetchReplyThread(selectedReview.id); // Refresh the reply thread
+        // Clear the reply content after sending
+        setReplyContent(""); 
+
+        // Fetch the updated reply thread
+        await fetchReplyThread(selectedReview.id); 
+
+        // Update the review's response status to 'Sent'
+        const updatedReviews = reviews.map((review) =>
+          review.id === selectedReview.id
+            ? { ...review, review_responded: true }
+            : review
+        );
+        setReviews(updatedReviews);
+
+        // Show success message
         handleSnackbar("Reply sent successfully", "success");
       }
     } catch (err) {
@@ -220,6 +236,12 @@ const CustomerReviewManagement = () => {
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+  // Close chat panel
+  const closeChatPanel = () => {
+    setChatPanelOpen(false);
+    setSelectedReview(null); // Optional: reset selected review on close
+  };
 
   return (
     <Box display="flex" width="100vw" height="100vh" bgcolor="white">
@@ -256,7 +278,7 @@ const CustomerReviewManagement = () => {
           overflow="auto"
         >
           <Box
-            flex={selectedReview ? (isMobile ? 1 : 0.7) : 1}
+            flex={chatPanelOpen ? (isMobile ? 1 : 0.7) : 1}
             transition="all 0.3s ease"
             bgcolor="white"
             boxShadow={1}
@@ -266,7 +288,6 @@ const CustomerReviewManagement = () => {
             }}
           >
             {/* Search Field */}
-
             <Box mb={6} sx={{ paddingTop: "16px", width: "50%" }}>
               <TextField
                 fullWidth
@@ -302,9 +323,9 @@ const CustomerReviewManagement = () => {
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="#DA9C9C"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
                         class="lucide lucide-search"
                       >
                         <circle cx="11" cy="11" r="8" />
@@ -327,9 +348,7 @@ const CustomerReviewManagement = () => {
                   variant="outlined"
                   size="small"
                 >
-                  <MenuItem value="Date Created">
-                    Sort by: Date Created
-                  </MenuItem>
+                  <MenuItem value="Date Created">Sort by: Date Created</MenuItem>
                   <MenuItem value="Rating Descending">
                     Sort by: Rating High to Low
                   </MenuItem>
@@ -399,44 +418,29 @@ const CustomerReviewManagement = () => {
               onPageChange={handlePageChange}
             />
           </Box>
-          {selectedReview && (
-            <Box
-              flex={0.3}
-              sx={{
-                width: isMobile ? "100%" : "30%",
-                transition: "all 0.3s ease",
-                height: "calc(100vh - 64px)",
-                overflowY: "auto",
-                boxShadow: 1,
-              }}
-            >
-              {isThreadLoading ? (
-                <Typography variant="body2" align="center" mt={2}>
-                  Loading replies...
-                </Typography>
-              ) : (
-                <ChatPanel
-                  selectedReview={selectedReview}
-                  replyThread={replyThread}
-                  replyContent={replyContent}
-                  setReplyContent={setReplyContent}
-                  handleSubmitReply={handleSubmitReply}
-                />
-              )}
-            </Box>
+          {/* Chat Panel */}
+          {chatPanelOpen && (
+            <ChatPanel
+              selectedReview={selectedReview}
+              replyThread={replyThread}
+              isThreadLoading={isThreadLoading}
+              replyContent={replyContent}
+              setReplyContent={setReplyContent}
+              handleSubmitReply={handleSubmitReply}
+              closeChatPanel={closeChatPanel} // Pass close function to ChatPanel
+            />
           )}
         </Box>
       </Box>
-
-      {/* Snackbar for notifications */}
       <Snackbar
         open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ open: false })}
       >
         <Alert
           severity={snackbar.severity}
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          sx={{ width: "100%" }}
+          onClose={() => setSnackbar({ open: false })}
         >
           {snackbar.message}
         </Alert>
