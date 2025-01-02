@@ -11,7 +11,7 @@ import logo from "../assets/logo.png";
 import "./styles.css";
 
 const Sidebar = () => {
-  const location = useLocation(); // Get the current location
+  const location = useLocation(); 
 
   const menuItems = [
     {
