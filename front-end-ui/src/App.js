@@ -6,12 +6,14 @@ import SignUp from './AuthComponent/SignUp';
 import ReviewCategories from './Pages/ReviewCategories/ReviewCategories';
 import ReviewsPage from './Pages/UserReview/userHome';
 import ReviewsReply from './Pages/ReviewReply/ReviewReply';
+import BusinessUserProfile from './Pages/Profile/BusinessUserProfile';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path= "/profile" element={<BusinessUserProfile />} />
         <Route path="/login" element={<LogIn />} />
         <Route path="/signUp" element={<SignUp />} />
         <Route path="/categories" element={<ReviewCategories />} />
