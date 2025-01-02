@@ -148,7 +148,7 @@ const CustomerReviewManagement = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm")); 
 
   return (
-    <Box display="flex" width="100vw" height="100vh" bgcolor="grey.100">
+    <Box display="flex" width="100vw" height="100vh" bgcolor="white">
       {/* Sidebar */}
       <Box height="100vh" position="fixed" width={isMobile ? "100%" : "20%"}>
         <Sidebar />
