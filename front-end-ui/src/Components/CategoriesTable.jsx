@@ -24,7 +24,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import AddCategoriesModal from './AddCategoriesModal';
-import EditCategoryModal from './EditCategoryModal'; // Import the edit modal component
+import EditCategoryModal from './EditCategoryModal'; 
 import './styles.css';
 
 const CategoriesTable = () => {
