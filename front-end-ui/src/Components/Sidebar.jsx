@@ -146,7 +146,10 @@ const Sidebar = () => {
               backgroundColor:
                 location.pathname === item.path ? "#DA9C9C" : "transparent",
               borderRadius: "8px",
-              
+              "&:hover": {
+                backgroundColor: 
+                location.pathname === item.path ? "#DA9C9C" : "transparent",
+              },        
             }}
           >
             <ListItemIcon>{item.icon}</ListItemIcon>
