@@ -17,13 +17,15 @@ import {
   Alert,
   useMediaQuery,
   useTheme,
+  TextField,
+  InputAdornment
 } from "@mui/material";
-import { Filter, MessageCircle } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
-import Pagination from "../../Components/Custom-Pagination"; // Import Pagination
+import Pagination from "../../Components/Custom-Pagination";
 import axios from "axios";
-import ChatPanel from "../../Components/Message"; // Import ChatPanel
+import ChatPanel from "../../Components/Message";
 
 const CustomerReviewManagement = () => {
   const [selectedReview, setSelectedReview] = useState(null);
@@ -38,7 +40,23 @@ const CustomerReviewManagement = () => {
     severity: "success",
   });
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 4;  // Set items per page to 4
+  const [sortBy, setSortBy] = useState("Date Created");
+  const [filterStatus, setFilterStatus] = useState("All");
+  const [searchQuery, setSearchQuery] = useState(""); // State for search query
+  const itemsPerPage = 4;
+  const debounceTimeout = 200; // Time delay for debounce
+
+  // Debounced search
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, debounceTimeout);
+
+    return () => {
+      clearTimeout(timer); // Clean up on each change
+    };
+  }, [searchQuery]);
 
   // Fetch reviews
   const fetchReviews = async () => {
@@ -56,7 +74,38 @@ const CustomerReviewManagement = () => {
           },
         }
       );
-      setReviews(response.data.review_rating_info_rs.review_rating_info_by_user);
+
+      let reviews =
+        response.data.review_rating_info_rs.review_rating_info_by_user;
+
+      // Filter reviews based on search query
+      if (debouncedSearchQuery) {
+        reviews = reviews.filter((review) =>
+          review.user_display_name
+            .toLowerCase()
+            .includes(debouncedSearchQuery.toLowerCase())
+        );
+      }
+
+      // Sort reviews
+      if (sortBy === "Date Created") {
+        reviews = reviews.sort(
+          (a, b) => new Date(b.created_at) - new Date(a.created_at)
+        );
+      } else if (sortBy === "Rating Descending") {
+        reviews = reviews.sort((a, b) => b.rating - a.rating);
+      } else if (sortBy === "Rating Ascending") {
+        reviews = reviews.sort((a, b) => a.rating - b.rating);
+      }
+
+      // Filter reviews by response status
+      if (filterStatus === "Sent") {
+        reviews = reviews.filter((review) => review.review_responded === true);
+      } else if (filterStatus === "Un Sent") {
+        reviews = reviews.filter((review) => review.review_responded === false);
+      }
+
+      setReviews(reviews);
     } catch (err) {
       handleSnackbar("Failed to fetch reviews", "error");
     } finally {
@@ -64,40 +113,47 @@ const CustomerReviewManagement = () => {
     }
   };
 
+  useEffect(() => {
+    fetchReviews();
+  }, [sortBy, filterStatus, debouncedSearchQuery]); // Depend on the debounced search query
+
   // Fetch reply thread
   const fetchReplyThread = async (reviewId) => {
     try {
       setIsThreadLoading(true);
-      const response = await axios.post("http://localhost:8080/api/reply/ReplyToReview", {
-        review_reply_thread_rq: {
-          header: {
-            user_name: selectedReview.user_id,
-            product: "rnr",
-            request_type: "REVIEW_RATING_INFO",
+      const response = await axios.post(
+        "http://localhost:8080/api/reply/ReplyToReview",
+        {
+          review_reply_thread_rq: {
+            header: {
+              user_name: selectedReview.user_id,
+              product: "rnr",
+              request_type: "REVIEW_RATING_INFO",
+            },
+            review_id: selectedReview.review_id,
           },
-          review_id: selectedReview.review_id,
-        },
-      });
+        }
+      );
       setReplyThread(response.data.review_reply_rs.review_reply_info);
     } catch (err) {
       handleSnackbar("Failed to fetch reply thread", "error");
     } finally {
-      setIsThreadLoading(false); 
+      setIsThreadLoading(false);
     }
   };
 
   // Handle chat open
   const handleChatOpen = async (review) => {
     setSelectedReview(review);
-    setReplyThread([]);
-    await fetchReplyThread(review.id);
+    setReplyThread([]); // Reset the reply thread
+    await fetchReplyThread(review.id); // Fetch the thread for the selected review
   };
 
   // Handle reply submission
   const handleSubmitReply = async () => {
-    if (!replyContent.trim()) return;
+    if (!replyContent.trim()) return; // Don't submit if the reply is empty
     try {
-      const user = JSON.parse(localStorage.getItem('user'));
+      const user = JSON.parse(localStorage.getItem("user"));
 
       const response = await axios.post(
         "http://localhost:8080/api/reply/ReplyToReviews",
@@ -115,22 +171,13 @@ const CustomerReviewManagement = () => {
       );
 
       if (response.data.review_reply_rq.status === "success") {
-        setReplyContent("");
-        await fetchReplyThread(selectedReview.id);
+        setReplyContent(""); // Clear the reply content after sending
+        await fetchReplyThread(selectedReview.id); // Refresh the reply thread
         handleSnackbar("Reply sent successfully", "success");
       }
     } catch (err) {
       handleSnackbar("Failed to send reply", "error");
     }
-  };
-
-  // Handle snackbar
-  const handleSnackbar = (message, severity) => {
-    setSnackbar({
-      open: true,
-      message,
-      severity,
-    });
   };
 
   const handlePageChange = (pageNum) => {
@@ -140,12 +187,16 @@ const CustomerReviewManagement = () => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentReviews = reviews.slice(startIndex, startIndex + itemsPerPage);
 
-  useEffect(() => {
-    fetchReviews();
-  });
+  const handleSnackbar = (message, severity) => {
+    setSnackbar({
+      open: true,
+      message,
+      severity,
+    });
+  };
 
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm")); 
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   return (
     <Box display="flex" width="100vw" height="100vh" bgcolor="white">
@@ -168,17 +219,17 @@ const CustomerReviewManagement = () => {
           width="80%"
           zIndex={1000}
           bgcolor="white"
-          sx={{ height: "64px" }} // Fixed header height
+          sx={{ height: "64px" }}
         >
           <Header />
         </Box>
 
         {/* Main Content Area */}
         <Box
-          mt="64px"  // Adjust for header height
+          mt="64px"
           display="flex"
           flex={1}
-          flexDirection={isMobile ? "column" : "row"} // Stack on mobile
+          flexDirection={isMobile ? "column" : "row"}
           overflow="auto"
         >
           <Box
@@ -187,25 +238,92 @@ const CustomerReviewManagement = () => {
             bgcolor="white"
             boxShadow={1}
             sx={{
-              height: "calc(100vh - 64px)", // Adjust height to take the remaining space
+              height: "calc(100vh - 64px)",
               overflow: "auto",
             }}
           >
-            <Typography variant="h6" mb={2} padding={2}>
-              Customer Review Management
-            </Typography>
+            {/* Search Field */}
+
+            <Box mb={6} sx={{ paddingTop: "16px", width: "50%" }}>
+              <TextField
+                fullWidth
+                variant="outlined"
+                placeholder="Search by Customer Name"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                size="small"
+                sx={{
+                  borderRadius: "50px", // Add borderRadius here
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "50px",
+                    border: "1px solid #DA9C9C",
+                    "&:hover": {
+                      border: "1px solid #DA9C9C",
+                    },
+                    "&:selected": {
+                      border: "1px solid #DA9C9C",
+                    },
+                  },
+                  "& .MuiOutlinedInput-notchedOutline": {
+                    borderStyle: "none",
+                    borderWidth: "none",
+                  },
+                }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="30"
+                        height="30"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#DA9C9C"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="lucide lucide-search"
+                      >
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.3-4.3" />
+                      </svg>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Box>
 
             <Box display="flex" justifyContent="space-between" mb={2}>
               <Typography variant="body2" color="textSecondary">
                 Total: {reviews.length} Reviews
               </Typography>
               <Box display="flex" gap={2}>
-                <Select defaultValue="Date Created" variant="outlined" size="small">
-                  <MenuItem value="Date Created">Sort by: Date Created</MenuItem>
+                <Select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  variant="outlined"
+                  size="small"
+                >
+                  <MenuItem value="Date Created">
+                    Sort by: Date Created
+                  </MenuItem>
+                  <MenuItem value="Rating Descending">
+                    Sort by: Rating High to Low
+                  </MenuItem>
+                  <MenuItem value="Rating Ascending">
+                    Sort by: Rating Low to High
+                  </MenuItem>
                 </Select>
-                <Button variant="outlined" startIcon={<Filter size={16} />}>
-                  Filter
-                </Button>
+                <Select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  variant="outlined"
+                  size="small"
+                >
+                  <MenuItem value="All">Filter by: All</MenuItem>
+                  <MenuItem value="Sent">Filter by: Sent</MenuItem>
+                  <MenuItem value="Un Sent">Filter by: Un Sent</MenuItem>
+                </Select>
               </Box>
             </Box>
 
@@ -213,38 +331,36 @@ const CustomerReviewManagement = () => {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Customer Name</TableCell>
-                    <TableCell>Rating</TableCell>
-                    <TableCell>Review</TableCell>
-                    <TableCell>Response Status</TableCell>
+                    <TableCell width={"142"} align="center">
+                      Customer Name
+                    </TableCell>
+                    <TableCell align="center">Rating</TableCell>
+                    <TableCell align="center">Review</TableCell>
+                    <TableCell width={"120"} align="center">
+                      Response Status
+                    </TableCell>
                     <TableCell />
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {currentReviews.map((review) => (
-                    <TableRow key={review.id} hover>
+                    <TableRow key={review.id}>
                       <TableCell>{review.user_display_name}</TableCell>
-                      <TableCell>{review.rating}</TableCell>
+                      <TableCell align="center">{review.rating}</TableCell>
                       <TableCell>{review.review}</TableCell>
-                      <TableCell>
+                      <TableCell align="center">
                         <Box
                           display="inline-block"
                           px={2}
                           py={0.5}
-                          borderRadius={16}
-                          bgcolor={
-                            review.responseStatus === "Sent"
-                              ? "success.light"
-                              : "error.light"
-                          }
                           color={
-                            review.responseStatus === "Sent"
+                            review.review_responded
                               ? "success.main"
                               : "error.main"
                           }
-                          textAlign="center"
+                          width={"150"}
                         >
-                          {review.responseStatus}
+                          {review.review_responded ? "Sent" : "Un Sent"}
                         </Box>
                       </TableCell>
                       <TableCell>
@@ -257,7 +373,6 @@ const CustomerReviewManagement = () => {
                 </TableBody>
               </Table>
             </TableContainer>
-
             <Pagination
               currentPage={currentPage}
               totalItems={reviews.length}
@@ -265,11 +380,9 @@ const CustomerReviewManagement = () => {
               onPageChange={handlePageChange}
             />
           </Box>
-
-          {/* Chat Panel */}
           {selectedReview && (
             <Box
-              flex={selectedReview ? 0.3 : 0}
+              flex={0.3}
               sx={{
                 width: isMobile ? "100%" : "30%",
                 transition: "all 0.3s ease",
