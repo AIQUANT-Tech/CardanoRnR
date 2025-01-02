@@ -82,7 +82,8 @@ const CategoriesTable = () => {
   }, []);
 
   // Handle adding new categories
-  const handleAddCategories = async (newCategories) => {    
+  const handleAddCategories = async (newCategories) => {   
+
     const categoryList = newCategories.map((category, index) => ({
       category_id: index + 1,
       category_name: category.category_name,
@@ -90,10 +91,12 @@ const CategoriesTable = () => {
       Status: category.Status,
     }));
 
+   const user = JSON.parse(localStorage.getItem('user'));
+
     const payload = {
       review_category_crud_rq: {
         header: {
-          user_name: 'Business User',
+          user_name: user.display_name,
           product: 'rnr',
           request_type: 'CREATE_REVIEW_CATEGORY',
         },
@@ -102,6 +105,7 @@ const CategoriesTable = () => {
     };
 
     try {
+
       const response = await fetch(
         'http://localhost:8080/api/reviewcategory/createReviewCategory',
         {

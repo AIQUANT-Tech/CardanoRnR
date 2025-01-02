@@ -48,8 +48,8 @@ export const createReviewCategory = async (req, res) => {
         category_name,
         category_description: category_desc,
         status: Status,
-        created_by: review_category_crud_rq.header.user_name, // Assuming this comes from header
-        modified_by: review_category_crud_rq.header.user_name, // Assuming this comes from header
+        created_by: review_category_crud_rq.header.user_name, 
+        modified_by: review_category_crud_rq.header.user_name, 
       });
     }
 
