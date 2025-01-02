@@ -28,6 +28,8 @@ const Header = () => {
         return 'My Profile';
       case '/chatreply':
         return 'Customer Review Management';
+      case '/reviews':
+        return 'Reviews';
       default:
         return 'Dashboard';
     }
