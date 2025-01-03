@@ -6,9 +6,13 @@ import {
     CircularProgress,
     Divider,
     Grid,
+    Button,
 } from "@mui/material";
 import { format } from "date-fns";
 import StarIcon from "@mui/icons-material/Star";
+import { motion } from "framer-motion";
+import Star from "../assets/Star.png";
+
 
 const FullReviewModal = ({ open, onClose, review }) => {
     const [fullReviewDetails, setFullReviewDetails] = useState(null);
@@ -49,7 +53,6 @@ const FullReviewModal = ({ open, onClose, review }) => {
         }
     }, [open, review]);
 
-
     return (
         <Modal open={open} onClose={onClose} aria-labelledby="review-modal-title">
             <Box
@@ -59,14 +62,27 @@ const FullReviewModal = ({ open, onClose, review }) => {
                     left: "50%",
                     transform: "translate(-50%, -50%)",
                     width: "90%",
-                    maxWidth: 600,
-                    bgcolor: "background.paper",
-                    borderRadius: 3,
-                    boxShadow: 24,
+                    maxWidth: 800,
+                    bgcolor: "#ddf4f7",
+                    borderRadius: 5,
                     p: 4,
                     maxHeight: "85vh",
                     overflowY: "auto",
                     animation: "fadeIn 0.3s ease-in-out",
+                    "&::-webkit-scrollbar": {
+                        width: "8px",
+                    },
+                    "&::-webkit-scrollbar-track": {
+                        backgroundColor: "#f1f1f1", 
+                        borderRadius: "50px",
+                    },
+                    "&::-webkit-scrollbar-thumb": {
+                        backgroundColor: "#888", 
+                        borderRadius: "50px", 
+                    },
+                    "&::-webkit-scrollbar-thumb:hover": {
+                        backgroundColor: "#555", 
+                    },
                 }}
             >
                 {loading ? (
@@ -93,20 +109,24 @@ const FullReviewModal = ({ open, onClose, review }) => {
                     </Typography>
                 ) : fullReviewDetails ? (
                     <>
-                        {/* <Typography
+                        <Typography
                             variant="h5"
                             fontWeight="bold"
                             gutterBottom
                             id="review-modal-title"
                             sx={{
                                 textAlign: "center",
-                                background: "linear-gradient(90deg, #2196F3, #21CBF3)",
+                                background: "#000",
                                 WebkitBackgroundClip: "text",
                                 WebkitTextFillColor: "transparent",
                                 mb: 2,
+                                fontSize: "2rem",
+                                textTransform: "uppercase",
+                                letterSpacing: "2px",
                             }}
                         >
-                        </Typography> */}
+                                {review?.user_name}  
+                        </Typography>
                         <Divider sx={{ mb: 2 }} />
                         <Box mb={3}>
                             <Typography
@@ -126,15 +146,26 @@ const FullReviewModal = ({ open, onClose, review }) => {
                                         Overall Rating:
                                     </Typography>
                                 </Grid>
-                                <Grid item>
+                                <Grid item
+                                    sx={{ display: "flex" }}
+                                >
                                     {[...Array(fullReviewDetails.overall_rating)].map((_, i) => (
-                                        <StarIcon
+                                        <motion.div
                                             key={i}
-                                            sx={{
-                                                color: "#FFD700",
-                                                fontSize: 15,
-                                            }}
-                                        />
+                                            whileHover={{ scale: 1.3 }}
+                                            transition={{ duration: 0.2 }}
+                                        >
+                                            <img
+                                                src={Star}
+                                                alt="star"
+                                                style={{
+                                                    cursor: "pointer",
+                                                    width: 40,
+                                                    height: 40,
+                                                    padding: 3
+                                                }}
+                                            />
+                                        </motion.div>
                                     ))}
                                 </Grid>
                             </Grid>
@@ -153,14 +184,14 @@ const FullReviewModal = ({ open, onClose, review }) => {
                             )}
                         </Box>
                         <Divider sx={{ mb: 3 }} />
-                        <Typography
+                        {/* <Typography
                             variant="h6"
                             fontWeight="bold"
                             gutterBottom
                             sx={{ color: "text.primary" }}
                         >
-                            Category-wise Reviews
-                        </Typography>
+                             Reviews
+                        </Typography> */}
                         {fullReviewDetails.category_wise_reviews.map((category, index) => (
                             <Box
                                 key={index}
@@ -175,7 +206,7 @@ const FullReviewModal = ({ open, onClose, review }) => {
                                     boxShadow: 1,
                                     transition: "all 0.3s ease",
                                     "&:hover": {
-                                        boxShadow: 3,
+                                        boxShadow: 4,
                                     },
                                 }}
                             >
@@ -183,8 +214,37 @@ const FullReviewModal = ({ open, onClose, review }) => {
                                     variant="subtitle1"
                                     fontWeight="bold"
                                     gutterBottom
+                                    display="flex"
                                 >
                                     {category.category_name}
+                                    {category.reviews.map((catReview, idx) => (
+                                        <Typography variant="body2" key={idx}>
+                                            <Typography
+                                                component="span"
+                                                color="primary"
+                                                position="absolute"
+                                                left="65%"
+                                            >
+                                                {[1, 2, 3, 4, 5].map((star) => (
+                                                    catReview.rating >= star ? (
+                                                        <img
+                                                            key={star}
+                                                            src={Star}
+                                                            alt="star"
+                                                            style={{
+                                                                cursor: "pointer",
+                                                                width: 40,
+                                                                height: 40,
+                                                                padding: 3
+
+                                                            }}
+                                                        />
+                                                    ) : (<span key={star}></span>
+                                                    )
+                                                ))}
+                                            </Typography>
+                                        </Typography>
+                                    ))}
                                 </Typography>
                                 <Typography
                                     variant="body2"
@@ -197,26 +257,29 @@ const FullReviewModal = ({ open, onClose, review }) => {
                                 {category.reviews.map((catReview, idx) => (
                                     <Typography variant="body2" key={idx}>
                                         - {catReview.review}{" "}
-                                        <Typography
-                                            component="span"
-                                            color="primary"
-                                        >
-                                            {[1, 2, 3, 4, 5].map((star) => (
-                                                <StarIcon
-                                                    key={star}
-                                                    // onClick={() => handleCategoryRating(index, star)}
-                                                    sx={{
-                                                        cursor: "pointer",
-                                                        color: catReview.rating >= star ? "#fdd835" : "#e0e0e0",
-                                                        fontSize: 28,
-                                                    }}
-                                                />
-                                            ))}
-                                        </Typography>
                                     </Typography>
                                 ))}
                             </Box>
                         ))}
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={onClose}
+                            sx={{
+                                mt: 3,
+                                fontWeight: "bold",
+                                padding: "10px 20px",
+                                borderRadius: 2,
+                                textTransform: "uppercase",
+                                transition: "all 0.3s ease",
+                                "&:hover": {
+                                    backgroundColor: "blue",
+                                    boxShadow: "0 8px 15px rgba(0, 0, 0, 0.2)",
+                                },
+                            }}
+                        >
+                            Close
+                        </Button>
                     </>
                 ) : (
                     <Typography

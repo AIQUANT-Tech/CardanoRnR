@@ -15,6 +15,8 @@ import WriteReviewModal from "./WriteReviewModal";
 import FullReviewModal from "./FullReviewModal";
 import StarIcon from "@mui/icons-material/Star";
 import { format } from "date-fns";
+import Star from "../assets/Star.png";
+
 
 const debounce = (func, delay) => {
     let timeout;
@@ -226,6 +228,31 @@ const RatingReviewModal = ({
                                     </Grid>
 
                                     <Grid item xs={12} md={10} position="relative">
+                                        {/* Rating as Stars */}
+                                        <Box
+                                            bottom={19}
+                                            display="flex"
+                                            alignItems="center"
+                                            position="relative"
+                                            left="75%"
+                                        >
+                                            {[1, 2, 3, 4, 5].map((star) => (
+                                                review.rating >= star ? (
+                                                    <img
+                                                        key={star}
+                                                        src={Star}
+                                                        alt="star"
+                                                        style={{
+                                                            cursor: "pointer",
+                                                            width: 32,
+                                                            height: 32,
+
+                                                        }}
+                                                    />
+                                                ) : (<span key={star}></span>
+                                                )
+                                            ))}
+                                        </Box>
                                         <Typography variant="h10" fontWeight="bold">
                                             {review.review}
                                         </Typography>
@@ -241,27 +268,6 @@ const RatingReviewModal = ({
                                                 )}
                                             </Typography>
                                         )}
-
-                                        {/* Rating as Stars */}
-                                        <Box
-                                            bottom={19}
-                                            left={8}
-                                            display="flex"
-                                            alignItems="center"
-                                        >
-                                            {[1, 2, 3, 4, 5].map((star) => (
-                                                <StarIcon
-                                                    key={star}
-                                                    sx={{
-                                                        color:
-                                                            star <= review.rating
-                                                                ? "#fdd835"
-                                                                : "#e0e0e0",
-                                                        fontSize: 20,
-                                                    }}
-                                                />
-                                            ))}
-                                        </Box>
                                     </Grid>
                                 </Grid>
                             </CardContent>
@@ -288,7 +294,7 @@ const RatingReviewModal = ({
                     variant="outlined"
                     color="secondary"
                     onClick={onClose}
-                    sx={{ textTransform: "none", borderRadius: 20}}
+                    sx={{ textTransform: "none", borderRadius: 20 }}
                 >
                     {closeButtonText || "Cancel"}
                 </Button>
