@@ -2,11 +2,14 @@ import React, { useEffect, useState } from "react";
 import { Box, Typography, Button, LinearProgress, Grid } from "@mui/material";
 import StarIcon from "@mui/icons-material/Star";
 import GuestReviews from "./guestReviews";
+import { useParams } from 'react-router-dom';
+
 
 const ReviewsPage = () => {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [showAllCategories, setShowAllCategories] = useState(false);
+    const { companyName } = useParams();
 
     useEffect(() => {
         const fetchData = async () => {
@@ -41,6 +44,10 @@ const ReviewsPage = () => {
 
         fetchData();
     }, []);
+
+    useEffect(() => {
+        localStorage.setItem('companyName', companyName);
+    }, [companyName]);
 
     if (loading) {
         return (
@@ -98,7 +105,13 @@ const ReviewsPage = () => {
                     Ratings & Reviews
                 </Typography>
                 <Typography variant="h5" align="center" fontWeight="bold" gutterBottom>
-                    {guestOverallRating} <StarIcon sx={{ color: "#ffa500" }} /> Good
+                    {guestOverallRating}{" "}
+                    <StarIcon sx={{ color: "#ffa500", height: 40, width: 40 }} />{" "}
+                    {guestOverallRating >= 4
+                        ? "Good"
+                        : guestOverallRating >= 3
+                            ? "Average"
+                            : "Bad"}
                 </Typography>
                 <Typography align="center" color="textSecondary">{totalReviews} Real Reviews</Typography>
 
@@ -122,7 +135,7 @@ const ReviewsPage = () => {
                                 {(reputation_score * 20).toFixed(2)}<br></br>/100
                             </Typography>
                         </Box>
-                        <Typography color="textSecondary" sx={{padding: 5}}>
+                        <Typography color="textSecondary" sx={{ padding: 5 }}>
                             {totalReviews} verified reviews
                         </Typography>
                     </Grid>

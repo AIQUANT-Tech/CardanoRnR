@@ -23,6 +23,7 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
   const [categories, setCategories] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [error, setError] = useState("");  // State for error message
 
   useEffect(() => {
     if (open) {
@@ -95,15 +96,21 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
   };
 
   const handleSubmit = async () => {
+    if (selectedCategories.length === 0) {
+      setError("Please select at least one category before submitting.");
+      return; // Prevent submission if no category is selected
+    }
+    setError(""); // Reset error message when form is valid
+
     try {
       const reviewData = {
         new_review_rating_create_rq: {
           header: {
-            user_name: "End User", 
-            product: "rnr", 
+            user_name: "End User",
+            product: "rnr",
             request_type: "CREATE_NEW_REVIEW_RATING",
           },
-          user_email_id: email, 
+          user_email_id: email,
           overall_rating: overallRating.toString(),
           overall_review: overallReview,
           category_wise_review_rating: selectedCategories.map((category) => ({
@@ -126,7 +133,7 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
         const data = await response.json();
         console.log("Review submitted successfully:", data);
         setOpen(false);
-        setOpenSnackbar(true); 
+        setOpenSnackbar(true);
       } else {
         const errorData = await response.json();
         console.error("Error submitting review:", errorData);
@@ -134,8 +141,7 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
     } catch (error) {
       console.error("Error:", error);
     }
-    setEmail(""); 
-    window.location.reload();
+    setEmail("");
   };
 
   const handleClose = () => {
@@ -251,7 +257,7 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
                         sx={{
                           cursor: "pointer",
                           color: category.rating >= star ? "#fdd835" : "#e0e0e0",
-                          fontSize: 28,
+                          fontSize: 32,
                         }}
                       />
                     ))}
@@ -272,6 +278,13 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
                 </Box>
               ))}
             </>
+          )}
+
+          {/* Error Message (styled with Alert) */}
+          {error && (
+            <Alert severity="error" sx={{ marginTop: 2 }}>
+              {error}
+            </Alert>
           )}
         </DialogContent>
         <DialogActions>
@@ -311,7 +324,9 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
         <Alert
           onClose={handleCloseSnackbar}
           severity="success"
-          sx={{ width: "100%" }}
+          sx={{ width: "100%",
+                fontSize: "40"
+           }}
         >
           Review submitted successfully!
         </Alert>

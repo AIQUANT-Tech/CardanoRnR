@@ -54,7 +54,7 @@ export const createReview = async (req, res) => {
     // Fetch all valid categories
     const validCategories = await ReviewCategory.find({
       category_id: { $in: categoryIds }
-    });
+    });    
 
     if (validCategories.length !== categoryIds.length) {
       return res
