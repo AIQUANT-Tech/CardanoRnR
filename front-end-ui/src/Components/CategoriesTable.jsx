@@ -84,14 +84,16 @@ const CategoriesTable = () => {
   // Handle adding new categories
   const handleAddCategories = async (newCategories) => {   
 
+   const user = JSON.parse(localStorage.getItem('user'));
+
     const categoryList = newCategories.map((category, index) => ({
       category_id: index + 1,
       category_name: category.category_name,
       category_desc: category.category_desc,
       Status: category.Status,
+      created_by: user.display_name, 
+      modified_by: user.display_name,
     }));
-
-   const user = JSON.parse(localStorage.getItem('user'));
 
     const payload = {
       review_category_crud_rq: {
@@ -125,7 +127,8 @@ const CategoriesTable = () => {
       console.log('Categories added successfully:', result);
 
       // Refresh data after adding new categories
-      setCategoriesData((prevData) => [...prevData, ...categoryList]);
+      await setCategoriesData((prevData) => [...prevData, ...categoryList]);
+
     } catch (error) {
       console.error('Error adding categories:', error);
     }
@@ -276,7 +279,7 @@ const CategoriesTable = () => {
                     <TableCell>{row.Status}</TableCell>
                     <TableCell>
                       <EditIcon
-                        className="action-icon"
+                        className="action-icon" 
                         onClick={() => {
                           setSelectedCategory(row);
                           setIsEditModalOpen(true);

@@ -1,12 +1,20 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { IconButton, Typography } from '@mui/material';
 import './styles.css';
 
 const Header = () => {
   const location = useLocation();
-
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem("authToken");
+
+    if (!token) {
+      navigate("/login");
+    }
+  }, [navigate]);
+
 
   const handleClick = () => {
     navigate("/profile");
