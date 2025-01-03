@@ -13,7 +13,6 @@ import RatingReviewModal from "../../Components/RatingReviewModal";
 import WriteReviewModal from "../../Components/WriteReviewModal";
 import FullReviewModal from "../../Components/FullReviewModal";
 import { format } from 'date-fns';
-import StarIcon from "@mui/icons-material/Star";
 import Star from "../../assets/Star.png";
 
 const GuestReviews = () => {
@@ -223,8 +222,11 @@ const GuestReviews = () => {
 
                                 {review.business_reply && (
                                     <Box mt={2} p={2} sx={{ backgroundColor: "#f9f9f9", borderRadius: 2 }}>
-                                        <Typography variant="body2" fontWeight="bold" color="primary">
-                                            <Avatar></Avatar>{companyName}:
+                                        <Typography variant="body2" fontWeight="bold" color="primary" sx={{ display: "flex" }}>
+                                            <Avatar></Avatar>
+                                            <Typography variant="body2" fontWeight="bold" color="primary" sx={{ fontSize : 18, display: "flex", alignContent: "center", flexWrap: "wrap", paddingLeft: 1 }}>
+                                                {companyName}
+                                            </Typography>
                                         </Typography>
                                         <Typography variant="body2">{review.business_reply}</Typography>
                                     </Box>

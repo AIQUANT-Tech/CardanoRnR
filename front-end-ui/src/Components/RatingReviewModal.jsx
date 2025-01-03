@@ -13,7 +13,6 @@ import {
 import { EditIcon } from "lucide-react";
 import WriteReviewModal from "./WriteReviewModal";
 import FullReviewModal from "./FullReviewModal";
-import StarIcon from "@mui/icons-material/Star";
 import { format } from "date-fns";
 import Star from "../assets/Star.png";
 
