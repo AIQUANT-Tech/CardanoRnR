@@ -26,6 +26,8 @@ import Header from "../../Components/Header";
 import Pagination from "../../Components/Custom-Pagination";
 import axios from "axios";
 import ChatPanel from "../../Components/Message";
+import "./ReviewReply.css";
+import "../../Components/styles.css";
 
 const CustomerReviewManagement = () => {
   const [selectedReview, setSelectedReview] = useState(null);
@@ -198,10 +200,10 @@ const CustomerReviewManagement = () => {
 
       if (response.data.review_reply_rq.status === "success") {
         // Clear the reply content after sending
-        setReplyContent(""); 
+        setReplyContent("");
 
         // Fetch the updated reply thread
-        await fetchReplyThread(selectedReview.id); 
+        await fetchReplyThread(selectedReview.id);
 
         // Update the review's response status to 'Sent'
         const updatedReviews = reviews.map((review) =>
@@ -285,10 +287,18 @@ const CustomerReviewManagement = () => {
             sx={{
               height: "calc(100vh - 64px)",
               overflow: "auto",
+              paddingRight: "2px",
             }}
           >
             {/* Search Field */}
-            <Box mb={6} sx={{ paddingTop: "16px", width: "50%" }}>
+            <Box
+              mb={6}
+              sx={{
+                margin: 0, // Set margin to 0 to ensure no margin
+                paddingTop: "16px", // Padding at the top
+                width: "40%", // Width remains as defined
+              }}
+            >
               <TextField
                 fullWidth
                 variant="outlined"
@@ -326,7 +336,7 @@ const CustomerReviewManagement = () => {
                         strokeWidth="2"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        class="lucide lucide-search"
+                        className="lucide lucide-search" // Changed to className for React
                       >
                         <circle cx="11" cy="11" r="8" />
                         <path d="m21 21-4.3-4.3" />
@@ -337,18 +347,27 @@ const CustomerReviewManagement = () => {
               />
             </Box>
 
-            <Box display="flex" justifyContent="space-between" mb={2}>
+            <Box
+              display="flex"
+              flexDirection={"row"}
+              alignItems={"flex-end"}
+              justifyContent="space-between"
+              mb={2}
+              sx={{ paddingTop: "5px", marginBottom: "5px" }}
+            >
               <Typography variant="body2" color="textSecondary">
                 Total: {reviews.length} Reviews
               </Typography>
-              <Box display="flex" gap={2}>
+              <Box display="flex" gap={4}>
                 <Select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
                   variant="outlined"
                   size="small"
                 >
-                  <MenuItem value="Date Created">Sort by: Date Created</MenuItem>
+                  <MenuItem value="Date Created">
+                    Sort by: Date Created
+                  </MenuItem>
                   <MenuItem value="Rating Descending">
                     Sort by: Rating High to Low
                   </MenuItem>
@@ -369,41 +388,135 @@ const CustomerReviewManagement = () => {
               </Box>
             </Box>
 
-            <TableContainer component={Paper}>
-              <Table>
+            <TableContainer
+              component={Paper}
+              sx={{
+                margin: 0, // No margin around the TableContainer
+                paddingRight: "2px",
+                width: "100%", // Full width of the container
+                height: "auto", // Adjust height based on content
+              }}
+            >
+              <Table
+                sx={{
+                  tableLayout: "fixed", // Ensures fixed column widths
+                  width: "100%", // Full width\
+                  height: "auto", // Adjust height based on content
+                }}
+              >
                 <TableHead>
                   <TableRow>
-                    <TableCell width={"142"} align="center">
+                    <TableCell
+                      align="center"
+                      sx={{
+                        width: "142px", // Fixed width
+                        padding: "8px", // Minimal padding
+                        whiteSpace: "nowrap", // Prevent text wrapping
+                      }}
+                    >
                       Customer Name
                     </TableCell>
-                    <TableCell align="center">Rating</TableCell>
-                    <TableCell align="center">Review</TableCell>
-                    <TableCell width={"120"} align="center">
+                    <TableCell
+                      align="center"
+                      sx={{
+                        width: "100px", // Adjust as needed
+                        padding: "8px",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      Rating
+                    </TableCell>
+                    <TableCell
+                      align="center"
+                      sx={{
+                        width: "auto", // Fills remaining space
+                        padding: "8px",
+                        textAlign: "center", // Aligns left if review text is long
+                      }}
+                    >
+                      Review
+                    </TableCell>
+                    <TableCell
+                      align="center"
+                      sx={{
+                        width: "120px", // Fixed width for status
+                        padding: "8px",
+                      }}
+                    >
                       Response Status
                     </TableCell>
-                    <TableCell />
+                    <TableCell
+                      sx={{
+                        width: "50px", // Adjust width for icons
+                        padding: "8px",
+                        textAlign: "center", // Center-align the icon
+                      }}
+                    />
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {currentReviews.map((review) => (
                     <TableRow key={review.id}>
-                      <TableCell>{review.user_display_name}</TableCell>
-                      <TableCell align="center">{review.rating}</TableCell>
-                      <TableCell>{review.review}</TableCell>
-                      <TableCell align="center">
+                      <TableCell
+                        sx={{
+                          padding: "8px", // Minimal padding
+                          textAlign: "center", // Center-align text
+                        }}
+                      >
+                        {review.user_display_name}
+                      </TableCell>
+                      <TableCell
+                        align="center"
+                        sx={{
+                          padding: "8px",
+                        }}
+                      >
+                        {review.rating}
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          padding: "8px", // Minimal padding for compactness
+                          textAlign: "left", // Align text to the left for readability
+                          height: "75px", // Fixed height for the cell
+                          overflow: "hidden", // Hide text that overflows the cell
+                          textOverflow: "ellipsis", // Show ellipsis for long text
+                          whiteSpace: "nowrap", // Prevent text wrapping
+                        }}
+                      >
+                        {review.review}
+                      </TableCell>
+                      <TableCell
+                        align="center"
+                        sx={{
+                          padding: "8px",
+                        }}
+                      >
                         <Box
                           display="inline-block"
                           px={2}
                           py={0.5}
-                          color={review.review_responded ? "success.main" : "error.main"}
-                          width={"150"}
+                          sx={{
+                            color: review.review_responded
+                              ? "success.main"
+                              : "error.main", // Dynamically set text color
+                            borderRadius: "8px", // Rounded look
+                            backgroundColor: review.review_responded
+                              ? "#e8f5e9" // Light green for "Sent"
+                              : "#ffebee", // Light red for "Un Sent"
+                          }}
                         >
                           {review.review_responded ? "Sent" : "Un Sent"}
                         </Box>
                       </TableCell>
-                      <TableCell>
+                      <TableCell
+                        sx={{
+                          padding: "8px",
+                          textAlign: "center",
+                          height: "20px", // Center-align the icon
+                        }}
+                      >
                         <IconButton onClick={() => handleChatOpen(review)}>
-                          <MessageCircle size={20} />
+                          <MessageCircle size={20} color="black" />
                         </IconButton>
                       </TableCell>
                     </TableRow>
@@ -411,12 +524,20 @@ const CustomerReviewManagement = () => {
                 </TableBody>
               </Table>
             </TableContainer>
-            <Pagination
-              currentPage={currentPage}
-              totalItems={reviews.length}
-              itemsPerPage={itemsPerPage}
-              onPageChange={handlePageChange}
-            />
+            <Box
+  sx={{
+    display: "flex", // Use flexbox
+    justifyContent: "flex-end", // Align pagination to the right
+    marginRight: "5px", //
+  }}
+>
+  <Pagination
+    currentPage={currentPage}
+    totalItems={reviews.length}
+    itemsPerPage={itemsPerPage}
+    onPageChange={handlePageChange}
+  />
+</Box>
           </Box>
           {/* Chat Panel */}
           {chatPanelOpen && (

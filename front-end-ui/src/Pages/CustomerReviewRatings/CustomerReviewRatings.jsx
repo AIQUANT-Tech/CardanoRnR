@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
+  Grid,
   Table,
   TableBody,
   TableCell,
@@ -16,29 +17,45 @@ import {
   Alert,
   useMediaQuery,
   useTheme,
+  InputAdornment,
+  TextField,
 } from "@mui/material";
 import { Filter } from "lucide-react";
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
-import Pagination from "../../Components/Custom-Pagination"; // Import Pagination
+import Pagination from "../../Components/Custom-Pagination";
 import axios from "axios";
+import "./CustomerReviewRatings.css";
 
-const CustomerReviewRatings = () => {
+const CustomerReviewManagement = () => {
   const [selectedReview, setSelectedReview] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [replyThread, setReplyThread] = useState([]);
   const [replyContent, setReplyContent] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isThreadLoading, setIsThreadLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
     severity: "success",
   });
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 4;  // Set items per page to 4
+  const [sortBy, setSortBy] = useState("Date Created");
+  const [filterStatus, setFilterStatus] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
+  const itemsPerPage = 4;
+  const debounceTimeout = 200;
 
-  // Fetch reviews
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, debounceTimeout);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [searchQuery]);
+
   const fetchReviews = async () => {
     try {
       setIsLoading(true);
@@ -54,7 +71,35 @@ const CustomerReviewRatings = () => {
           },
         }
       );
-      setReviews(response.data.review_rating_info_rs.review_rating_info_by_user);
+
+      let reviews =
+        response.data.review_rating_info_rs.review_rating_info_by_user;
+
+      if (debouncedSearchQuery) {
+        reviews = reviews.filter((review) =>
+          review.user_display_name
+            .toLowerCase()
+            .includes(debouncedSearchQuery.toLowerCase())
+        );
+      }
+
+      if (sortBy === "Date Created") {
+        reviews = reviews.sort(
+          (a, b) => new Date(b.created_at) - new Date(a.created_at)
+        );
+      } else if (sortBy === "Rating Descending") {
+        reviews = reviews.sort((a, b) => b.rating - a.rating);
+      } else if (sortBy === "Rating Ascending") {
+        reviews = reviews.sort((a, b) => a.rating - b.rating);
+      }
+
+      if (filterStatus === "Sent") {
+        reviews = reviews.filter((review) => review.review_responded === true);
+      } else if (filterStatus === "Un Sent") {
+        reviews = reviews.filter((review) => review.review_responded === false);
+      }
+
+      setReviews(reviews);
     } catch (err) {
       handleSnackbar("Failed to fetch reviews", "error");
     } finally {
@@ -62,37 +107,9 @@ const CustomerReviewRatings = () => {
     }
   };
 
-  // Fetch reply thread
-  const fetchReplyThread = async (reviewId) => {
-    try {
-      setIsThreadLoading(true);
-      const response = await axios.post("http://localhost:8080/api/reply/ReplyToReview", {
-        review_reply_thread_rq: {
-          header: {
-            user_name: selectedReview.user_id,
-            product: "rnr",
-            request_type: "REVIEW_RATING_INFO",
-          },
-          review_id: selectedReview.review_id,
-        },
-      });
-      setReplyThread(response.data.review_reply_rs.review_reply_info);
-    } catch (err) {
-      handleSnackbar("Failed to fetch reply thread", "error");
-    } finally {
-      setIsThreadLoading(false); 
-    }
-  };
-
-
-  // Handle snackbar
-  const handleSnackbar = (message, severity) => {
-    setSnackbar({
-      open: true,
-      message,
-      severity,
-    });
-  };
+  useEffect(() => {
+    fetchReviews();
+  }, [sortBy, filterStatus, debouncedSearchQuery]);
 
   const handlePageChange = (pageNum) => {
     setCurrentPage(pageNum);
@@ -101,116 +118,143 @@ const CustomerReviewRatings = () => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentReviews = reviews.slice(startIndex, startIndex + itemsPerPage);
 
-  useEffect(() => {
-    fetchReviews();
-  });
+  const handleSnackbar = (message, severity) => {
+    setSnackbar({
+      open: true,
+      message,
+      severity,
+    });
+  };
 
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm")); 
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   return (
-    <Box display="flex" width="90vw" height="100vh">
-      {/* Sidebar */}
-      <Box height="100vh" position="fixed" width={isMobile ? "100%" : "20%"}>
+    <Box display="flex" width="100vw" height="100vh" bgcolor="white">
+      <Box
+        component="aside"
+        width={isMobile ? "100%" : "240px"} // Fixed sidebar width
+        height="100vh"
+        position="fixed"
+        bgcolor="lightgray"
+        overflow="auto"
+        zIndex={1200}
+      >
         <Sidebar />
       </Box>
 
       <Box
-        ml={isMobile ? 0 : "20%"}
-        width={isMobile ? "100%" : "80%"}
-        display="flex"
-        flexDirection="column"
+        component="main"
+        ml={isMobile ? 0 : "240px"}
+        width={isMobile ? "100%" : "calc(100% - 240px)"}
         height="100vh"
         overflow="hidden"
+        display="flex"
+        flexDirection="column"
       >
         <Box
+          component="header"
+          height="64px" // Fixed header height
+          width="100%"
           position="fixed"
-          width="80%"
-          zIndex={1000}
           bgcolor="white"
-          sx={{ height: "64px" }} // Fixed header height
+          zIndex={1100}
+          display="flex"
+          alignItems="center"
+          boxShadow={1}
         >
           <Header />
         </Box>
 
-        {/* Main Content Area */}
         <Box
-          mt="64px"  // Adjust for header height
-          display="flex"
+          mt="64px" // Account for header height
           flex={1}
-          flexDirection={isMobile ? "column" : "row"} // Stack on mobile
           overflow="auto"
+          px={2}
+          py={2}
         >
           <Box
-            flex={selectedReview ? (isMobile ? 1 : 0.7) : 1}
-            transition="all 0.3s ease"
-            boxShadow={1}
-            sx={{
-              height: "calc(100vh - 64px)", // Adjust height to take the remaining space
-              overflow: "auto",
-            }}
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            mb={2}
+            flexWrap="wrap"
           >
-
-            <Box display="flex" justifyContent="space-between" mb={2}>
-              <Typography variant="body2" color="textSecondary">
-                Total: {reviews.length} Reviews
-              </Typography>
-              <Box display="flex" gap={2}>
-                <Select defaultValue="Date Created" variant="outlined" size="small">
-                  <MenuItem value="Date Created">Sort by: Date Created</MenuItem>
-                </Select>
-                <Button variant="outlined" startIcon={<Filter size={16} />}>
-                  Filter
-                </Button>
-              </Box>
-            </Box>
-
-            <TableContainer component={Paper}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Customer Name</TableCell>
-                    <TableCell>Rating</TableCell>
-                    <TableCell>Review</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {currentReviews.map((review) => (
-                    <TableRow key={review.id} hover>
-                      <TableCell>{review.user_display_name}</TableCell>
-                      <TableCell>{review.rating}</TableCell>
-                      <TableCell>{review.review}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-
-            <Pagination
-              currentPage={currentPage}
-              totalItems={reviews.length}
-              itemsPerPage={itemsPerPage}
-              onPageChange={handlePageChange}
+            <TextField
+              fullWidth
+              variant="outlined"
+              placeholder="Search by Customer Name"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              size="small"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Filter />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ maxWidth: "300px", mb: 2 }}
             />
+            <Box display="flex" gap={2}>
+              <Select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                variant="outlined"
+                size="small"
+              >
+                <MenuItem value="Date Created">Date Created</MenuItem>
+                <MenuItem value="Rating Descending">Rating High to Low</MenuItem>
+                <MenuItem value="Rating Ascending">Rating Low to High</MenuItem>
+              </Select>
+              <Select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                variant="outlined"
+                size="small"
+              >
+                <MenuItem value="All">All</MenuItem>
+                <MenuItem value="Sent">Sent</MenuItem>
+                <MenuItem value="Un Sent">Un Sent</MenuItem>
+              </Select>
+            </Box>
           </Box>
+
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Customer Name</TableCell>
+                  <TableCell align="center">Rating</TableCell>
+                  <TableCell align="center">Review</TableCell>
+                  <TableCell align="center">Response Status</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {currentReviews.map((review) => (
+                  <TableRow key={review.id}>
+                    <TableCell>{review.user_display_name}</TableCell>
+                    <TableCell align="center">{review.rating}</TableCell>
+                    <TableCell>{review.review}</TableCell>
+                    <TableCell align="center">
+                      {review.review_responded ? "Sent" : "Un Sent"}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          <Pagination
+            currentPage={currentPage}
+            totalItems={reviews.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChange}
+          />
         </Box>
       </Box>
-
-      {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-      >
-        <Alert
-          severity={snackbar.severity}
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 };
 
-export default CustomerReviewRatings;
+export default CustomerReviewManagement;
