@@ -1,0 +1,16 @@
+.Custom-pagination {
+    display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-content: flex-end;
+        justify-content: flex-end;
+        align-items: center;
+  }
+  #root {
+    margin: 0;
+  }
+  
+  #search-container {
+    padding-top: 20px;
+  }
+  

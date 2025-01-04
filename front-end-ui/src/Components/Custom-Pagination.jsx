@@ -36,33 +36,17 @@ const Pagination = ({
   };
 
   return (
-    <div className="p-4 flex justify-between items-center">
-      <div className="text-sm text-gray-600">
-        Showing data {startItem} to {endItem} of {totalItems} entries
-      </div>
-      <div className="flex gap-2">
-        {getPageNumbers().map((pageNum, index, array) => {
-          if (index > 0 && pageNum - array[index - 1] > 1) {
-            return (
-              <React.Fragment key={`ellipsis-${index}`}>
-                <span className="px-3 py-1">...</span>
-                <button
-                  className={`px-3 py-1 border rounded hover:bg-gray-50 ${
-                    currentPage === pageNum
-                      ? "bg-rose-100 text-rose-600 border-rose-200"
-                      : ""
-                  }`}
-                  onClick={() => onPageChange(pageNum)}
-                >
-                  {pageNum}
-                </button>
-              </React.Fragment>
-            );
-          }
-
-          return (
+    <div className="flex justify-between items-center">
+  <div className="text-sm text-gray-600">
+    Showing data {startItem} to {endItem} of {totalItems} entries
+  </div>
+  <div className="flex gap-2">
+    {getPageNumbers().map((pageNum, index, array) => {
+      if (index > 0 && pageNum - array[index - 1] > 1) {
+        return (
+          <React.Fragment key={`ellipsis-${index}`}>
+            <span className="px-3 py-1">...</span>
             <button
-              key={pageNum}
               className={`px-3 py-1 border rounded hover:bg-gray-50 ${
                 currentPage === pageNum
                   ? "bg-rose-100 text-rose-600 border-rose-200"
@@ -72,10 +56,27 @@ const Pagination = ({
             >
               {pageNum}
             </button>
-          );
-        })}
-      </div>
-    </div>
+          </React.Fragment>
+        );
+      }
+
+      return (
+        <button
+          key={pageNum}
+          className={`px-3 py-1 border rounded hover:bg-gray-50 ${
+            currentPage === pageNum
+              ? "bg-rose-100 text-rose-600 border-rose-200"
+              : ""
+          }`}
+          onClick={() => onPageChange(pageNum)}
+        >
+          {pageNum}
+        </button>
+      );
+    })}
+  </div>
+</div>
+
   );
 };
 
