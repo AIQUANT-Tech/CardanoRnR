@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
-  Grid,
   Table,
   TableBody,
   TableCell,
@@ -17,21 +16,17 @@ import {
   Alert,
   useMediaQuery,
   useTheme,
-  InputAdornment,
   TextField,
+  InputAdornment,
 } from "@mui/material";
-import { Filter } from "lucide-react";
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
 import Pagination from "../../Components/Custom-Pagination";
 import axios from "axios";
-import "./CustomerReviewRatings.css";
+import "../../Components/styles.css";
 
 const CustomerReviewManagement = () => {
-  const [selectedReview, setSelectedReview] = useState(null);
   const [reviews, setReviews] = useState([]);
-  const [replyThread, setReplyThread] = useState([]);
-  const [replyContent, setReplyContent] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -41,10 +36,11 @@ const CustomerReviewManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState("Date Created");
   const [filterStatus, setFilterStatus] = useState("All");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(""); // State for search query
   const itemsPerPage = 4;
-  const debounceTimeout = 200;
+  const debounceTimeout = 200; // Time delay for debounce
 
+  // Debounced search
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -52,10 +48,11 @@ const CustomerReviewManagement = () => {
     }, debounceTimeout);
 
     return () => {
-      clearTimeout(timer);
+      clearTimeout(timer); // Clean up on each change
     };
   }, [searchQuery]);
 
+  // Fetch reviews
   const fetchReviews = async () => {
     try {
       setIsLoading(true);
@@ -75,6 +72,7 @@ const CustomerReviewManagement = () => {
       let reviews =
         response.data.review_rating_info_rs.review_rating_info_by_user;
 
+      // Filter reviews based on search query
       if (debouncedSearchQuery) {
         reviews = reviews.filter((review) =>
           review.user_display_name
@@ -83,6 +81,7 @@ const CustomerReviewManagement = () => {
         );
       }
 
+      // Sort reviews
       if (sortBy === "Date Created") {
         reviews = reviews.sort(
           (a, b) => new Date(b.created_at) - new Date(a.created_at)
@@ -93,6 +92,7 @@ const CustomerReviewManagement = () => {
         reviews = reviews.sort((a, b) => a.rating - b.rating);
       }
 
+      // Filter reviews by response status
       if (filterStatus === "Sent") {
         reviews = reviews.filter((review) => review.review_responded === true);
       } else if (filterStatus === "Un Sent") {
@@ -109,7 +109,7 @@ const CustomerReviewManagement = () => {
 
   useEffect(() => {
     fetchReviews();
-  }, [sortBy, filterStatus, debouncedSearchQuery]);
+  }, [sortBy, filterStatus, debouncedSearchQuery]); // Depend on the debounced search query
 
   const handlePageChange = (pageNum) => {
     setCurrentPage(pageNum);
@@ -131,128 +131,272 @@ const CustomerReviewManagement = () => {
 
   return (
     <Box display="flex" width="100vw" height="100vh" bgcolor="white">
-      <Box
-        component="aside"
-        width={isMobile ? "100%" : "240px"} // Fixed sidebar width
-        height="100vh"
-        position="fixed"
-        bgcolor="lightgray"
-        overflow="auto"
-        zIndex={1200}
-      >
+      {/* Sidebar */}
+      <Box height="100vh" position="fixed" width={isMobile ? "100%" : "20%"}>
         <Sidebar />
       </Box>
 
       <Box
-        component="main"
-        ml={isMobile ? 0 : "240px"}
-        width={isMobile ? "100%" : "calc(100% - 240px)"}
-        height="100vh"
-        overflow="hidden"
+        ml={isMobile ? 0 : "20%"}
+        width={isMobile ? "100%" : "80%"}
         display="flex"
         flexDirection="column"
+        height="100vh"
+        overflow="hidden"
       >
+        {/* Header */}
         <Box
-          component="header"
-          height="64px" // Fixed header height
-          width="100%"
           position="fixed"
+          width="80%"
+          zIndex={1000}
           bgcolor="white"
-          zIndex={1100}
-          display="flex"
-          alignItems="center"
-          boxShadow={1}
+          sx={{ height: "64px" }}
         >
           <Header />
         </Box>
 
+        {/* Main Content Area */}
         <Box
-          mt="64px" // Account for header height
+          mt="64px"
+          display="flex"
           flex={1}
+          flexDirection={isMobile ? "column" : "row"}
           overflow="auto"
-          px={2}
-          py={2}
         >
           <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-            mb={2}
-            flexWrap="wrap"
+            flex={1}
+            transition="all 0.3s ease"
+            bgcolor="white"
+            boxShadow={1}
+            sx={{
+              height: "calc(100vh - 64px)",
+              overflow: "auto",
+              paddingRight: "2px",
+            }}
           >
-            <TextField
-              fullWidth
-              variant="outlined"
-              placeholder="Search by Customer Name"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              size="small"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Filter />
-                  </InputAdornment>
-                ),
+            {/* Search Field */}
+            <Box
+              mb={6}
+              sx={{
+                margin: 0,
+                paddingTop: "16px",
+                width: "40%",
               }}
-              sx={{ maxWidth: "300px", mb: 2 }}
-            />
-            <Box display="flex" gap={2}>
-              <Select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
+            >
+              <TextField
+                fullWidth
                 variant="outlined"
+                placeholder="Search by Customer Name"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 size="small"
-              >
-                <MenuItem value="Date Created">Date Created</MenuItem>
-                <MenuItem value="Rating Descending">Rating High to Low</MenuItem>
-                <MenuItem value="Rating Ascending">Rating Low to High</MenuItem>
-              </Select>
-              <Select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                variant="outlined"
-                size="small"
-              >
-                <MenuItem value="All">All</MenuItem>
-                <MenuItem value="Sent">Sent</MenuItem>
-                <MenuItem value="Un Sent">Un Sent</MenuItem>
-              </Select>
+                sx={{
+                  borderRadius: "50px",
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "50px",
+                    border: "1px solid #DA9C9C",
+                    "&:hover": {
+                      border: "1px solid #DA9C9C",
+                    },
+                    "&:selected": {
+                      border: "1px solid #DA9C9C",
+                    },
+                  },
+                  "& .MuiOutlinedInput-notchedOutline": {
+                    borderStyle: "none",
+                    borderWidth: "none",
+                  },
+                }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="30"
+                        height="30"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#DA9C9C"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="lucide lucide-search"
+                      >
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.3-4.3" />
+                      </svg>
+                    </InputAdornment>
+                  ),
+                }}
+              />
             </Box>
-          </Box>
 
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Customer Name</TableCell>
-                  <TableCell align="center">Rating</TableCell>
-                  <TableCell align="center">Review</TableCell>
-                  <TableCell align="center">Response Status</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {currentReviews.map((review) => (
-                  <TableRow key={review.id}>
-                    <TableCell>{review.user_display_name}</TableCell>
-                    <TableCell align="center">{review.rating}</TableCell>
-                    <TableCell>{review.review}</TableCell>
-                    <TableCell align="center">
-                      {review.review_responded ? "Sent" : "Un Sent"}
+            <Box
+              display="flex"
+              flexDirection={"row"}
+              alignItems={"flex-end"}
+              justifyContent="space-between"
+              mb={2}
+              sx={{ paddingTop: "5px", marginBottom: "5px" }}
+            >
+              <Typography variant="body2" color="textSecondary">
+                Total: {reviews.length} Reviews
+              </Typography>
+              <Box display="flex" gap={4}>
+                <Select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  variant="outlined"
+                  size="small"
+                >
+                  <MenuItem value="Date Created">Sort by: Date Created</MenuItem>
+                  <MenuItem value="Rating Descending">
+                    Sort by: Rating High to Low
+                  </MenuItem>
+                  <MenuItem value="Rating Ascending">
+                    Sort by: Rating Low to High
+                  </MenuItem>
+                </Select>
+                <Select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  variant="outlined"
+                  size="small"
+                >
+                  <MenuItem value="All">Filter by: All</MenuItem>
+                  <MenuItem value="Sent">Filter by: Sent</MenuItem>
+                  <MenuItem value="Un Sent">Filter by: Un Sent</MenuItem>
+                </Select>
+              </Box>
+            </Box>
+
+            <TableContainer
+              component={Paper}
+              sx={{
+                margin: 0,
+                paddingRight: "2px",
+                width: "100%",
+                height: "auto",
+              }}
+            >
+              <Table sx={{ tableLayout: "fixed", width: "100%", height: "auto" }}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell
+                      align="center"
+                      sx={{
+                        width: "142px",
+                        padding: "8px",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      Customer Name
+                    </TableCell>
+                    <TableCell
+                      align="center"
+                      sx={{
+                        width: "100px",
+                        padding: "8px",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      Rating
+                    </TableCell>
+                    <TableCell
+                      align="center"
+                      sx={{
+                        width: "auto",
+                        padding: "8px",
+                        textAlign: "center",
+                      }}
+                    >
+                      Review
+                    </TableCell>
+                    <TableCell
+                      align="center"
+                      sx={{
+                        width: "120px",
+                        padding: "8px",
+                      }}
+                    >
+                      Response Status
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-
-          <Pagination
-            currentPage={currentPage}
-            totalItems={reviews.length}
-            itemsPerPage={itemsPerPage}
-            onPageChange={handlePageChange}
-          />
+                </TableHead>
+                <TableBody>
+                  {currentReviews.map((review) => (
+                    <TableRow key={review.id}>
+                      <TableCell sx={{ padding: "8px", textAlign: "center" }}>
+                        {review.user_display_name}
+                      </TableCell>
+                      <TableCell align="center" sx={{ padding: "8px" }}>
+                        {review.rating}
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          padding: "8px",
+                          textAlign: "left",
+                          height: "75px",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {review.review}
+                      </TableCell>
+                      <TableCell align="center" sx={{ padding: "8px" }}>
+                        <Box
+                          display="inline-block"
+                          px={2}
+                          py={0.5}
+                          sx={{
+                            color: review.review_responded
+                              ? "success.main"
+                              : "error.main",
+                            borderRadius: "8px",
+                            backgroundColor: review.review_responded
+                              ? "#e8f5e9"
+                              : "#ffebee",
+                          }}
+                        >
+                          {review.review_responded ? "Sent" : "Un Sent"}
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "flex-end",
+                marginRight: "5px",
+              }}
+            >
+              <Pagination
+                currentPage={currentPage}
+                totalItems={reviews.length}
+                itemsPerPage={itemsPerPage}
+                onPageChange={handlePageChange}
+              />
+            </Box>
+          </Box>
         </Box>
       </Box>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ open: false })}
+      >
+        <Alert
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+          onClose={() => setSnackbar({ open: false })}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
