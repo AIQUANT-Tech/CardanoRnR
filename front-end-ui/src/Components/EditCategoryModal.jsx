@@ -47,12 +47,22 @@ const EditCategoryModal = ({ open, onClose, category, onSubmit }) => {
           fullWidth
           margin="normal"
         />
-        <FormControl fullWidth margin="normal">
-          <InputLabel>Status</InputLabel>
+        <FormControl fullWidth margin="n">
+          <InputLabel
+           sx={{ 
+            paddingTop: '8px',
+            fontSize: '16px',
+            '&.Mui-focused': { 
+              color: 'Black' 
+            } 
+          }} 
+          id="status-label">Status</InputLabel>
           <Select
             name="Status"
             value={formData.Status}
             onChange={handleChange}
+            fullWidth
+          margin="normal"
           >
             <MenuItem value="Active">Active</MenuItem>
             <MenuItem value="Inactive">Inactive</MenuItem>
@@ -60,11 +70,21 @@ const EditCategoryModal = ({ open, onClose, category, onSubmit }) => {
         </FormControl>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSubmit} variant="contained" color="primary">
-          Save
-        </Button>
-      </DialogActions>
+  <Button 
+    onClick={onClose} 
+    sx={{ color: 'black', borderColor: '#DA9C9C' }}
+  >
+    Cancel
+  </Button>
+  <Button 
+    onClick={handleSubmit} 
+    variant="contained" 
+    color="primary" 
+    sx={{ backgroundColor: '#DA9C9C', color: 'black', '&:hover': { backgroundColor: '#D68C8C' } }}
+  >
+    Save
+  </Button>
+</DialogActions>
     </Dialog>
   );
 };
