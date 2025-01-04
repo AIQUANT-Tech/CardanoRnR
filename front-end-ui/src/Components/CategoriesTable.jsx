@@ -239,18 +239,44 @@ const CategoriesTable = () => {
           >
             Add Categories
           </Button>
-          <FormControl size="small">
-            <InputLabel>Status</InputLabel>
-            <Select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              style={{ minWidth: '120px' }}
-            >
-              <MenuItem value="All">All</MenuItem>
-              <MenuItem value="Active">Active</MenuItem>
-              <MenuItem value="Inactive">Inactive</MenuItem>
-            </Select>
-          </FormControl>
+          <FormControl size="small" sx={{ width: '150px' }}>
+  <InputLabel 
+    sx={{ 
+      padding: '10px', 
+      paddingLeft: '55px', 
+      color: 'Black', 
+      '&.Mui-focused': { 
+        color: 'Black' 
+      } 
+    }} 
+    id="status-label"
+  >
+    Status
+  </InputLabel>
+  <Select
+    labelId="status-label"
+    value={filterStatus}
+    onChange={(e) => setFilterStatus(e.target.value)}
+    sx={{
+      borderColor: '#DA9C9C',
+      display: 'flex',
+      alignItems: 'center',
+      '& .MuiOutlinedInput-notchedOutline': {
+        borderColor: '#DA9C9C',
+      },
+      '&:hover .MuiOutlinedInput-notchedOutline': {
+        borderColor: '#DA9C9C',
+      },
+      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+        borderColor: '#DA9C9C',
+      },
+    }}
+  >
+    <MenuItem value="All">All</MenuItem>
+    <MenuItem value="Active">Active</MenuItem>
+    <MenuItem value="Inactive">Inactive</MenuItem>
+  </Select>
+</FormControl>
         </div>
       </div>
       {isLoading ? (

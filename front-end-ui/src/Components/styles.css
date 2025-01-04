@@ -40,7 +40,7 @@
 
 /* Table styles */
 .categories-table {
-    padding: 16px;
+    padding: 5px;
 }
 
 .table-header {
@@ -180,7 +180,7 @@
 }
 /*
 *******************************************************************************************************************/
-.Custom-Pagination {
+.Custom-Pagination { 
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
