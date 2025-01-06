@@ -15,6 +15,7 @@ import WriteReviewModal from "./WriteReviewModal";
 import FullReviewModal from "./FullReviewModal";
 import { format } from "date-fns";
 import Star from "../assets/Star.png";
+import user from "../assets/userProfile.svg";
 
 
 const debounce = (func, delay) => {
@@ -84,7 +85,7 @@ const RatingReviewModal = ({
                 String(review.rating).includes(query) ||
                 String(review.user_name).toLowerCase().includes(query)
             );
-            
+
             setFilteredReviews(filtered);
         }
     }, 500);
@@ -221,7 +222,9 @@ const RatingReviewModal = ({
                                                 backgroundColor: "#e6f7ff",
                                             }}
                                         >
-                                            {review.review.charAt(0)}
+                                            <img src={user} alt="" style={{ width: "30px", height: "30px" }} />
+
+                                            {/* {review.review.charAt(0)} */}
                                         </Avatar>
                                         <Typography variant="body2" fontWeight="bold" mt={1}>
                                             {review.user_name}
