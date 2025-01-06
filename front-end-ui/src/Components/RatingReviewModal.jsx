@@ -81,8 +81,10 @@ const RatingReviewModal = ({
         } else {
             const filtered = reviews.filter((review) =>
                 review.review.toLowerCase().includes(query.toLowerCase()) ||
-                String(review.rating).includes(query)
+                String(review.rating).includes(query) ||
+                String(review.user_name).toLowerCase().includes(query)
             );
+            
             setFilteredReviews(filtered);
         }
     }, 500);
