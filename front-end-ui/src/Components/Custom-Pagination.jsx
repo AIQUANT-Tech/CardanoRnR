@@ -69,6 +69,7 @@ const Pagination = ({
               : ""
           }`}
           onClick={() => onPageChange(pageNum)}
+          style={{padding: "10px"}}
         >
           {pageNum}
         </button>
