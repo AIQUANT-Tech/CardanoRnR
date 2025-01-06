@@ -9,6 +9,7 @@ import {
 } from "@mui/material";
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
+import business from "../../assets/businessProfile.svg";
 
 const BusinessUserProfile = () => {
     const [user, setUser] = useState(null);
@@ -67,9 +68,9 @@ const BusinessUserProfile = () => {
                         <Paper elevation={5} sx={{ p: 3, width: "100%" }}>
                             <Avatar
                                 alt={user ? user.display_name : "User"}
-                                sx={{ width: 80, height: 80, margin: "0 auto", mb: 3 }}
-                            >
-                                {user ? user.display_name.charAt(0) : "U"}
+                                sx={{ width: 80, height: 80, margin: "0 auto", mb: 3, background: "#DA9C9C" }}
+                            ><img src={business} alt="" />
+                                {/* {user ? user.display_name.charAt(0) : "U"} */}
                             </Avatar>
                             {user ? (
                                 <Box>

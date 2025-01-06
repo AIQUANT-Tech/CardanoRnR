@@ -14,6 +14,9 @@ import WriteReviewModal from "../../Components/WriteReviewModal";
 import FullReviewModal from "../../Components/FullReviewModal";
 import { format } from 'date-fns';
 import Star from "../../assets/Star.png";
+import business from "../../assets/businessProfile.svg";
+import user from "../../assets/userProfile.svg";
+
 
 const GuestReviews = () => {
     const [reviews, setReviews] = useState([]);
@@ -157,7 +160,8 @@ const GuestReviews = () => {
                                         backgroundColor: "#e6f7ff",
                                     }}
                                 >
-                                    {review.review.charAt(0)}
+                                    <img src={user} alt="" style={{width: "30px", height: "30px"}}/>
+                                    {/* {review.review.charAt(0)} */}
                                 </Avatar>
                                 <Typography variant="body2" fontWeight="bold" mt={1}>
                                     {review.user_name}
@@ -223,7 +227,7 @@ const GuestReviews = () => {
                                 {review.business_reply && (
                                     <Box mt={2} p={2} sx={{ backgroundColor: "#f9f9f9", borderRadius: 2 }}>
                                         <Typography variant="body2" fontWeight="bold" color="primary" sx={{ display: "flex" }}>
-                                            <Avatar></Avatar>
+                                            <Avatar><img src={business} alt="" style={{height: "30px", width: "30px",}} /></Avatar>
                                             <Typography variant="body2" fontWeight="bold" color="primary" sx={{ fontSize : 18, display: "flex", alignContent: "center", flexWrap: "wrap", paddingLeft: 1 }}>
                                                 {companyName}
                                             </Typography>
