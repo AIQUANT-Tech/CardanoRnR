@@ -1,20 +1,32 @@
 import React, { useState } from "react";
-import { Navbar, Nav } from "react-bootstrap";
+import { Navbar, Nav, Dropdown } from "react-bootstrap";
 import axios from "axios";
 import workspace from "../AuthComponent/image/LogIn.jpg";
 import "./auth.css";
-
+import LanguageSelector from "../Components/LanguageSelector";
+import { useTranslation } from "react-i18next";
 function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // const [isLanguageDropdownVisible, setIsLanguageDropdownVisible] =
+  //   useState(false);
+  const { t } = useTranslation();
+  const { i18n } = useTranslation(); // Get i18n instance from react-i18next
 
+  // Handle language change
+  const handleChangeLanguage = (lang) => {
+    i18n.changeLanguage(lang); // Change the language using i18n
+  };
   // Toggle Password Visibility
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
+  // const handleLanguageToggle = () => {
+  //   setIsLanguageDropdownVisible(!isLanguageDropdownVisible);
+  // };
 
   // Handle Form Submission
   const handleSubmit = async (e) => {
@@ -23,10 +35,13 @@ function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      const response = await axios.post("http://localhost:8080/api/user/login", {
-        email,
-        password_hash: password, // Backend expects `password_hash`
-      });
+      const response = await axios.post(
+        "http://localhost:8080/api/user/login",
+        {
+          email,
+          password_hash: password, // Backend expects `password_hash`
+        }
+      );
 
       if (response.status === 200) {
         const { token, user } = response.data;
@@ -53,14 +68,29 @@ function LoginPage() {
       <div className="navBar">
         <Navbar expand="lg">
           <Navbar.Brand href="#home">
-            <h1>WELCOME BACK!</h1>
+            <h4>{t("WELCOME BACK")}</h4>
           </Navbar.Brand>
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="justify-content-end" style={{ width: "100%" }}>
               <Nav.Link href="#home">Help</Nav.Link>
               <Nav.Link href="#">Contact Us</Nav.Link>
-              <Nav.Link href="#link">Language</Nav.Link>
+              <Dropdown align="end" className="language-dropdown-container">
+                <Dropdown.Toggle variant="link" id="language-dropdown">
+                  Language
+                </Dropdown.Toggle>
+                <Dropdown.Menu>
+                  <Dropdown.Item onClick={() => handleChangeLanguage("en")}>
+                    English
+                  </Dropdown.Item>
+                  <Dropdown.Item onClick={() => handleChangeLanguage("fr")}>
+                    French
+                  </Dropdown.Item>
+                  <Dropdown.Item onClick={() => handleChangeLanguage("de")}>
+                    German
+                  </Dropdown.Item>
+                </Dropdown.Menu>
+              </Dropdown>
               <Nav.Link href="/signUp">Sign Up</Nav.Link>
             </Nav>
           </Navbar.Collapse>
