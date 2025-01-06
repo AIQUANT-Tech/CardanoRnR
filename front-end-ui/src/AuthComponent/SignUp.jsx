@@ -23,6 +23,13 @@ const SignUp = () => {
     setSuccessMessage("");
     setIsSubmitting(true);
 
+    const emailRegex = /\S+@\S+\.\S+/;
+    if (!emailRegex.test(formData.email)) {
+      setError("Please enter a valid email address.");
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       const response = await fetch("http://localhost:8080/api/user/users", {
         method: "POST",
