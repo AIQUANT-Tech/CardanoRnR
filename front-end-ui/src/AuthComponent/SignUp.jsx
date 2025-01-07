@@ -54,7 +54,7 @@ const SignUp = () => {
       setSuccessMessage("Account created successfully!");
         navigate('/login');
       
-      setFormData({ email: "", password: "", displayName: "" }); // Reset form
+      setFormData({ email: "", password: "", displayName: "" }); 
     } catch (error) {
       setError(error.message);
     } finally {
