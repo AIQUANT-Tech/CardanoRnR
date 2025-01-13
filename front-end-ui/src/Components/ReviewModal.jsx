@@ -103,6 +103,10 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
     setError(""); // Reset error message when form is valid
 
     try {
+      const metadata = {
+        
+      }
+
       const reviewData = {
         new_review_rating_create_rq: {
           header: {
