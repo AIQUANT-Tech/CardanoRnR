@@ -2,11 +2,6 @@ import { MeshWallet, BlockfrostProvider, ForgeScript, Transaction } from "@meshs
 
 // Blockchain Configuration
 const blockchainProvider = new BlockfrostProvider(process.env.BLOCKFROST_KEY); 
-// const mnemonic = ["pyramid", "trophy", "prevent", "cluster", "edge",
-//     "drama", "minor", "element", "arrest", "bicycle",
-//     "gown", "hand", "dolphin", "latin", "shaft",
-//     "flag", "renew", "miss", "analyst", "body",
-//     "flock", "nurse", "noise", "pyramid"]; 
 
 // const mnemonic = process.env.MNEMONIC;
 
