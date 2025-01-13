@@ -25,7 +25,10 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.8.3",
     "nodemailer": "^6.9.16",
-    "nodemon": "^3.1.7"
+    "nodemon": "^3.1.7",
+    "@meshsdk/core": "^1.8.8",
+    "bip39": "^3.1.0",
+    "body-parser": "^1.20.3"
   },
   "description": "",
   "devDependencies": {
