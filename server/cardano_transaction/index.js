@@ -1,18 +1,21 @@
 import { MeshWallet, BlockfrostProvider, ForgeScript, Transaction } from "@meshsdk/core";
+import dotenv from "dotenv";
+dotenv.config();
 
 // Blockchain Configuration
 const blockchainProvider = new BlockfrostProvider(process.env.BLOCKFROST_KEY); 
 
-// const mnemonic = process.env.MNEMONIC;
+const mnemonic = {
+    type: "mnemonic",
+    words: process.env.MNEMONIC.split(" "), 
+};
+
 
 const wallet = new MeshWallet({
     networkId: 0, 
     fetcher: blockchainProvider,
     submitter: blockchainProvider,
-    key: {
-        type: "mnemonic",
-        words: process.env.MNEMONIC, 
-    },
+    key: mnemonic,
 });
 
 
