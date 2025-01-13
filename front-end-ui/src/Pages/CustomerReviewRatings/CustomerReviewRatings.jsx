@@ -18,6 +18,7 @@ import {
   useTheme,
   TextField,
   InputAdornment,
+  Autocomplete
 } from "@mui/material";
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
@@ -176,60 +177,68 @@ const CustomerReviewManagement = () => {
           >
             {/* Search Field */}
             <Box
-              mb={6}
-              sx={{
-                margin: 0,
-                paddingTop: "16px",
-                width: "40%",
-              }}
-            >
-              <TextField
-                fullWidth
-                variant="outlined"
-                placeholder="Search by Customer Name"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                size="small"
-                sx={{
-                  borderRadius: "50px",
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "50px",
-                    border: "1px solid #DA9C9C",
-                    "&:hover": {
-                      border: "1px solid #DA9C9C",
-                    },
-                    "&:selected": {
-                      border: "1px solid #DA9C9C",
-                    },
-                  },
-                  "& .MuiOutlinedInput-notchedOutline": {
-                    borderStyle: "none",
-                    borderWidth: "none",
-                  },
-                }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="30"
-                        height="30"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="#DA9C9C"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="lucide lucide-search"
-                      >
-                        <circle cx="11" cy="11" r="8" />
-                        <path d="m21 21-4.3-4.3" />
-                      </svg>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Box>
+      mb={6}
+      sx={{
+        margin: 0,
+        paddingTop: '16px',
+        width: '40%',
+      }}
+    >
+      <Autocomplete
+        freeSolo
+        options={reviews.map((review) => review.user_display_name)}
+        value={searchQuery}
+        onInputChange={(event, newInputValue) => setSearchQuery(newInputValue)}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            fullWidth
+            variant="outlined"
+            placeholder="Search by Customer Name"
+            size="small"
+            sx={{
+              borderRadius: '50px',
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '50px',
+                border: '1px solid #DA9C9C',
+                '&:hover': {
+                  border: '1px solid #DA9C9C',
+                },
+                '&:selected': {
+                  border: '1px solid #DA9C9C',
+                },
+              },
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderStyle: 'none',
+                borderWidth: 'none',
+              },
+            }}
+            InputProps={{
+              ...params.InputProps,
+              startAdornment: (
+                <InputAdornment position="start">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="30"
+                    height="30"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#DA9C9C"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="lucide lucide-search"
+                  >
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.3-4.3" />
+                  </svg>
+                </InputAdornment>
+              ),
+            }}
+          />
+        )}
+      />
+    </Box>
 
             <Box
               display="flex"
