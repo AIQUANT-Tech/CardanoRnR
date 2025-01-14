@@ -38,9 +38,6 @@ const Pagination = ({
 
   return (
     <div className="pagination-container">
-      <div className="pagination-info">
-        Showing data {startItem} to {endItem} of {totalItems} entries
-      </div>
       <div className="pagination-buttons">
         {getPageNumbers().map((pageNum, index, array) => {
           if (index > 0 && pageNum - array[index - 1] > 1) {

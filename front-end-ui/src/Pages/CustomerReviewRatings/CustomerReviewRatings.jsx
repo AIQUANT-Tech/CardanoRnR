@@ -18,7 +18,7 @@ import {
   useTheme,
   TextField,
   InputAdornment,
-  Autocomplete
+  Autocomplete,
 } from "@mui/material";
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
@@ -177,68 +177,70 @@ const CustomerReviewManagement = () => {
           >
             {/* Search Field */}
             <Box
-      mb={6}
-      sx={{
-        margin: 0,
-        paddingTop: '16px',
-        width: '40%',
-      }}
-    >
-      <Autocomplete
-        freeSolo
-        options={reviews.map((review) => review.user_display_name)}
-        value={searchQuery}
-        onInputChange={(event, newInputValue) => setSearchQuery(newInputValue)}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            fullWidth
-            variant="outlined"
-            placeholder="Search by Customer Name"
-            size="small"
-            sx={{
-              borderRadius: '50px',
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '50px',
-                border: '1px solid #DA9C9C',
-                '&:hover': {
-                  border: '1px solid #DA9C9C',
-                },
-                '&:selected': {
-                  border: '1px solid #DA9C9C',
-                },
-              },
-              '& .MuiOutlinedInput-notchedOutline': {
-                borderStyle: 'none',
-                borderWidth: 'none',
-              },
-            }}
-            InputProps={{
-              ...params.InputProps,
-              startAdornment: (
-                <InputAdornment position="start">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="30"
-                    height="30"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#DA9C9C"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="lucide lucide-search"
-                  >
-                    <circle cx="11" cy="11" r="8" />
-                    <path d="m21 21-4.3-4.3" />
-                  </svg>
-                </InputAdornment>
-              ),
-            }}
-          />
-        )}
-      />
-    </Box>
+              mb={6}
+              sx={{
+                margin: 0,
+                paddingTop: "16px",
+                width: "40%",
+              }}
+            >
+              <Autocomplete
+                freeSolo
+                options={reviews.map((review) => review.user_display_name)}
+                value={searchQuery}
+                onInputChange={(event, newInputValue) =>
+                  setSearchQuery(newInputValue)
+                }
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    fullWidth
+                    variant="outlined"
+                    placeholder="Search by Customer Name"
+                    size="small"
+                    sx={{
+                      borderRadius: "50px",
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "50px",
+                        border: "1px solid #DA9C9C",
+                        "&:hover": {
+                          border: "1px solid #DA9C9C",
+                        },
+                        "&:selected": {
+                          border: "1px solid #DA9C9C",
+                        },
+                      },
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        borderStyle: "none",
+                        borderWidth: "none",
+                      },
+                    }}
+                    InputProps={{
+                      ...params.InputProps,
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="30"
+                            height="30"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="#DA9C9C"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="lucide lucide-search"
+                          >
+                            <circle cx="11" cy="11" r="8" />
+                            <path d="m21 21-4.3-4.3" />
+                          </svg>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                )}
+              />
+            </Box>
 
             <Box
               display="flex"
@@ -252,13 +254,49 @@ const CustomerReviewManagement = () => {
                 Total: {reviews.length} Reviews
               </Typography>
               <Box display="flex" gap={4}>
+                {/* Sort By Select */}
                 <Select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
                   variant="outlined"
                   size="small"
+                  sx={{
+                    borderColor: "#DA9C9C",
+                    display: "flex",
+                    alignItems: "center",
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#DA9C9C", // Default border color
+                    },
+                    "&:hover .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#DA9C9C", // Hover border color
+                    },
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#DA9C9C", // Focused border color
+                    },
+                  }}
+                  MenuProps={{
+                    PaperProps: {
+                      sx: {
+                        "& .MuiMenuItem-root": {
+                          "&:hover": {
+                            backgroundColor: "#ECC0C0", // Background color on hover
+                            color: "#fff", // Text color on hover
+                          },
+                          "&.Mui-selected": {
+                            backgroundColor: "#DA9C9C", // Background color when selected
+                            color: "#fff", // Text color when selected
+                          },
+                          "&.Mui-selected:hover": {
+                            backgroundColor: "#DA9C9C", // Background color on hover when selected
+                          },
+                        },
+                      },
+                    },
+                  }}
                 >
-                  <MenuItem value="Date Created">Sort by: Date Created</MenuItem>
+                  <MenuItem value="Date Created">
+                    Sort by: Date Created
+                  </MenuItem>
                   <MenuItem value="Rating Descending">
                     Sort by: Rating High to Low
                   </MenuItem>
@@ -266,13 +304,48 @@ const CustomerReviewManagement = () => {
                     Sort by: Rating Low to High
                   </MenuItem>
                 </Select>
+
+                {/* Filter Status Select */}
                 <Select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
                   variant="outlined"
                   size="small"
-                >
-                  <MenuItem value="All">Filter by: All</MenuItem>
+                  sx={{
+                    borderColor: "#DA9C9C",
+                    display: "flex",
+                    alignItems: "center",
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#DA9C9C", // Default border color
+                    },
+                    "&:hover .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#DA9C9C", // Hover border color
+                    },
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#DA9C9C", // Focused border color
+                    },
+                  }}
+                  MenuProps={{
+                    PaperProps: {
+                      sx: {
+                        "& .MuiMenuItem-root": {
+                          "&:hover": {
+                            backgroundColor: "#ECC0C0", // Background color on hover
+                            color: "#fff", // Text color on hover
+                          },
+                          "&.Mui-selected": {
+                            backgroundColor: "#DA9C9C", // Background color when selected
+                            color: "#fff", // Text color when selected
+                          },
+                          "&.Mui-selected:hover": {
+                            backgroundColor: "#DA9C9C", // Background color on hover when selected
+                          },
+                        },
+                      },
+                    },
+                  }}
+                
+                  ><MenuItem value="All">Filter by: All</MenuItem>
                   <MenuItem value="Sent">Filter by: Sent</MenuItem>
                   <MenuItem value="Un Sent">Filter by: Un Sent</MenuItem>
                 </Select>
@@ -288,7 +361,9 @@ const CustomerReviewManagement = () => {
                 height: "auto",
               }}
             >
-              <Table sx={{ tableLayout: "fixed", width: "100%", height: "auto" }}>
+              <Table
+                sx={{ tableLayout: "fixed", width: "100%", height: "auto" }}
+              >
                 <TableHead>
                   <TableRow>
                     <TableCell
