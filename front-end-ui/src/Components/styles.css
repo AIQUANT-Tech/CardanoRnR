@@ -199,12 +199,6 @@
     font-family: Arial, sans-serif;
   }
   
-  .pagination-info {
-    font-size: 0.875rem;
-    color: #4a5568; /* Tailwind's gray-600 */
-    margin-right: 2px;
-  }
-  
   .pagination-buttons {
     display: flex;
     gap: 6px; /* Adds space between buttons */
