@@ -21,7 +21,7 @@ import {
   InputAdornment,
   Autocomplete,
 } from "@mui/material";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, MessageCircleReply } from "lucide-react";
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
 import Pagination from "../../Components/Custom-Pagination";
@@ -593,7 +593,7 @@ const CustomerReviewManagement = () => {
                         }}
                       >
                         <IconButton onClick={() => handleChatOpen(review)}>
-                          <MessageCircle size={20} color="black" />
+                          <MessageCircleReply size={24} color="black" />
                         </IconButton>
                       </TableCell>
                     </TableRow>
