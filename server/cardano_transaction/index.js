@@ -41,7 +41,7 @@ export const createTransaction = async (req, res) => {
         const balance = await wallet.getBalance();
         // console.log("Wallet Balance:", balance);
 
-        const utxos = await wallet.getUtxos();
+        // const utxos = await wallet.getUtxos();
         // console.log("UTxOs:", utxos);
 
         if (balance < lovelaceToSend) {
