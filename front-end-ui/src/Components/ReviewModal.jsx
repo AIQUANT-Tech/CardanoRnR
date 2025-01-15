@@ -137,6 +137,8 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
 
       if (response.ok) {
         const data = await response.json();
+        console.log(metadata);
+        
         
         const transact = await fetch("http://localhost:8080/api/transaction/createTransaction", {
           method: "POST",
