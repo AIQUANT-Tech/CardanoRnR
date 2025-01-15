@@ -236,7 +236,7 @@ const ChatPanel = ({
               {selectedReview?.user_display_name}
             </Typography>
             <Typography variant="body2" color="textSecondary">
-              {selectedReview?.review_date}
+              {selectedReview?.created_at}
             </Typography>
             <Typography variant="body2" mt={1}>
               {selectedReview?.review}
@@ -284,7 +284,7 @@ const ChatPanel = ({
               <Avatar
                 sx={{
                   alignSelf: "center",
-                  bgcolor: reply.isAdmin ? "#DA9C9C" : "#da9c9c",
+                  bgcolor: reply.replied_by ? "#DA9C9C" : "#da9c9c",
                 }}
               >
                 {reply.replied_by[0]}
