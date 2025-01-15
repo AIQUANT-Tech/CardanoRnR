@@ -3,7 +3,11 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // Blockchain Configuration
-const blockchainProvider = new BlockfrostProvider(process.env.BLOCKFROST_KEY); 
+const blockchainProvider = new BlockfrostProvider("preprodpbTcmksa3AVgtzcLqeq6amMbHtCkgxxJ");
+ 
+const mnemonic = ["fire", "click", "behind", "sight", "sniff", "grass", "slogan",
+    "castle", "pear", "excess", "give", "oyster", "quality", "frown", "satisfy", "merit",
+    "three", "music", "castle", "fault", "pride", "eager", "protect", "urge"];
 
 const mnemonic = {
     type: "mnemonic",
