@@ -213,7 +213,7 @@ const CustomerReviewManagement = () => {
                       "& .MuiOutlinedInput-notchedOutline": {
                         borderStyle: "none",
                         borderWidth: "none",
-                      },
+                      }
                     }}
                     InputProps={{
                       ...params.InputProps,
