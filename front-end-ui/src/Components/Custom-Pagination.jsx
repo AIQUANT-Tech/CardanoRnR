@@ -1,9 +1,10 @@
 import React from "react";
+import "./styles.css";
 
 const Pagination = ({
   currentPage = 1,
   totalItems = 136,
-  itemsPerPage = 4,  // Adjusted to 4 per page
+  itemsPerPage = 4,
   onPageChange = () => {},
 }) => {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -36,48 +37,39 @@ const Pagination = ({
   };
 
   return (
-    <div className="flex justify-between items-center">
-  <div className="text-sm text-gray-600">
-    Showing data {startItem} to {endItem} of {totalItems} entries
-  </div>
-  <div className="flex gap-2">
-    {getPageNumbers().map((pageNum, index, array) => {
-      if (index > 0 && pageNum - array[index - 1] > 1) {
-        return (
-          <React.Fragment key={`ellipsis-${index}`}>
-            <span className="px-3 py-1">...</span>
+    <div className="pagination-container">
+      <div className="pagination-buttons">
+        {getPageNumbers().map((pageNum, index, array) => {
+          if (index > 0 && pageNum - array[index - 1] > 1) {
+            return (
+              <React.Fragment key={`ellipsis-${index}`}>
+                <span className="pagination-ellipsis">...</span>
+                <button
+                  className={`pagination-button ${
+                    currentPage === pageNum ? "active" : ""
+                  }`}
+                  onClick={() => onPageChange(pageNum)}
+                >
+                  {pageNum}
+                </button>
+              </React.Fragment>
+            );
+          }
+
+          return (
             <button
-              className={`px-3 py-1 border rounded hover:bg-gray-50 ${
-                currentPage === pageNum
-                  ? "bg-rose-100 text-rose-600 border-rose-200"
-                  : ""
+              key={pageNum}
+              className={`pagination-button ${
+                currentPage === pageNum ? "active" : ""
               }`}
               onClick={() => onPageChange(pageNum)}
             >
               {pageNum}
             </button>
-          </React.Fragment>
-        );
-      }
-
-      return (
-        <button
-          key={pageNum}
-          className={`px-3 py-1 border rounded hover:bg-gray-50 ${
-            currentPage === pageNum
-              ? "bg-rose-100 text-rose-600 border-rose-200"
-              : ""
-          }`}
-          onClick={() => onPageChange(pageNum)}
-          style={{padding: "10px"}}
-        >
-          {pageNum}
-        </button>
-      );
-    })}
-  </div>
-</div>
-
+          );
+        })}
+      </div>
+    </div>
   );
 };
 
