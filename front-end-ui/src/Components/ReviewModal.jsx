@@ -103,11 +103,6 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
     setError(""); // Reset error message when form is valid
 
     try {
-      const metadata = {
-        user_email_id: email,
-        overall_rating: overallRating.toString(),
-        overall_review: overallReview
-      }
 
       const reviewData = {
         new_review_rating_create_rq: {
@@ -137,6 +132,15 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
 
       if (response.ok) {
         const data = await response.json();
+
+        const metadata = {
+          metadata: {
+          user_id: data.overall.user_id,
+          rating_id: data.overall._id,
+          overall_rating: overallRating.toString(),
+          overall_review: overallReview
+          }
+        }
         console.log(metadata);
         
         
