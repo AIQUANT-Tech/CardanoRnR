@@ -19,8 +19,9 @@ import {
   useTheme,
   TextField,
   InputAdornment,
+  Autocomplete,
 } from "@mui/material";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, MessageCircleReply } from "lucide-react";
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
 import Pagination from "../../Components/Custom-Pagination";
@@ -299,51 +300,61 @@ const CustomerReviewManagement = () => {
                 width: "40%", // Width remains as defined
               }}
             >
-              <TextField
-                fullWidth
-                variant="outlined"
-                placeholder="Search by Customer Name"
+              <Autocomplete
+                freeSolo
+                options={reviews.map((review) => review.user_display_name)}
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                size="small"
-                sx={{
-                  borderRadius: "50px", // Add borderRadius here
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "50px",
-                    border: "1px solid #DA9C9C",
-                    "&:hover": {
-                      border: "1px solid #DA9C9C",
-                    },
-                    "&:selected": {
-                      border: "1px solid #DA9C9C",
-                    },
-                  },
-                  "& .MuiOutlinedInput-notchedOutline": {
-                    borderStyle: "none",
-                    borderWidth: "none",
-                  },
-                }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="30"
-                        height="30"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="#DA9C9C"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="lucide lucide-search" // Changed to className for React
-                      >
-                        <circle cx="11" cy="11" r="8" />
-                        <path d="m21 21-4.3-4.3" />
-                      </svg>
-                    </InputAdornment>
-                  ),
-                }}
+                onInputChange={(event, newInputValue) =>
+                  setSearchQuery(newInputValue)
+                }
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    fullWidth
+                    variant="outlined"
+                    placeholder="Search by Customer Name"
+                    size="small"
+                    sx={{
+                      borderRadius: "50px",
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "50px",
+                        border: "1px solid #DA9C9C",
+                        "&:hover": {
+                          border: "1px solid #DA9C9C",
+                        },
+                        "&:selected": {
+                          border: "1px solid #DA9C9C",
+                        },
+                      },
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        borderStyle: "none",
+                        borderWidth: "none",
+                      },
+                    }}
+                    InputProps={{
+                      ...params.InputProps,
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="30"
+                            height="30"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="#DA9C9C"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="lucide lucide-search"
+                          >
+                            <circle cx="11" cy="11" r="8" />
+                            <path d="m21 21-4.3-4.3" />
+                          </svg>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                )}
               />
             </Box>
 
@@ -364,6 +375,39 @@ const CustomerReviewManagement = () => {
                   onChange={(e) => setSortBy(e.target.value)}
                   variant="outlined"
                   size="small"
+                  sx={{
+                    borderColor: "#DA9C9C",
+                    display: "flex",
+                    alignItems: "center",
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#DA9C9C",
+                    },
+                    "&:hover .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#DA9C9C",
+                    },
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#DA9C9C",
+                    },
+                  }}
+                  MenuProps={{
+                    PaperProps: {
+                      sx: {
+                        "& .MuiMenuItem-root": {
+                          "&:hover": {
+                            backgroundColor: "#ECC0C0", // Background color on hover
+                            color: "#fff", // Text color on hover
+                          },
+                          "&.Mui-selected": {
+                            backgroundColor: "#DA9C9C", // Background color when selected
+                            color: "#fff", // Text color when selected
+                          },
+                          "&.Mui-selected:hover": {
+                            backgroundColor: "#DA9C9C", // Background color on hover when selected
+                          },
+                        },
+                      },
+                    },
+                  }}
                 >
                   <MenuItem value="Date Created">
                     Sort by: Date Created
@@ -380,6 +424,39 @@ const CustomerReviewManagement = () => {
                   onChange={(e) => setFilterStatus(e.target.value)}
                   variant="outlined"
                   size="small"
+                  sx={{
+                    borderColor: "#DA9C9C",
+                    display: "flex",
+                    alignItems: "center",
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#DA9C9C", // Default border color
+                    },
+                    "&:hover .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#DA9C9C", // Hover border color
+                    },
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#DA9C9C", // Focused border color
+                    },
+                  }}
+                  MenuProps={{
+                    PaperProps: {
+                      sx: {
+                        "& .MuiMenuItem-root": {
+                          "&:hover": {
+                            backgroundColor: "#ECC0C0", // Background color on hover
+                            color: "#fff", // Text color on hover
+                          },
+                          "&.Mui-selected": {
+                            backgroundColor: "#DA9C9C", // Background color when selected
+                            color: "#fff", // Text color when selected
+                          },
+                          "&.Mui-selected:hover": {
+                            backgroundColor: "#DA9C9C", // Background color on hover when selected
+                          },
+                        },
+                      },
+                    },
+                  }}
                 >
                   <MenuItem value="All">Filter by: All</MenuItem>
                   <MenuItem value="Sent">Filter by: Sent</MenuItem>
@@ -516,7 +593,7 @@ const CustomerReviewManagement = () => {
                         }}
                       >
                         <IconButton onClick={() => handleChatOpen(review)}>
-                          <MessageCircle size={20} color="black" />
+                          <MessageCircleReply size={24} color="black" />
                         </IconButton>
                       </TableCell>
                     </TableRow>
@@ -525,19 +602,19 @@ const CustomerReviewManagement = () => {
               </Table>
             </TableContainer>
             <Box
-  sx={{
-    display: "flex", // Use flexbox
-    justifyContent: "flex-end", // Align pagination to the right
-    marginRight: "5px", //
-  }}
->
-  <Pagination
-    currentPage={currentPage}
-    totalItems={reviews.length}
-    itemsPerPage={itemsPerPage}
-    onPageChange={handlePageChange}
-  />
-</Box>
+              sx={{
+                display: "flex", // Use flexbox
+                justifyContent: "flex-end", // Align pagination to the right
+                marginRight: "5px", //
+              }}
+            >
+              <Pagination
+                currentPage={currentPage}
+                totalItems={reviews.length}
+                itemsPerPage={itemsPerPage}
+                onPageChange={handlePageChange}
+              />
+            </Box>
           </Box>
           {/* Chat Panel */}
           {chatPanelOpen && (
