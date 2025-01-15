@@ -104,7 +104,9 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
 
     try {
       const metadata = {
-        
+        user_email_id: email,
+        overall_rating: overallRating.toString(),
+        overall_review: overallReview
       }
 
       const reviewData = {
@@ -135,7 +137,19 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log("Review submitted successfully:", data);
+        
+        const transact = await fetch("http://localhost:8080/api/transaction/createTransaction", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(metadata),
+        });
+
+        console.log(transact);
+        
+
+        //console.log("Review submitted successfully:", data);
         setOpen(false);
         setOpenSnackbar(true);
       } else {
@@ -328,11 +342,13 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
         <Alert
           onClose={handleCloseSnackbar}
           severity="success"
-          sx={{ width: "100%",
-                fontSize: "40"
-           }}
+          sx={{
+            width: "100%",
+            fontSize: "50"
+          }}
         >
           Review submitted successfully!
+          <p></p>Please wait for sometime for review to be approved.
         </Alert>
       </Snackbar>
     </>

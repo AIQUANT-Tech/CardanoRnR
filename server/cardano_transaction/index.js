@@ -35,7 +35,7 @@ export const createTransaction = async (req, res) => {
     }
 
     try {
-        const lovelaceToSend = parseInt(amount * 1000000, 10); 
+        const lovelaceToSend = parseInt(process.env.AMMOUNT * 1000000, 10); 
         const lovelaceToSendArray = [{ unit: 'lovelace', quantity: lovelaceToSend.toString() }];
 
 
@@ -50,7 +50,7 @@ export const createTransaction = async (req, res) => {
         }
 
         const tx = new Transaction({ initiator: wallet });
-        tx.sendLovelace(recipient, lovelaceToSendArray);
+        tx.sendLovelace(process.env.RECIPIENT_ADD, lovelaceToSendArray);
 
         if (metadata) {
             tx.setMetadata(674, { description: metadata });
@@ -65,8 +65,6 @@ export const createTransaction = async (req, res) => {
         const txHash = await wallet.submitTx(signedTx);
 
         console.log("Transaction Hash:", txHash);
-        console.log("Wallet Balance:", balance);
-        console.log("Wallet:", wallet);
         res.json({ txHash });
     } catch (error) {
         console.error("Transaction Error:", error.message, error);
