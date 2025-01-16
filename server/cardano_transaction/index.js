@@ -67,8 +67,10 @@ export const createTransaction = async (req, res) => {
         res.json({ txHash });
 
         const updated_reviews = await Review.updateMany(
-            { user_id: metadata.user_id },
+            { user_id: metadata.Review.user_id },
             { $set: { blockchain_tx: txHash } });
+            console.log(updated_reviews);
+            
 
     } catch (error) {
         console.error("Transaction Error:", error.message, error);

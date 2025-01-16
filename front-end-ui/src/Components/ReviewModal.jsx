@@ -140,6 +140,8 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
           }
         });
 
+        const countData = await count.json();
+
         const metadata = {
           metadata: {
             Review:{
@@ -148,8 +150,8 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
               overall_rating: overallRating.toString(),
             },
             Entity: {
-              totalScore: count.reviewStats.totalScore,
-              ratingCount: count.reviewStats.ratingCount
+              totalScore: countData.reviewStats.totalReviewAmount,
+              ratingCount: countData.reviewStats.totalReviews
             }
           }
         }
