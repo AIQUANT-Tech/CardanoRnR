@@ -23,7 +23,7 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
   const [categories, setCategories] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [openSnackbar, setOpenSnackbar] = useState(false);
-  const [error, setError] = useState("");  // State for error message
+  const [error, setError] = useState("");  
 
   useEffect(() => {
     if (open) {
@@ -98,9 +98,9 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
   const handleSubmit = async () => {
     if (selectedCategories.length === 0) {
       setError("Please select at least one category before submitting.");
-      return; // Prevent submission if no category is selected
+      return; 
     }
-    setError(""); // Reset error message when form is valid
+    setError(""); 
 
     try {
 
@@ -133,12 +133,24 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
       if (response.ok) {
         const data = await response.json();
 
+        const count = await fetch("http://localhost:8080/api/review/count", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          }
+        });
+
         const metadata = {
           metadata: {
-          user_id: data.overall.user_id,
-          rating_id: data.overall._id,
-          overall_rating: overallRating.toString(),
-          overall_review: overallReview
+            Review:{
+              user_id: data.overall.user_id,
+              rating_id: data.overall._id,
+              overall_rating: overallRating.toString(),
+            },
+            Entity: {
+              totalScore: count.reviewStats.totalScore,
+              ratingCount: count.reviewStats.ratingCount
+            }
           }
         }
         console.log(metadata);
