@@ -1,5 +1,5 @@
 import express from 'express';
-import { createReview, getAllReviews, getReviewsForBusinessUser, getReviewsForEndUser, getUserReviews } from './reviewController.js';
+import { calculateReviewStats, createReview, getAllReviews, getReviewsForBusinessUser, getReviewsForEndUser, getUserReviews } from './reviewController.js';
 import { verifyToken, allowBusinessUser, allowEndUser } from '../auth/jwtUtils.js';
 
 const router = express.Router();
@@ -21,6 +21,9 @@ router.post('/reviews/user/FetchReviews', getReviewsForEndUser);
 
 //Get a user review - end user
 router.post('/reviews/user/selected', getUserReviews);
+
+//Get the total reviews
+router.get('/count', calculateReviewStats);
 
 
 export default router;

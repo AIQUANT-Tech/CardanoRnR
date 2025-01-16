@@ -56,7 +56,7 @@ export const createReview = async (req, res) => {
     // Fetch all valid categories
     const validCategories = await ReviewCategory.find({
       category_id: { $in: categoryIds }
-    });    
+    });
 
     if (validCategories.length !== categoryIds.length) {
       return res
@@ -104,7 +104,7 @@ export const createReview = async (req, res) => {
 
     return res.status(201).json({
       new_review_rating_create_rs: { status: responses.success.success },
-      
+
       reviews: savedReviews,
       overall: savedOverall
     });
@@ -223,7 +223,7 @@ export const getReviewsForBusinessUser = async (req, res) => {
       user_id: review.user_id?._id?.toString() || null,
       user_display_name: review.user_id?.display_name || "Unknown User",
       category_id: review.category_id?._id?.toString() || null,
-      review_responded: !!review.is_responded, 
+      review_responded: !!review.is_responded,
       review: review.review || review.overall_review,
       rating: review.rating?.toString() || review.overall_rating?.toString(),
     }));
@@ -266,8 +266,8 @@ export const getReviewsForEndUser = async (req, res) => {
     }
 
     const reviews = await Review.find({ status: "true", })
-    .select("_id user_id overall_review overall_rating review rating category_id created_at")
-    .populate("user_id", "display_name");    
+      .select("_id user_id overall_review overall_rating review rating category_id created_at")
+      .populate("user_id", "display_name");
 
     if (!reviews || reviews.length === 0) {
       return res.status(404).json({ review_rating_fetch_rs: { status: responses.validation.reviewNotFound } });
@@ -334,7 +334,7 @@ export const getReviewsForEndUser = async (req, res) => {
       return categories;
     }, {});
 
-    const categoryWiseReviewList = Object.values(categoryWiseReviewRating);    
+    const categoryWiseReviewList = Object.values(categoryWiseReviewRating);
 
     return res.status(200).json({
       review_rating_fetch_rs: {
@@ -367,7 +367,6 @@ export const getUserReviews = async (req, res) => {
       });
     }
 
-    // Fetch the user to ensure the user exists
     const user = await User.findById(user_id);
 
     if (!user) {
@@ -377,7 +376,6 @@ export const getUserReviews = async (req, res) => {
       });
     }
 
-    // Fetch all reviews for the user
     const reviews = await Review.find({ user_id: user_id, status: "true" }).select(
       "overall_review overall_rating review rating category_id created_at"
     );
@@ -389,7 +387,6 @@ export const getUserReviews = async (req, res) => {
       });
     }
 
-    // Calculate overall rating
     const validOverallRatings = reviews
       .map((r) => r.overall_rating)
       .filter((rating) => typeof rating === "number" && !isNaN(rating));
@@ -397,10 +394,9 @@ export const getUserReviews = async (req, res) => {
     const totalOverallRating =
       validOverallRatings.length > 0
         ? validOverallRatings.reduce((sum, rating) => sum + rating, 0) /
-          validOverallRatings.length
+        validOverallRatings.length
         : 0.0;
 
-    // Fetch category details for reviews
     const categoryIds = [...new Set(reviews.map((r) => r.category_id))];
 
     const categories = await ReviewCategory.find({
@@ -415,7 +411,6 @@ export const getUserReviews = async (req, res) => {
       return map;
     }, {});
 
-    // Organize category-wise review ratings
     const categoryWiseReviews = reviews.reduce((categories, review) => {
       const category = categoryDetailsMap[review.category_id];
       if (!category) return categories;
@@ -458,6 +453,43 @@ export const getUserReviews = async (req, res) => {
       status: "error",
       message: "Failed to fetch reviews",
       error: error.message,
+    });
+  }
+};
+
+//Get review count and total review
+export const calculateReviewStats = async (req, res) => {
+  try {
+    const reviews = await Review.find();
+
+    if (reviews.length === 0) {
+      return res.status(404).json({ status: "error", message: "No reviews found for this user." });
+    }
+
+    let totalReviews = 0;
+    let totalReviewAmount = 0;
+
+    reviews.forEach((review) => {      
+      totalReviews += 1;
+      if (review.category_id == null) {
+        totalReviewAmount += review.overall_rating;
+      } else {
+        totalReviewAmount += review.rating;
+      }
+    });
+
+    return res.status(200).json({
+      status: "success",
+      reviewStats: {
+        totalReviews,
+        totalReviewAmount,
+      },
+    });
+  } catch (error) {
+    console.error("Error calculating review stats:", error.message);
+    return res.status(500).json({
+      status: "error",
+      message: error.message,
     });
   }
 };
