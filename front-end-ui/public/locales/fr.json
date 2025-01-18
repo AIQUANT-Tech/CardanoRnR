@@ -1,9 +1,10 @@
 {
-    "WELCOME BACK": "content de te revoir",
-    "email": "Adresse e-mail",
-    "email_placeholder": "Veuillez entrer votre identifiant e-mail",
-    "password": "Mot de passe",
-    "password_placeholder": "Veuillez entrer votre mot de passe",
-    "display_name": "Nom d'affichage",
-    "create_account": "Créer un compte"
+      "WELCOME BACK": "content de te revoir",
+      "EMAIL ID": "Identifiant email",
+      "PASSWORD": "Mot de passe",
+      "DONT HAVE AN ACC": "Vous n'avez pas de compte ?",
+      "FORGET PASS": "Mot de passe oublié ?",
+      "REMEMBER ME": "Se souvenir de moi"
+    
+    
   }
