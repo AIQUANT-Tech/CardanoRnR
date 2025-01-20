@@ -13,7 +13,7 @@ import RatingReviewModal from "../../Components/RatingReviewModal";
 import WriteReviewModal from "../../Components/WriteReviewModal";
 import FullReviewModal from "../../Components/FullReviewModal";
 import { format } from 'date-fns';
-import Star from "../../assets/Star.png";
+import Star from "../../assets/Star.svg";
 import business from "../../assets/businessProfile.svg";
 import user from "../../assets/userProfile.svg";
 
@@ -199,7 +199,8 @@ const GuestReviews = () => {
                                                 height: 35,
                                                 position: "relative",
                                                 left: "80%",
-                                                paddingBottom: "2px"
+                                                paddingBottom: "2px",
+                                                padding: 2,
                                             }}
                                         />
                                           ): (<span key={star}></span>
