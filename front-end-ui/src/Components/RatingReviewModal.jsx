@@ -14,7 +14,7 @@ import { EditIcon } from "lucide-react";
 import WriteReviewModal from "./WriteReviewModal";
 import FullReviewModal from "./FullReviewModal";
 import { format } from "date-fns";
-import Star from "../assets/Star.png";
+import Star from "../assets/Star.svg";
 import user from "../assets/userProfile.svg";
 
 
@@ -248,8 +248,9 @@ const RatingReviewModal = ({
                                                         alt="star"
                                                         style={{
                                                             cursor: "pointer",
-                                                            width: 32,
-                                                            height: 32,
+                                                            width: 35,
+                                                            height: 35,
+                                                            marginRight: 2, // Add spacing between stars
 
                                                         }}
                                                     />
