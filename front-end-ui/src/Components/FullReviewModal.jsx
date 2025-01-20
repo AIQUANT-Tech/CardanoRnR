@@ -9,9 +9,8 @@ import {
     Button,
 } from "@mui/material";
 import { format } from "date-fns";
-import StarIcon from "@mui/icons-material/Star";
 import { motion } from "framer-motion";
-import Star from "../assets/Star.png";
+import Star from "../assets/Star.svg";
 
 
 const FullReviewModal = ({ open, onClose, review }) => {
@@ -235,7 +234,7 @@ const FullReviewModal = ({ open, onClose, review }) => {
                                                                 cursor: "pointer",
                                                                 width: 40,
                                                                 height: 40,
-                                                                padding: 3
+                                                                padding: 2     
 
                                                             }}
                                                         />
