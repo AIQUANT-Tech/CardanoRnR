@@ -17,7 +17,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@meshsdk/core": "^1.5.25",
+    "@emurgo/cardano-serialization-lib-browser": "^13.2.1",
+    "@meshsdk/core": "^1.8.12",
     "@meshsdk/provider": "^1.8.9",
     "axios": "^1.7.9",
     "bcryptjs": "^2.4.3",
@@ -28,6 +29,7 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.1",
     "jsonwebtoken": "^9.0.2",
+    "lucid-cardano": "^0.10.11",
     "mongoose": "^8.8.3",
     "nodemailer": "^6.9.16",
     "nodemon": "^3.1.7"
