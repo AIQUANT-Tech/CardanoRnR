@@ -79,86 +79,84 @@ export const createTransaction = async (req, res) => {
 };
 
 
-// export const demo = async (req, res) => {
-//   const { metadata } = req.body;
+export const demo = async (req, res) => {
+  const { metadata, reviewDatum, entityRedeemer } = req.body;
 
-//   const datum = {
-//     // Add your datum fields here
-//     reviewId: "1234",
-//     reviewReferenceId: null,
-//     overallRating: 5,
-//     timestamp: Date.now(),
-//   };
+  // Validate recipient address
+  if (!process.env.RECIPIENT_ADD || typeof process.env.RECIPIENT_ADD !== "string" || !process.env.RECIPIENT_ADD.startsWith("addr")) {
+    return res.status(400).json({ error: "Invalid recipient address" });
+  }
 
-//   if (!process.env.RECIPIENT_ADD || typeof process.env.RECIPIENT_ADD !== "string" || !process.env.RECIPIENT_ADD.startsWith("addr")) {
-//     return res.status(400).json({ error: "Invalid recipient address" });
-//   }
+  // Validate amount
+  if (!process.env.AMMOUNT || isNaN(process.env.AMMOUNT) || process.env.AMMOUNT < 0) {
+    return res.status(400).json({ error: "Invalid amount" });
+  }
 
-//   if (!process.env.AMMOUNT || isNaN(process.env.AMMOUNT) || process.env.AMMOUNT < 0) {
-//     return res.status(400).json({ error: "Invalid amount" });
-//   }
+  try {
+    const lovelaceToSend = parseInt(process.env.AMMOUNT * 1000000, 10);
+    const lovelaceToSendArray = [{ unit: 'lovelace', quantity: lovelaceToSend.toString() }];
+    
+    const balance = await wallet.getBalance();
+    
+    // Fetch UTxOs and change address
+    const utxos = await wallet.getUtxos();
 
-//   try {
-//     const lovelaceToSend = parseInt(process.env.AMMOUNT * 1000000, 10);
-//     const lovelaceToSendArray = [{ unit: 'lovelace', quantity: lovelaceToSend.toString() }];
+    const changeAddress = await wallet.getChangeAddress();
 
+    // Plutus script setup
+    const script = {
+      code: process.env.SCRIPT_CBOR, // Assuming this is the correct Plutus script
+      version: "V2",
+    };
+    
+    // Serialize the Plutus script
+    const { address: scriptAddress } = serializePlutusScript(script);
 
-//     const balance = await wallet.getBalance();
-//     // console.log("Wallet Balance:", balance);
+    console.log("Script Address:", scriptAddress);
+    
+    // Check balance and UTxOs before proceeding
+    if (balance < lovelaceToSend) {
+      return res.status(400).json({ error: "Insufficient funds." });
+    }
 
-//     // const utxos = await wallet.getUtxos();
-//     // console.log("UTxOs:", utxos);
+    console.log("here");
 
-//     if (balance < lovelaceToSend) {
-//       return res.status(400).json({ error: "Insufficient funds." });
-//     }
+    // Initialize assets (You might want to add your asset dynamically here)
+    const assets = [
+      {
+        unit: 'd9312da562da182b02322fd8acb536f37eb9d29fba7c49dc172555274d657368546f6b656e',
+        quantity: "1",
+      },
+    ];
 
-//     const txBuilder = new Transaction({ initiator: wallet });
+    // Call the function with the assets array
+    //processAssets(assets);
 
-//     txBuilder.addOutput({
-//       address: process.env.RECIPIENT_ADD,  // Replace with your script address
-//       amount: 1000000,           // Amount in lovelace
-//       datum: JSON.stringify(datum)               // Attach the datum
-//     });
+    // Prepare the transaction builder
+    const txBuilder = getTxBuilder();
+    
 
-//     // const tx = await wallet.createTx({
-//     //   to: [{
-//     //     address: process.env.RECIPIENT_ADD,
-//     //     amount: 1000000,
-//     //     datum: JSON.stringify(datum),
-//     //   }],
-//     //   metadata: { 674: { description: metadata } },
-//     // });
+    // Build the transaction with outputs and inline datum
+    const unsignedTx = await txBuilder
+      .txOut(scriptAddress, assets) // Send assets to the script address
+      .txOutInlineDatumValue(reviewDatum) // Attach datum (use your JSON object or string here)
+      .changeAddress(changeAddress) // Specify the change address
+      .selectUtxosFrom(utxos) // Select UTxOs for the transaction
+      .complete();
 
-//     // const tx = new Transaction({ initiator: wallet });
-//     // tx.sendLovelace(process.env.RECIPIENT_ADD, lovelaceToSendArray);
+    // Sign and submit the transaction
+    const signedTx = await wallet.signTx(unsignedTx);
+    const txHash = await wallet.submitTx(signedTx);
+    console.log("Transaction Hash:", txHash);
 
-//     // if (metadata) {
-//     //   tx.setMetadata(674, { description: metadata });
-//     // }
+    res.json({ txHash });
 
-//     // console.log("Transaction Object (Pre-Build):", tx);
+  } catch (error) {
+    console.error("Transaction Error:", error.message, error);
+    res.status(500).json({ error: "Transaction failed", details: error.message });
+  }
+};
 
-//     const unsignedTx = await txBuilder.build();
-//     // console.log("Unsigned Transaction:", unsignedTx);
-
-//     const signedTx = await wallet.signTx(unsignedTx);
-//     const txHash = await wallet.submitTx(signedTx);
-
-//     console.log("Transaction Hash:", txHash);
-//     res.json({ txHash });
-
-//     // const updated_reviews = await Review.updateMany(
-//     //   { user_id: metadata.Review.user_id },
-//     //   { $set: { blockchain_tx: txHash } });
-//     // console.log(updated_reviews);
-
-
-//   } catch (error) {
-//     console.error("Transaction Error:", error.message, error);
-//     res.status(500).json({ error: "Transaction failed", details: error.message });
-//   }
-// };
 
 
 export const getTransactionMetadata = async (req, res) => {

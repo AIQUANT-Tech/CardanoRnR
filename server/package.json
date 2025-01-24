@@ -24,6 +24,7 @@
     "bcryptjs": "^2.4.3",
     "bip39": "^3.1.0",
     "body-parser": "^1.20.3",
+    "cbor": "^10.0.3",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
     "dotenv": "^16.4.7",
@@ -42,6 +43,7 @@
     "babel-jest": "^29.7.0",
     "jest": "^29.7.0",
     "mockingoose": "^2.16.2",
-    "supertest": "^7.0.0"
+    "supertest": "^7.0.0",
+    "typescript": "^5.7.3"
   }
 }
