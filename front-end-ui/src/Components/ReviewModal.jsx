@@ -15,6 +15,7 @@ import {
 import StarIcon from "@mui/icons-material/Star";
 import AddIcon from "@mui/icons-material/Add";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import Star from "../assets/Star.svg";
 
 const ReviewModal = ({ open, setOpen, email, setEmail }) => {
   const [overallRating, setOverallRating] = useState(0);
@@ -23,7 +24,7 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
   const [categories, setCategories] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [openSnackbar, setOpenSnackbar] = useState(false);
-  const [error, setError] = useState("");  
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (open) {
@@ -98,12 +99,11 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
   const handleSubmit = async () => {
     if (selectedCategories.length === 0) {
       setError("Please select at least one category before submitting.");
-      return; 
+      return;
     }
-    setError(""); 
+    setError("");
 
     try {
-
       const reviewData = {
         new_review_rating_create_rq: {
           header: {
@@ -122,13 +122,16 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
         },
       };
 
-      const response = await fetch("http://localhost:8080/api/review/CreateReview", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(reviewData),
-      });
+      const response = await fetch(
+        "http://localhost:8080/api/review/CreateReview",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(reviewData),
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();
@@ -137,38 +140,36 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-          }
+          },
         });
-
-        const countData = await count.json();
 
         const metadata = {
           metadata: {
-            Review:{
+            Review: {
               user_id: data.overall.user_id,
               rating_id: data.overall._id,
               overall_rating: overallRating.toString(),
             },
             Entity: {
-              totalScore: countData.reviewStats.totalReviewAmount,
-              ratingCount: countData.reviewStats.totalReviews
-            }
-          }
-        }
-        console.log(metadata);
-        
-        
-        const transact = await fetch("http://localhost:8080/api/transaction/createTransaction", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
+              totalScore: count.reviewStats.totalScore,
+              ratingCount: count.reviewStats.ratingCount,
+            },
           },
-          body: JSON.stringify(metadata),
-        });
+        };
+        console.log(metadata);
+
+        const transact = await fetch(
+          "http://localhost:8080/api/transaction/createTransaction",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(metadata),
+          }
+        );
 
         console.log(transact);
-        
-
         //console.log("Review submitted successfully:", data);
         setOpen(false);
         setOpenSnackbar(true);
@@ -209,15 +210,22 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
           </Typography>
           <Box display="flex" alignItems="center" mb={2}>
             {[1, 2, 3, 4, 5].map((star) => (
-              <StarIcon
+              <img
                 key={star}
+                src={Star}
+                alt="star"
                 onClick={() => setOverallRating(star)}
                 onMouseEnter={() => setHover(star)}
                 onMouseLeave={() => setHover(-1)}
-                sx={{
+                style={{
                   cursor: "pointer",
-                  color: hover >= star || overallRating >= star ? "#fdd835" : "#e0e0e0",
-                  fontSize: 32,
+                  width: 32,
+                  height: 32,
+                  filter:
+                    hover >= star || overallRating >= star
+                      ? "grayscale(0%)"
+                      : "grayscale(100%)",
+                  marginRight: 5,
                 }}
               />
             ))}
@@ -225,7 +233,6 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
               {hover !== -1 ? hover : overallRating} / 5
             </Typography>
           </Box>
-
           {/* Overall Review */}
           <TextField
             fullWidth
@@ -289,18 +296,27 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
                   </Typography>
                   <Box display="flex" alignItems="center">
                     {[1, 2, 3, 4, 5].map((star) => (
-                      <StarIcon
+                      <img
                         key={star}
+                        src={Star}
+                        alt="star"
                         onClick={() => handleCategoryRating(index, star)}
-                        sx={{
+                        onMouseEnter={() => setHover(star)}
+                        onMouseLeave={() => setHover(-1)}
+                        style={{
                           cursor: "pointer",
-                          color: category.rating >= star ? "#fdd835" : "#e0e0e0",
-                          fontSize: 32,
+                          width: 32,
+                          height: 32,
+                          filter:
+                          hover >= star ||  category.rating >= star
+                              ? "grayscale(0%)"
+                              : "grayscale(100%)",
+                          marginRight: 5,
                         }}
                       />
                     ))}
                     <Typography sx={{ marginLeft: 2 }}>
-                      {category.rating} / 5
+                    {hover !== -1 ? hover :category.rating} / 5
                     </Typography>
                   </Box>
                   <TextField
@@ -308,9 +324,11 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
                     multiline
                     rows={2}
                     value={category.review}
-                    onChange={(e) => handleCategoryReview(index, e.target.value)}
+                    onChange={(e) =>
+                      handleCategoryReview(index, e.target.value)
+                    }
                     label={`Review for ${category.name}`}
-                    placeholder={`Write your experience about ${category.name}...`}
+                    placeholder={`${category.description}`}
                     sx={{ marginTop: 1 }}
                   />
                 </Box>
@@ -364,7 +382,7 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
           severity="success"
           sx={{
             width: "100%",
-            fontSize: "50"
+            fontSize: "50",
           }}
         >
           Review submitted successfully!
