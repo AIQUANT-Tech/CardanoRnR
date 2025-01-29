@@ -65,9 +65,10 @@
         font-family: 'Nunito';
         background: linear-gradient(0deg, #DA9C9C, #DA9C9C), #DA9C9C;
         box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25), inset 0px 4px 4px rgba(0, 0, 0, 0.25);
-        /* Note: backdrop-filter has minimal browser support */
+        
         border-radius: 100px;
         border-color: #000000;
+     
 }
 .form-control {
         display: block;
@@ -212,8 +213,8 @@
 }
 
 .home-page-container .right-part .sign-up-link {
-        display: flex;
-        justify-content: center;
+        /* display: flex; */
+        /* justify-content: center; */
         position: relative;
         top: 90px;
         font-family: 'Nunito';
@@ -311,7 +312,7 @@ gap: 40px;
 }
 
 .login-form a {
-        color: #e08785;
+        color: #fb6959;
         text-decoration: none;
 }
 
@@ -322,7 +323,7 @@ gap: 40px;
 }
 
 .login-form input {
-        border-color: #e08785;
+        /* border-color: #e08785; */
         border-radius: 60px!important;
         font-family: initial;
 }
@@ -330,26 +331,31 @@ gap: 40px;
 
 .input-group {
         margin-bottom: 20px;
-        font-size: 30px;
+        font-size: 18px;
         /* height: 30px; */
         padding-left: 100px;
         margin : none;
 }
 .input-group #email{
-        width: 452px;
+        width: 100%;
         margin-left: 0px;
-        border: 2px solid #e08785;
-        padding-left: 30px;
+        border: 1px solid #003366;
+        padding:8px 16px;
         margin-top: 10px;
 
         
 }
+input:focus {
+        border: none;
+        outline: none; /* Optionally removes the outline as well */
+      }
 .password-input{
-        width: 452px;
-        border: 2px solid #e08785;
+        width: 100%;
+        border:  1px solid #003366;
         border-radius: 60px!important;
-        padding-left: 30px;
+        /* padding-left: 30px; */
         margin-top: 15px;
+        position: relative;
 }
 
 .password-input input {
@@ -359,10 +365,16 @@ gap: 40px;
         outline: none;
 }
 .password-input #password {
-        outline: none;
+        /* outline: none;
         padding-left: 0px;
         border: none;
         outline: none;
+        width: 100%; */
+        /* margin-left: 0px; */
+        /* border: 1px solid #003366; */
+        padding:8px 16px;
+        width: 97%;
+        /* margin-top: 10px; */
 
 }
 
@@ -414,6 +426,9 @@ gap: 40px;
 .toggle-password{
         border: none;
         background-color: transparent;
+        position: absolute;
+        top: 6px;
+        right: 30px;
 }
 
 .options label {
@@ -456,7 +471,7 @@ gap: 40px;
 
 .sign-in-button-container{
         padding-left: 95px;
-        padding-right: 60px;
+        /* padding-right: 60px; */
 }
 
 .sign-in-button:hover {

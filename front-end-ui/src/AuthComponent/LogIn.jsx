@@ -68,7 +68,7 @@ function LoginPage() {
       <div className="navBar">
         <Navbar expand="lg">
           <Navbar.Brand href="#home">
-            <h4>{t("WELCOME BACK")}</h4>
+            <h4 className="blue-deep">{t("WELCOME BACK")}</h4>
           </Navbar.Brand>
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
@@ -99,13 +99,13 @@ function LoginPage() {
       <div className="login-component">
         <div className="login-form">
           <div className="login-section">
-            <p>
-              Don’t have an account? <a href="/signUp">Sign up</a>
+            <p className="blue-deep">
+              {t("DONT HAVE AN ACC")} <a href="/signUp">Sign up</a>
             </p>
             {error && <p className="error-message text-danger">{error}</p>}
             <form onSubmit={handleSubmit}>
               <div className="input-group email">
-                <label htmlFor="email">Email Id</label>
+                <label htmlFor="email">{t("EMAIL ID")}</label>
                 <input
                   type="email"
                   id="email"
@@ -117,7 +117,7 @@ function LoginPage() {
               </div>
 
               <div className="input-group">
-                <label htmlFor="password">Password</label>
+                <label htmlFor="password">{t("PASSWORD")}</label>
                 <div className="password-input">
                   <input
                     type={showPassword ? "text" : "password"}
@@ -152,16 +152,16 @@ function LoginPage() {
               </div>
               <div className="options">
                 <div className="rememberMe">
-                  <input type="checkbox" /> Remember me
+                  <input type="checkbox" /> {t("REMEMBER ME")}
                 </div>
-                <a href="#" className="forgot-password">
-                  Forget password?
+                <a href="#" className="forgot-password high-light-text ">
+                  {t("FORGET PASS")}
                 </a>
               </div>
               <div className="sign-in-button-container">
                 <button
                   type="submit"
-                  className="sign-in-button"
+                  className="button-primary"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? "Signing In..." : "Sign In"}

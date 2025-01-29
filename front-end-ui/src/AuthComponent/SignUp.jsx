@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Container, Form } from "react-bootstrap";
-import signupImage from './image/signup.png';
-import { useNavigate } from 'react-router-dom';
+import signupImage from "./image/signup.png";
+import { useNavigate } from "react-router-dom";
 import "./auth.css";
 
 const SignUp = () => {
@@ -37,24 +37,26 @@ const SignUp = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          user_id: new Date().getTime().toString(), 
+          user_id: new Date().getTime().toString(),
           email: formData.email,
-          password_hash: formData.password, 
+          password_hash: formData.password,
           display_name: formData.displayName,
-          role: "Business User", 
+          role: "Business User",
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.user_crud_rs?.status || "Sign-Up failed. Please try again.");
+        throw new Error(
+          data.user_crud_rs?.status || "Sign-Up failed. Please try again."
+        );
       }
 
       setSuccessMessage("Account created successfully!");
-        navigate('/login');
-      
-      setFormData({ email: "", password: "", displayName: "" }); 
+      navigate("/login");
+
+      setFormData({ email: "", password: "", displayName: "" }); // Reset form
     } catch (error) {
       setError(error.message);
     } finally {
@@ -130,7 +132,11 @@ const SignUp = () => {
           {successMessage && <p className="text-success">{successMessage}</p>}
 
           {/* Submit Button */}
-          <button type="submit" className="btn" disabled={isSubmitting}>
+          <button
+            type="submit"
+            className="button-primary"
+            disabled={isSubmitting}
+          >
             {isSubmitting ? "Creating Account..." : "Create Account"}
           </button>
         </form>
