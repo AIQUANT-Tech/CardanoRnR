@@ -2,11 +2,16 @@ import { MeshWallet, BlockfrostProvider, serializePlutusScript, Transaction } fr
 import dotenv from "dotenv";
 import axios from "axios";
 import Review from "../review/Reviews.js";
+import { BlockFrostAPI } from "@blockfrost/blockfrost-js";
 
 dotenv.config();
 
+const blockchainProvider = new BlockFrostAPI({
+  projectId: process.env.BLOCKFROST_KEY, // Replace with your API key
+});
+
 // Blockchain Configuration
-const blockchainProvider = new BlockfrostProvider(process.env.BLOCKFROST_KEY);
+//const blockchainProvider = new BlockfrostProvider(process.env.BLOCKFROST_KEY);
 
 const mnemonic = {
   type: "mnemonic",
@@ -22,73 +27,8 @@ const wallet = new MeshWallet({
 });
 
 
-export const createTransaction = async (req, res) => {
-  const { metadata } = req.body;
-
-  if (!process.env.RECIPIENT_ADD || typeof process.env.RECIPIENT_ADD !== "string" || !process.env.RECIPIENT_ADD.startsWith("addr")) {
-    return res.status(400).json({ error: "Invalid recipient address" });
-  }
-
-  if (!process.env.AMMOUNT || isNaN(process.env.AMMOUNT) || process.env.AMMOUNT < 0) {
-    return res.status(400).json({ error: "Invalid amount" });
-  }
-
-  try {
-    const lovelaceToSend = parseInt(process.env.AMMOUNT * 1000000, 10);
-    const lovelaceToSendArray = [{ unit: 'lovelace', quantity: lovelaceToSend.toString() }];
-
-
-    const balance = await wallet.getBalance();
-    // console.log("Wallet Balance:", balance);
-
-    // const utxos = await wallet.getUtxos();
-    // console.log("UTxOs:", utxos);
-
-    if (balance < lovelaceToSend) {
-      return res.status(400).json({ error: "Insufficient funds." });
-    }
-
-    const tx = new Transaction({ initiator: wallet });
-    tx.sendLovelace(process.env.RECIPIENT_ADD, lovelaceToSendArray);
-
-    if (metadata) {
-      tx.setMetadata(674, { description: metadata });
-    }
-
-    // console.log("Transaction Object (Pre-Build):", tx);
-
-    const unsignedTx = await tx.build();
-    // console.log("Unsigned Transaction:", unsignedTx);
-
-    const signedTx = await wallet.signTx(unsignedTx);
-    const txHash = await wallet.submitTx(signedTx);
-
-    console.log("Transaction Hash:", txHash);
-    res.json({ txHash });
-
-    const updated_reviews = await Review.updateMany(
-      { user_id: metadata.Review.user_id },
-      { $set: { blockchain_tx: txHash } });
-    console.log(updated_reviews);
-
-
-  } catch (error) {
-    console.error("Transaction Error:", error.message, error);
-    res.status(500).json({ error: "Transaction failed", details: error.message });
-  }
-};
-
-
-// export const demo = async (req, res) => {
+// export const createTransaction = async (req, res) => {
 //   const { metadata } = req.body;
-
-//   const datum = {
-//     // Add your datum fields here
-//     reviewId: "1234",
-//     reviewReferenceId: null,
-//     overallRating: 5,
-//     timestamp: Date.now(),
-//   };
 
 //   if (!process.env.RECIPIENT_ADD || typeof process.env.RECIPIENT_ADD !== "string" || !process.env.RECIPIENT_ADD.startsWith("addr")) {
 //     return res.status(400).json({ error: "Invalid recipient address" });
@@ -113,33 +53,16 @@ export const createTransaction = async (req, res) => {
 //       return res.status(400).json({ error: "Insufficient funds." });
 //     }
 
-//     const txBuilder = new Transaction({ initiator: wallet });
+//     const tx = new Transaction({ initiator: wallet });
+//     tx.sendLovelace(process.env.RECIPIENT_ADD, lovelaceToSendArray);
 
-//     txBuilder.addOutput({
-//       address: process.env.RECIPIENT_ADD,  // Replace with your script address
-//       amount: 1000000,           // Amount in lovelace
-//       datum: JSON.stringify(datum)               // Attach the datum
-//     });
-
-//     // const tx = await wallet.createTx({
-//     //   to: [{
-//     //     address: process.env.RECIPIENT_ADD,
-//     //     amount: 1000000,
-//     //     datum: JSON.stringify(datum),
-//     //   }],
-//     //   metadata: { 674: { description: metadata } },
-//     // });
-
-//     // const tx = new Transaction({ initiator: wallet });
-//     // tx.sendLovelace(process.env.RECIPIENT_ADD, lovelaceToSendArray);
-
-//     // if (metadata) {
-//     //   tx.setMetadata(674, { description: metadata });
-//     // }
+//     if (metadata) {
+//       tx.setMetadata(674, { description: metadata });
+//     }
 
 //     // console.log("Transaction Object (Pre-Build):", tx);
 
-//     const unsignedTx = await txBuilder.build();
+//     const unsignedTx = await tx.build();
 //     // console.log("Unsigned Transaction:", unsignedTx);
 
 //     const signedTx = await wallet.signTx(unsignedTx);
@@ -148,10 +71,10 @@ export const createTransaction = async (req, res) => {
 //     console.log("Transaction Hash:", txHash);
 //     res.json({ txHash });
 
-//     // const updated_reviews = await Review.updateMany(
-//     //   { user_id: metadata.Review.user_id },
-//     //   { $set: { blockchain_tx: txHash } });
-//     // console.log(updated_reviews);
+//     const updated_reviews = await Review.updateMany(
+//       { user_id: metadata.Review.user_id },
+//       { $set: { blockchain_tx: txHash } });
+//     console.log(updated_reviews);
 
 
 //   } catch (error) {
@@ -161,29 +84,108 @@ export const createTransaction = async (req, res) => {
 // };
 
 
-export const getTransactionMetadata = async (req, res) => {
-  const { txHash } = req.body;
+// export const demo = async (req, res) => {
+//   const { metadata, reviewDatum, entityRedeemer } = req.body;
 
-  if (!txHash) {
-    return res.status(400).json({ message: 'Transaction hash is required.' });
-  }
+//   // Validate recipient address
+//   if (!process.env.RECIPIENT_ADD || typeof process.env.RECIPIENT_ADD !== "string" || !process.env.RECIPIENT_ADD.startsWith("addr")) {
+//     return res.status(400).json({ error: "Invalid recipient address" });
+//   }
 
-  try {
-    const projectId = process.env.BLOCKFROST_KEY;
+//   // Validate amount
+//   if (!process.env.AMMOUNT || isNaN(process.env.AMMOUNT) || process.env.AMMOUNT <= 0) {
+//     return res.status(400).json({ error: "Invalid amount" });
+//   }
 
-    const url = `https://cardano-preprod.blockfrost.io/api/v0/txs/${txHash}/metadata`;
+//   try {
+//     const lovelaceToSend = parseInt(process.env.AMMOUNT * 1000000, 10);
 
-    const response = await axios.get(url, {
-      headers: {
-        'project_id': projectId
-      }
-    });
+//     const balance = await wallet.getBalance();
+//     const utxos = await wallet.getUtxos();
+//     const changeAddress = await wallet.getChangeAddress();
 
-    res.status(200).json(response.data);
-  } catch (error) {
-    console.error('Error fetching metadata:', error.message);
-  }
-};
+//     // Plutus script setup
+//     const script = {
+//       code: process.env.SCRIPT_CBOR, // Assuming this is the correct Plutus script
+//       version: "V2",
+//     };
+
+//     const { address: scriptAddress } = serializePlutusScript(script);
+//     console.log("Script Address:", scriptAddress);
+
+//     // Check balance
+//     if (balance < lovelaceToSend) {
+//       return res.status(400).json({ error: "Insufficient funds." });
+//     }
+
+//     // Prepare inline datum
+//     const datum = {
+//       alternative: 0,
+//       fields: reviewDatum.fields,
+//     };
+
+//     console.log(reviewDatum.fields);
+    
+
+//     // Build the transaction
+//     const tx = new Transaction({ initiator: wallet });
+
+//     // Add recipient output with inline datum
+//     tx.sendAssets(
+//       {
+//         address: scriptAddress,
+//         datum: { inline: datum }, // Use 'inline' to specify storing datum on-chain
+//       },
+//       [{ unit: "lovelace", quantity: lovelaceToSend.toString() }]
+//     );
+
+//     // Add metadata if provided
+//     if (metadata) {
+//       tx.setMetadata(674, { description: metadata });
+//     }
+
+//     // Add a change output
+//     tx.setChangeAddress(changeAddress);
+
+//     // Build, sign, and submit the transaction
+//     const unsignedTx = await tx.build();
+//     const signedTx = await wallet.signTx(unsignedTx);
+//     const txHash = await wallet.submitTx(signedTx);
+
+//     console.log("Transaction Hash:", txHash);
+//     res.json({ txHash });
+//   } catch (error) {
+//     console.error("Transaction Error:", error.message, error);
+//     res.status(500).json({ error: "Transaction failed", details: error.message });
+//   }
+// };
+
+
+
+
+// export const getTransactionMetadata = async (req, res) => {
+//   const { txHash } = req.body;
+
+//   if (!txHash) {
+//     return res.status(400).json({ message: 'Transaction hash is required.' });
+//   }
+
+//   try {
+//     const projectId = process.env.BLOCKFROST_KEY;
+
+//     const url = `https://cardano-preprod.blockfrost.io/api/v0/txs/${txHash}/metadata`;
+
+//     const response = await axios.get(url, {
+//       headers: {
+//         'project_id': projectId
+//       }
+//     });
+
+//     res.status(200).json(response.data);
+//   } catch (error) {
+//     console.error('Error fetching metadata:', error.message);
+//   }
+// };
 
 
 export const fetchRedeemers = async (req, res) => {
@@ -191,19 +193,12 @@ export const fetchRedeemers = async (req, res) => {
   console.log(txHash);
 
   try {
-    const projectId = process.env.BLOCKFROST_KEY;
-
-    const url = `https://cardano-preprod.blockfrost.io/api/v0/txs/${txHash}/redeemers`;
-    const response = await axios.get(url, {
-      headers: {
-        'project_id': projectId,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching redeemer data:', error.message);
-    throw error;
-  }
+    const redeemers = await blockchainProvider.txsRedeemers(txHash);
+    console.log("Redeemer Data:", redeemers);
+    res.status(200).json({ redeemers });
+} catch (error) {
+    console.error("Error fetching redeemer data:", error);
+}
 };
 
 
