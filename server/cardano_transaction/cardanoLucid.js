@@ -35,11 +35,14 @@ const scriptAddress = lucid.utils.validatorToAddress(script);
 console.log(scriptAddress);
 
 // Lock ADA at the script
-const lockFunds = async (dataToLock, redeemerData) => {
+const lockFunds = async (dataToLock) => {
 
     if (typeof dataToLock !== 'object' || dataToLock === null) {
         throw new Error("Datum must be a valid JSON object");
     }
+
+    const transformedDatum = transformReviewToDatum(dataToLock);
+    console.log("Transformed Datum:", JSON.stringify(transformedDatum, null, 2));
 
     const jsonString = JSON.stringify(dataToLock);
     // const buffer = Buffer.from(jsonString, 'utf-8');
@@ -47,10 +50,10 @@ const lockFunds = async (dataToLock, redeemerData) => {
 
     console.log("Encoded CBOR Datum:", cborDatum);
 
-    const redeemerBuffer = JSON.stringify(redeemerData);
-    const encodedRedeemer = encode(redeemerData).toString('hex');
+    const transformedBuffer = JSON.stringify(transformedDatum);
+    const transformedData = encode(transformedDatum).toString('hex');
 
-    console.log("Encoded Redeemer:", encodedRedeemer);
+    console.log("Encoded Redeemer:", transformedData);
 
 
     try {
@@ -69,7 +72,7 @@ const lockFunds = async (dataToLock, redeemerData) => {
             .payToContract(
                 scriptAddress,
                 {
-                    asHash: Data.to(cborDatum),
+                    asHash: Data.to(transformedData),
                     scriptRef: script,
                 }, {})
             .complete();
@@ -183,12 +186,31 @@ const getTransactionDetails = async (txHash) => {
 };
 
 
+const transformReviewToDatum = (review) => {
+    return {
+        constructor: 0,
+        fields: [
+            { bytes: Buffer.from(review.reviewId, 'utf-8').toString('hex') }, // Convert reviewId to hex
+            review.reviewReferenceId
+                ? {
+                      constructor: 1,
+                      fields: [{ bytes: Buffer.from(review.reviewReferenceId, 'utf-8').toString('hex') }],
+                  }
+                : { constructor: 1, fields: [] }, // Handle null case
+            { int: review.overallRating },
+            { int: review.timestamp },
+            { int: review.totalScore },
+            { int: review.ratingCount },
+            { int: review.reputationScore },
+        ],
+    };
+};
 
 
 
 // Controller methods for the routes
 export const lockFundsController = async (req, res) => {
-    const { datum, redeemer } = req.body;
+    const { datum } = req.body;
     console.log(datum);
 
     if (!datum && !redeemer) {
@@ -234,3 +256,4 @@ export const TxDetails = async (req, res) => {
         res.status(500).json({ error: "Error redeeming funds", details: error.message });
     }
 }
+
