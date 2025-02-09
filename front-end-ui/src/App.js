@@ -10,6 +10,8 @@ import BusinessUserProfile from "./Pages/Profile/BusinessUserProfile";
 import CustomerReviewRatings from "./Pages/CustomerReviewRatings/CustomerReviewRatings";
 import Dashboard from "./Pages/Dashboard/Dashboard";
 import { useTranslation } from "react-i18next";
+import UserUpload from "./Pages/UserUpload/UserUpload";
+
 function App() {
   const { i18n } = useTranslation();
   const changeLanguage = (lang) => {
@@ -27,6 +29,7 @@ function App() {
         <Route path="/chatreply" element={<ReviewsReply />} />
         <Route path="/reviews" element={<CustomerReviewRatings />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/uploadUser" element={<UserUpload />} />
       </Routes>
     </BrowserRouter>
   );

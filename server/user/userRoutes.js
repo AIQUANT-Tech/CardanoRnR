@@ -1,5 +1,5 @@
 import express from "express";
-import { createUser, getAllUsers, loginUser, validateEndUser } from "./userController.js";
+import { createUser, getAllUsers, loginUser, uploadUser, validateEndUser } from "./userController.js";
 import { verifyToken, allowBusinessUser, allowEndUser } from '../auth/jwtUtils.js';
 
 const router = express.Router();
@@ -18,5 +18,8 @@ router.post("/validate", validateEndUser);
 
 //Route to validate end user
 // router.post("/verify", verifyEndUserOTP);
+
+//Route to input all HBS users
+router.post("/uploadUser",verifyToken, allowBusinessUser, uploadUser);
 
 export default router;
