@@ -75,7 +75,7 @@ const lockFunds = async (dataToLock) => {
             .payToContract(
                 scriptAddress,
                 {
-                    asHash: Data.to(transformedData),
+                    asHash: Data.to(cborDatum),
                     scriptRef: script,
                 }, {})
             .complete();
@@ -106,38 +106,45 @@ async function redeemFunds(datumToRedeem, redeemer) {
         console.log("🔹 Original Datum:", datumToRedeem);
         console.log("🔹 Redeemer:", redeemer);
 
-        function stringToBytes(str) {
-            return Array.from(new TextEncoder().encode(str));
-        }
+        // function stringToBytes(str) {
+        //     return Array.from(new TextEncoder().encode(str));
+        // }
 
-        const datumPlutus = new Constr(0, [
-            new Constr(0, [stringToBytes(datumToRedeem.reviewId)]), 
-            datumToRedeem.reviewReferenceId
-                ? new Constr(0, [stringToBytes(datumToRedeem.reviewReferenceId)])
-                : null,
-            BigInt(datumToRedeem.overallRating),
-            BigInt(datumToRedeem.timestamp),
-            BigInt(datumToRedeem.totalScore),
-            BigInt(datumToRedeem.ratingCount),
-            BigInt(datumToRedeem.reputationScore),
-        ]);
-        console.log("🔹 Datum (PlutusData):", datumPlutus);
+        // const datumPlutus = new Constr(0, [
+        //     new Constr(0, [stringToBytes(datumToRedeem.reviewId)]), 
+        //     datumToRedeem.reviewReferenceId
+        //         ? new Constr(0, [stringToBytes(datumToRedeem.reviewReferenceId)])
+        //         : null,
+        //     BigInt(datumToRedeem.overallRating),
+        //     BigInt(datumToRedeem.timestamp),
+        //     BigInt(datumToRedeem.totalScore),
+        //     BigInt(datumToRedeem.ratingCount),
+        //     BigInt(datumToRedeem.reputationScore),
+        // ]);
+        // console.log("🔹 Datum (PlutusData):", datumPlutus);
 
-        const datum = encode(datumPlutus).toString('hex');
+        // const datum = encode(datumPlutus).toString('hex');
 
-        const datumCbor = Data.to(datum);
-        console.log("🔹 Datum (CBOR):", datumCbor);
+        // const datumCbor = Data.to(datum);
+        // console.log("🔹 Datum (CBOR):", datumCbor);
 
-        // Format Redeemer as Plutus Constr(0, [redeemer])
-        const redeemerPlutus = new Constr(0, [redeemer]); 
-        console.log("🔹 Redeemer (PlutusData):", redeemerPlutus);
+        // // Format Redeemer as Plutus Constr(0, [redeemer])
+        // const redeemerPlutus = new Constr(0, [redeemer]); 
+        // console.log("🔹 Redeemer (PlutusData):", redeemerPlutus);
 
-        const redeem = encode(datumPlutus).toString('hex');
+        // const redeem = encode(datumPlutus).toString('hex');
 
-        const redeemerCbor = Data.to(redeem);
-        console.log("🔹 Redeemer (CBOR):", redeemerCbor);
+        // const redeemerCbor = Data.to(redeem);
+        // console.log("🔹 Redeemer (CBOR):", redeemerCbor);
 
         // Fetch UTxOs at the script address
+        
+        const cborDatum = Data.to(encode(datumToRedeem).toString('hex'));
+        console.log("Encoded CBOR Datum:", cborDatum);
+
+        const cborRedeemer = Data.to(encode(redeemer).toString('hex'));
+        console.log("Encoded CBOR Redeemer:", cborRedeemer);
+
         const utxos = await lucid.utxosAt(scriptAddress);
 
         const referenceScriptUtxo = utxos.find(utxo => Boolean(utxo.scriptRef));
@@ -161,7 +168,7 @@ async function redeemFunds(datumToRedeem, redeemer) {
         }
 
         const tx = await txBuilder
-            .collectFrom([utxoToRedeem], redeemerCbor) 
+            .collectFrom([utxoToRedeem], cborRedeemer) 
             .addSigner(await lucid.wallet.address())  
             .complete();
 
