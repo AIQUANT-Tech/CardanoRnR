@@ -34,6 +34,10 @@ const UserMast = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  booking_id: {
+    type: String,
+    required: true,
+  }
 });
 
 const User = new mongoose.model("User", UserMast);

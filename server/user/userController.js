@@ -11,9 +11,9 @@ let otps = {};
 // Create a new user
 export const createUser = async (req, res) => {
     try {
-        const { user_id, email, password_hash, display_name, role } = req.body;
+        const { user_id, email, password_hash, display_name, role, booking_id } = req.body;
 
-        if (!user_id || !display_name || !email || !password_hash || !role) {
+        if (!user_id || !display_name || !email || !password_hash || !role || !booking_id) {
             return res.status(400).json({user_crud_rs: {status:responses.validation.allFieldsRequired} });
         }
 
@@ -31,7 +31,7 @@ export const createUser = async (req, res) => {
         const password = await bcrypt.hash(password_hash, salt);
 
         // Create the new user
-        const newUser = new User({ user_id, email, password_hash: password, display_name, role });
+        const newUser = new User({ user_id, email, password_hash: password, display_name, role, booking_id });
         const savedUser = await newUser.save();  
         
 
@@ -158,3 +158,42 @@ export const validateEndUser = async (req, res) => {
 //         return res.status(500).json({ user_crud_rs: { status: responses.error.verifyingOTP }, error: error.message });
 //     }
 // };
+
+export const uploadUser = async (req, res) => {
+    try {
+        const { reservations } = req.body;
+        if (!reservations) return res.status(400).json({ error: "Invalid JSON format" });
+
+        const salt = await bcrypt.genSalt(10);
+        const password = await bcrypt.hash("password", salt);
+
+        const users = [];
+
+        for (const res of reservations) {
+            const existingUser = await User.findOne({
+                email: res.guestDetails.email,
+                booking_id: res.reservationId,
+            });
+
+            if (!existingUser) {
+                users.push({
+                    user_id: res.guestDetails.id,
+                    email: res.guestDetails.email,
+                    password_hash: password,
+                    display_name: `${res.guestDetails.firstName} ${res.guestDetails.lastName}`,
+                    booking_id: res.reservationId,
+                    role: "End User",
+                });
+            }
+        }
+
+        if (users.length > 0) {
+            await User.insertMany(users);
+            res.json({ message: "Users added successfully" });
+        } else {
+            res.status(400).json({ message: "No new users found for insertion" });
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};

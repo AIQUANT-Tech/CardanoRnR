@@ -41,6 +41,7 @@ const SignUp = () => {
           email: formData.email,
           password_hash: formData.password,
           display_name: formData.displayName,
+          booking_id: "NA",
           role: "Business User",
         }),
       });
