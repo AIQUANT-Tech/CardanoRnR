@@ -157,11 +157,11 @@ describe('Review Category Controller Tests', () => {
     it('should fetch categories successfully for businessUser', async () => {
       const req = {
         body: {
-          "review_category_fetch_rq": {
-            "header": {
-              "user_name": "Business User",
-              "product": "rnr",
-              "request_type": "FETCH_REVIEW_CATEGORY"
+          review_category_fetch_rq: {
+            header: {
+              user_name: "Business User",
+              product: "rnr",
+              request_type: "FETCH_REVIEW_CATEGORY"
             }
           }
         },
@@ -171,24 +171,21 @@ describe('Review Category Controller Tests', () => {
         json: jest.fn()
       };
 
-      jest.spyOn(ReviewCategory, 'find').mockResolvedValue({
-        review_category_fetch_rs: {
-          category_list: [{
-              category_id: '1',
-              category_name: "Test Category",
-              category_desc: 'Test Description',
-              modified_by: "businessUser",
-              last_modified: "businessUser",
-              Status: "Active"
-            }
-          ],
-          status: "success"
+      jest.spyOn(ReviewCategory, 'find').mockResolvedValue([
+        {
+          category_id: '1',
+          category_name: "Test Category",
+          category_description: 'Test Description',
+          modified_by: "businessUser",
+          last_modified: "businessUser",
+          status: "Active"
         }
-      });
+      ]);
+    
 
       await getAllReviewCategories(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
         review_category_fetch_rs: {
           category_list: [{
