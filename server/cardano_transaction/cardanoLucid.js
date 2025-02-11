@@ -1,5 +1,5 @@
 // controllers/transactionController.js
-import { Lucid, Blockfrost, Data } from "lucid-cardano";
+import { Lucid, Blockfrost, Constr, Data, fromHex, toHex } from "lucid-cardano";
 import dotenv from "dotenv";
 import cbor from "cbor";
 import { BlockFrostAPI } from '@blockfrost/blockfrost-js';
@@ -35,11 +35,16 @@ const scriptAddress = lucid.utils.validatorToAddress(script);
 console.log(scriptAddress);
 
 // Lock ADA at the script
-const lockFunds = async (dataToLock, redeemerData) => {
+const lockFunds = async (dataToLock) => {
 
     if (typeof dataToLock !== 'object' || dataToLock === null) {
         throw new Error("Datum must be a valid JSON object");
     }
+
+    const transformedDatum = transformReviewToDatum(dataToLock);
+    const transformedData = encode(transformedDatum).toString('hex');
+
+    console.log("Transformed Datum:", JSON.stringify(transformedDatum, null, 2));
 
     const jsonString = JSON.stringify(dataToLock);
     // const buffer = Buffer.from(jsonString, 'utf-8');
@@ -47,11 +52,12 @@ const lockFunds = async (dataToLock, redeemerData) => {
 
     console.log("Encoded CBOR Datum:", cborDatum);
 
-    const redeemerBuffer = JSON.stringify(redeemerData);
-    const encodedRedeemer = encode(redeemerData).toString('hex');
+   // const transformedBuffer = JSON.stringify(transformedDatum);
 
-    console.log("Encoded Redeemer:", encodedRedeemer);
+    console.log("Encoded Redeemer:", transformedData);
 
+    console.log(scriptAddress);
+    
 
     try {
         const utxos = await lucid.utxosAt(scriptAddress);
@@ -93,43 +99,64 @@ async function redeemFunds(datumToRedeem, redeemer) {
         if (typeof datumToRedeem !== 'object' || datumToRedeem === null) {
             throw new Error("Invalid datum: Expected a valid JSON object.");
         }
-
-        if (typeof redeemer !== 'object' || redeemer === null) {
-            throw new Error("Invalid redeemer: Expected a valid JSON object.");
+        if (typeof redeemer.reviewId !== 'string') {
+            throw new Error("Invalid redeemer: Expected a string (reviewId).");
         }
 
-        const jsonString = JSON.stringify(datumToRedeem);
-        const datumHex = encode(datumToRedeem).toString('hex');
-        const datumCbor = Data.to(datumHex);
+        console.log("🔹 Original Datum:", datumToRedeem);
+        console.log("🔹 Redeemer:", redeemer);
 
-        console.log("Encoded CBOR Datum:", datumCbor);
+        // function stringToBytes(str) {
+        //     return Array.from(new TextEncoder().encode(str));
+        // }
 
-        const redeemerBuffer = JSON.stringify(redeemer);
-        const redeemerHex = encode(redeemer).toString('hex');
-        const redeemerCbor = Data.to(redeemerHex);
+        // const datumPlutus = new Constr(0, [
+        //     new Constr(0, [stringToBytes(datumToRedeem.reviewId)]), 
+        //     datumToRedeem.reviewReferenceId
+        //         ? new Constr(0, [stringToBytes(datumToRedeem.reviewReferenceId)])
+        //         : null,
+        //     BigInt(datumToRedeem.overallRating),
+        //     BigInt(datumToRedeem.timestamp),
+        //     BigInt(datumToRedeem.totalScore),
+        //     BigInt(datumToRedeem.ratingCount),
+        //     BigInt(datumToRedeem.reputationScore),
+        // ]);
+        // console.log("🔹 Datum (PlutusData):", datumPlutus);
 
+        // const datum = encode(datumPlutus).toString('hex');
 
-        console.log("Encoded Redeemer:", redeemerCbor);
+        // const datumCbor = Data.to(datum);
+        // console.log("🔹 Datum (CBOR):", datumCbor);
 
+        // // Format Redeemer as Plutus Constr(0, [redeemer])
+        // const redeemerPlutus = new Constr(0, [redeemer]); 
+        // console.log("🔹 Redeemer (PlutusData):", redeemerPlutus);
+
+        // const redeem = encode(datumPlutus).toString('hex');
+
+        // const redeemerCbor = Data.to(redeem);
+        // console.log("🔹 Redeemer (CBOR):", redeemerCbor);
+
+        // Fetch UTxOs at the script address
+        
+        const cborDatum = Data.to(encode(datumToRedeem).toString('hex'));
+        console.log("Encoded CBOR Datum:", cborDatum);
+
+        const cborRedeemer = Data.to(encode(redeemer).toString('hex'));
+        console.log("Encoded CBOR Redeemer:", cborRedeemer);
 
         const utxos = await lucid.utxosAt(scriptAddress);
 
-        const referenceScriptUtxo = (utxos).find(
-            (utxo) => Boolean(utxo.scriptRef),
-        );
+        const referenceScriptUtxo = utxos.find(utxo => Boolean(utxo.scriptRef));
         if (!referenceScriptUtxo) throw new Error("Reference script not found");
 
+        // Fix UTxO Selection (Ensure it has a datum)
+        const utxoToRedeem = utxos.find(utxo => utxo.datum);
+        if (!utxoToRedeem) throw new Error("No valid UTxO with datum found!");
 
-        const utxoToRedeem = utxos.find(utxo => utxo.datum && utxo.datum === datumCbor && !utxo.scriptRef);
+        console.log("🔹 Selected UTxO:", utxoToRedeem);
 
-        if (!utxoToRedeem) {
-            throw new Error("No matching UTXO found at script address.");
-        }
-
-        console.log(utxoToRedeem);
-        const addr = await lucid.wallet.address();
-
-
+        // Build Transaction
         let txBuilder = lucid.newTx();
 
         if (referenceScriptUtxo) {
@@ -141,23 +168,26 @@ async function redeemFunds(datumToRedeem, redeemer) {
         }
 
         const tx = await txBuilder
-            .collectFrom([utxoToRedeem], redeemerCbor) 
-            .addSigner(await lucid.wallet.address()) 
+            .collectFrom([utxoToRedeem], cborRedeemer) 
+            .addSigner(await lucid.wallet.address())  
             .complete();
 
+        console.log("Transaction Built:", tx);
 
+        // Sign & Submit
         const signedTx = await tx.sign().complete();
-
         const txHash = await signedTx.submit();
 
         console.log("Funds redeemed successfully with transaction:", txHash);
         return txHash;
 
     } catch (error) {
-        console.error("Error redeeming funds:", error.message);
+        console.error("❌ Error redeeming funds:", error.message);
+        console.error("❌ Error:", error);
         throw new Error("Transaction failed: " + error.message);
     }
 }
+
 
 const getTransactionDetails = async (txHash) => {
     try {
@@ -183,20 +213,39 @@ const getTransactionDetails = async (txHash) => {
 };
 
 
+const transformReviewToDatum = (review) => {
+    return {
+        constructor: 0,
+        fields: [
+            { bytes: Buffer.from(review.reviewId, 'utf-8').toString('hex') }, // Convert reviewId to hex
+            review.reviewReferenceId
+                ? {
+                      constructor: 1,
+                      fields: [{ bytes: Buffer.from(review.reviewReferenceId, 'utf-8').toString('hex') }],
+                  }
+                : { constructor: 1, fields: [] }, // Handle null case
+            { int: review.overallRating },
+            { int: review.timestamp },
+            { int: review.totalScore },
+            { int: review.ratingCount },
+            { int: review.reputationScore },
+        ],
+    };
+};
 
 
 
 // Controller methods for the routes
 export const lockFundsController = async (req, res) => {
-    const { datum, redeemer } = req.body;
+    const { datum } = req.body;
     console.log(datum);
 
-    if (!datum && !redeemer) {
+    if (!datum) {
         return res.status(400).json({ error: "No data provided to lock" });
     }
 
     try {
-        const txHash = await lockFunds(datum, redeemer);
+        const txHash = await lockFunds(datum);
         res.status(200).json({ txHash });
     } catch (error) {
         res.status(500).json({ error: "Error locking funds", details: error.message });
@@ -234,3 +283,4 @@ export const TxDetails = async (req, res) => {
         res.status(500).json({ error: "Error redeeming funds", details: error.message });
     }
 }
+
