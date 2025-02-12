@@ -6,6 +6,8 @@ import reviewRoutes from './review/reviewRoutes.js';
 import userRoutes from './user/userRoutes.js';
 import replyTransData from './replyTransactionData/replyTransDataRoutes.js';
 import transactionRoutes from './cardano_transaction/chainRoutes.js';
+import HbsRoutes from './Hotel_Booking_System/Hbs_Routes.js';
+
 dotenv.config();
 
 const app = express();
@@ -23,6 +25,7 @@ app.use('/api/review', reviewRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/reply', replyTransData);
 app.use('/api/transaction', transactionRoutes);
+app.use('/api/hotel_booking_system/', HbsRoutes);
 
 
 
