@@ -1,0 +1,196 @@
+{"guest_booking_info_rq": [{
+    "reservationId": "RES-2024-001",
+    "bookingStatus": "confirmed",
+    "bookingDate": "2024-01-10",
+    "checkInDate": "2024-01-15",
+    "checkOutDate": "2024-01-18",
+    "numberOfNights": 3,
+    "guestDetails": {
+        "id": "G-123456",
+        "title": "Mr",
+        "firstName": "Sumit",
+        "lastName": "Bera",
+        "email": "sumitberaaiquant@gmail.com",
+        "phone": "+918777245574",
+        "address": {
+            "street": "123 Main Street",
+            "city": "New York",
+            "state": "NY",
+            "zipCode": "10001",
+            "country": "USA"
+        },
+        "identification": {
+            "type": "passport",
+            "number": "P123456789",
+            "expiryDate": "2026-05-20",
+            "issuingCountry": "USA"
+        }
+    },
+    "accompanyingGuests": [
+        {
+            "name": "Jane Doe",
+            "phone": "+1-555-987-6543"
+        },
+        {
+            "name": "Tom Brown",
+            "phone": "+1-555-567-8901"
+        }
+    ],
+    "roomDetails": {
+        "roomType": "deluxe",
+        "roomNumber": "405",
+        "size": "45sq",
+        "floor": 4,
+        "amenities": [
+            "king bed",
+            "ocean view",
+            "wifi",
+            "minibar",
+            "room service"
+        ],
+        "ratePerNight": 250.00,
+        "maxOccupancy": 2
+    },
+    "paymentDetails": {
+        "totalAmount": 750.00,
+        "paidAmount": 750.00,
+        "paymentStatus": "paid",
+        "paymentMethod": "credit_card",
+        "cardDetails": {
+            "cardType": "visa",
+            "lastFourDigits": "4567",
+            "expiryDate": "12/25"
+        },
+        "transactions": [
+            {
+                "transactionId": "TXN-001",
+                "date": "2024-01-10",
+                "amount": 750.00,
+                "type": "payment"
+            }
+        ]
+    },
+    "addOnServices": [
+        {
+            "serviceId": "SVC-001",
+            "name": "Airport Pickup",
+            "status": "confirmed",
+            "date": "2024-01-15",
+            "time": "14:00",
+            "price": 50.00
+        },
+        {
+            "serviceId": "SVC-002",
+            "name": "Spa Treatment",
+            "status": "booked",
+            "date": "2024-01-16",
+            "time": "10:00",
+            "price": 120.00
+        }
+    ],
+    "specialRequests": [
+        "early check-in",
+        "high floor preferred"
+    ],
+    "checkInStatus": {
+        "preCheckInCompleted": true,
+        "estimatedArrivalTime": "14:00",
+        "actualCheckInTime": null,
+        "actualCheckOutTime": null,
+        "keyCardIssued": false
+    }
+},
+{
+    "reservationId": "RES-2024-002",
+    "bookingStatus": "confirmed",
+    "bookingDate": "2024-01-10",
+    "checkInDate": "2024-01-20",
+    "checkOutDate": "2024-01-22",
+    "numberOfNights": 2,
+    "guestDetails": {
+        "id": "G-123457",
+        "title": "Mrs",
+        "firstName": "Sarah",
+        "lastName": "Johnson",
+        "email": "sarah.j@email.com",
+        "phone": "+1-555-987-6543",
+        "address": {
+            "street": "456 Park Avenue",
+            "city": "Los Angeles",
+            "state": "CA",
+            "zipCode": "90001",
+            "country": "USA"
+        },
+        "identification": {
+            "type": "driving_license",
+            "number": "DL98765432",
+            "expiryDate": "2025-12-31",
+            "issuingCountry": "USA"
+        }
+    },
+    "accompanyingGuests": [
+        {
+            "name": "Jane Doe",
+            "phone": "+1-555-987-6543"
+        },
+        {
+            "name": "Tom Brown",
+            "phone": "+1-555-567-8901"
+        }
+    ],
+    "roomDetails": {
+        "roomType": "suite",
+        "roomNumber": "701",
+        "floor": 7,
+        "amenities": [
+            "two bedrooms",
+            "city view",
+            "wifi",
+            "kitchenette",
+            "jacuzzi",
+            "room service"
+        ],
+        "ratePerNight": 400.00,
+        "maxOccupancy": 4
+    },
+    "paymentDetails": {
+        "totalAmount": 800.00,
+        "paidAmount": 400.00,
+        "paymentStatus": "partially_paid",
+        "paymentMethod": "credit_card",
+        "cardDetails": {
+            "cardType": "mastercard",
+            "lastFourDigits": "8901",
+            "expiryDate": "03/26"
+        },
+        "transactions": [
+            {
+                "transactionId": "TXN-002",
+                "date": "2024-01-15",
+                "amount": 400.00,
+                "type": "deposit"
+            }
+        ]
+    },
+    "addOnServices": [
+        {
+            "serviceId": "SVC-003",
+            "name": "Breakfast Package",
+            "status": "confirmed",
+            "date": "2024-01-20",
+            "time": "07:00",
+            "price": 75.00
+        }
+    ],
+    "specialRequests": [
+        "allergic to feathers",
+        "quiet room"
+    ],
+    "checkInStatus": {
+        "preCheckInCompleted": false,
+        "estimatedArrivalTime": "15:00",
+        "actualCheckInTime": null,
+        "actualCheckOutTime": null,
+        "keyCardIssued": false
+    }
+}]}
