@@ -245,7 +245,7 @@ export const getTransactionMetadata = async (req, res) => {
 //   } catch (error) {
 //     console.error('Error fetching metadata:', error.message);
 //   }
-// };
+};
 
 
 export const fetchRedeemers = async (req, res) => {
