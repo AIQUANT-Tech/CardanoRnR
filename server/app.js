@@ -7,7 +7,7 @@ import userRoutes from './user/userRoutes.js';
 import replyTransData from './replyTransactionData/replyTransDataRoutes.js';
 import transactionRoutes from './cardano_transaction/chainRoutes.js';
 import HbsRoutes from './Hotel_Booking_System/Hbs_Routes.js';
-
+import schedulerRoutes from './scheduler/schedulerRoutes.js';
 dotenv.config();
 
 const app = express();
@@ -26,7 +26,7 @@ app.use('/api/user', userRoutes);
 app.use('/api/reply', replyTransData);
 app.use('/api/transaction', transactionRoutes);
 app.use('/api/hotel_booking_system/', HbsRoutes);
-
+app.use('/api/scheduler', schedulerRoutes);
 
 
 app.listen(process.env.PORT, () => {
