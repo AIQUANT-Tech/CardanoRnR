@@ -16,6 +16,7 @@ import { format } from 'date-fns';
 import Star from "../../assets/Star.svg";
 import business from "../../assets/businessProfile.svg";
 import user from "../../assets/userProfile.svg";
+import API_BASE_URL from "../../config.js";
 
 
 const GuestReviews = () => {
@@ -39,7 +40,7 @@ const GuestReviews = () => {
         const fetchReviews = async () => {
             try {
                 const response = await fetch(
-                    "http://localhost:8080/api/review/reviews/user/FetchReviews",
+                    `${API_BASE_URL}api/review/reviews/user/FetchReviews`,
                     {
                         method: "POST",
                         headers: {
@@ -73,7 +74,7 @@ const GuestReviews = () => {
     useEffect(() => {
         const fetchBusinessReplies = async () => {
             try {
-                const response = await fetch("http://localhost:8080/api/reply/", {
+                const response = await fetch(`${API_BASE_URL}api/reply/`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",

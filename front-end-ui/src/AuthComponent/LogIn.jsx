@@ -5,6 +5,8 @@ import workspace from "../AuthComponent/image/LogIn.jpg";
 import "./auth.css";
 import LanguageSelector from "../Components/LanguageSelector";
 import { useTranslation } from "react-i18next";
+import API_BASE_URL from "../config.js";
+
 function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -36,7 +38,7 @@ function LoginPage() {
 
     try {
       const response = await axios.post(
-        "http://localhost:8080/api/user/login",
+        `${API_BASE_URL}api/user/login`,
         {
           email,
           password_hash: password, // Backend expects `password_hash`
