@@ -16,6 +16,7 @@ import StarIcon from "@mui/icons-material/Star";
 import AddIcon from "@mui/icons-material/Add";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import Star from "../assets/Star.svg";
+import API_BASE_URL from "../config.js";
 
 const ReviewModal = ({ open, setOpen, email, setEmail }) => {
   const [overallRating, setOverallRating] = useState(0);
@@ -35,7 +36,7 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
   const fetchCategories = async () => {
     try {
       const response = await fetch(
-        "http://localhost:8080/api/reviewcategory/getReviewCategoryInfo",
+        `${API_BASE_URL}api/reviewcategory/getReviewCategoryInfo`,
         {
           method: "POST",
           headers: {
@@ -123,7 +124,7 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
       };
 
       const response = await fetch(
-        "http://localhost:8080/api/review/CreateReview",
+        `${API_BASE_URL}api/review/CreateReview`,
         {
           method: "POST",
           headers: {
@@ -136,7 +137,7 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
       if (response.ok) {
         const data = await response.json();
 
-        const count = await fetch("http://localhost:8080/api/review/count", {
+        const count = await fetch(`${API_BASE_URL}api/review/count`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -159,7 +160,7 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
         console.log(metadata);
 
         const transact = await fetch(
-          "http://localhost:8080/api/transaction/createTransaction",
+          `${API_BASE_URL}api/transaction/createTransaction`,
           {
             method: "POST",
             headers: {
