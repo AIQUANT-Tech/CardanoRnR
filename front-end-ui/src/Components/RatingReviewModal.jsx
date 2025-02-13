@@ -16,6 +16,7 @@ import FullReviewModal from "./FullReviewModal";
 import { format } from "date-fns";
 import Star from "../assets/Star.svg";
 import user from "../assets/userProfile.svg";
+import API_BASE_URL from "../config.js";
 
 
 const debounce = (func, delay) => {
@@ -45,7 +46,7 @@ const RatingReviewModal = ({
         const fetchReviews = async () => {
             try {
                 const response = await fetch(
-                    "http://localhost:8080/api/review/reviews/user/FetchReviews",
+                    `${API_BASE_URL}api/review/reviews/user/FetchReviews`,
                     {
                         method: "POST",
                         headers: {

@@ -29,6 +29,8 @@ import axios from "axios";
 import ChatPanel from "../../Components/Message";
 import "./ReviewReply.css";
 import "../../Components/styles.css";
+import API_BASE_URL from "../../config.js";
+
 
 const CustomerReviewManagement = () => {
   const [selectedReview, setSelectedReview] = useState(null);
@@ -67,7 +69,7 @@ const CustomerReviewManagement = () => {
     try {
       setIsLoading(true);
       const response = await axios.post(
-        "http://localhost:8080/api/review/reviews/business/FetchReviews",
+        `${API_BASE_URL}api/review/reviews/business/FetchReviews`,
         {
           review_rating_info_rq: {
             header: {
@@ -126,7 +128,7 @@ const CustomerReviewManagement = () => {
     try {
       setIsThreadLoading(true);
       const response = await axios.post(
-        "http://localhost:8080/api/reply/ReplyToReview",
+        `${API_BASE_URL}api/reply/ReplyToReview`,
         {
           review_reply_thread_rq: {
             header: {
@@ -156,7 +158,7 @@ const CustomerReviewManagement = () => {
     setIsThreadLoading(true); // Set the loading state to true to show a loading indicator
     try {
       const response = await axios.post(
-        "http://localhost:8080/api/reply/ReplyToReview",
+        `${API_BASE_URL}api/reply/ReplyToReview`,
         {
           review_reply_thread_rq: {
             header: {
@@ -185,7 +187,7 @@ const CustomerReviewManagement = () => {
 
       // Send the reply
       const response = await axios.post(
-        "http://localhost:8080/api/reply/ReplyToReviews",
+        `${API_BASE_URL}api/reply/ReplyToReviews`,
         {
           review_reply_thread_rq: {
             header: {

@@ -3,6 +3,8 @@ import { Box, Typography, Button, LinearProgress, Grid } from "@mui/material";
 import StarIcon from "@mui/icons-material/Star";
 import GuestReviews from "./guestReviews";
 import { useParams } from 'react-router-dom';
+import API_BASE_URL from "../../config.js";
+
 
 
 const ReviewsPage = () => {
@@ -15,7 +17,7 @@ const ReviewsPage = () => {
         const fetchData = async () => {
             setLoading(true);
             try {
-                const response = await fetch("http://localhost:8080/api/review/reviews/user/FetchReviews", {
+                const response = await fetch(`${API_BASE_URL}api/review/reviews/user/FetchReviews`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({

@@ -25,6 +25,8 @@ import Header from "../../Components/Header";
 import Pagination from "../../Components/Custom-Pagination";
 import axios from "axios";
 import "../../Components/styles.css";
+import API_BASE_URL from "../../config.js";
+
 
 const CustomerReviewManagement = () => {
   const [reviews, setReviews] = useState([]);
@@ -58,7 +60,7 @@ const CustomerReviewManagement = () => {
     try {
       setIsLoading(true);
       const response = await axios.post(
-        "http://localhost:8080/api/review/reviews/business/FetchReviews",
+        `${API_BASE_URL}api/review/reviews/business/FetchReviews`,
         {
           review_rating_info_rq: {
             header: {
