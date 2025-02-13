@@ -3,6 +3,8 @@ import { Container, Form } from "react-bootstrap";
 import signupImage from "./image/signup.png";
 import { useNavigate } from "react-router-dom";
 import "./auth.css";
+import API_BASE_URL from "../config.js";
+
 
 const SignUp = () => {
   const [formData, setFormData] = useState({
@@ -31,7 +33,7 @@ const SignUp = () => {
     }
 
     try {
-      const response = await fetch("http://localhost:8080/api/user/users", {
+      const response = await fetch(`${API_BASE_URL}api/user/users`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -4,6 +4,8 @@ import { styled } from "@mui/material/styles";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ErrorIcon from "@mui/icons-material/Error";
+import API_BASE_URL from "../../config.js";
+
 
 const Input = styled("input")({
   display: "none",
@@ -30,7 +32,7 @@ const UserUpload = () => {
     formData.append("file", file);
 
     try {
-      const response = await fetch("http://localhost:8080/api/user/uploadUser", {
+      const response = await fetch(`${API_BASE_URL}api/user/uploadUser`, {
         method: "POST",
         body: formData,
       });
