@@ -10,6 +10,8 @@ import {
 } from "@mui/material";
 import { EditIcon } from "lucide-react";
 import ReviewModal from "./ReviewModal";
+import API_BASE_URL from "../config.js";
+
 
 const WriteReviewModal = () => {
   const [openReviewModal, setOpenReviewModal] = useState(false);
@@ -39,7 +41,7 @@ const WriteReviewModal = () => {
     }
 
     try {
-        const response = await fetch("http://localhost:8080/api/user/validate", {
+        const response = await fetch(`${API_BASE_URL}api/user/validate`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

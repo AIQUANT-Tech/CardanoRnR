@@ -11,6 +11,7 @@ import {
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 import Star from "../assets/Star.svg";
+import API_BASE_URL from "../config.js";
 
 
 const FullReviewModal = ({ open, onClose, review }) => {
@@ -25,7 +26,7 @@ const FullReviewModal = ({ open, onClose, review }) => {
                 setError(null);
                 try {
                     const response = await fetch(
-                        "http://localhost:8080/api/review/reviews/user/selected",
+                        `${API_BASE_URL}api/review/reviews/user/selected`,
                         {
                             method: "POST",
                             headers: {

@@ -26,6 +26,7 @@ import AddIcon from "@mui/icons-material/Add";
 import AddCategoriesModal from "./AddCategoriesModal";
 import EditCategoryModal from "./EditCategoryModal";
 import "./styles.css";
+import API_BASE_URL from "../config.js";
 
 const CategoriesTable = () => {
   const [categoriesData, setCategoriesData] = useState([]);
@@ -55,7 +56,7 @@ const CategoriesTable = () => {
         };
 
         const response = await fetch(
-          "http://localhost:8080/api/reviewcategory/getReviewCategoryInfo",
+          `${API_BASE_URL}api/reviewcategory/getReviewCategoryInfo`,
           {
             method: "POST",
             headers: {
@@ -107,7 +108,7 @@ const CategoriesTable = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:8080/api/reviewcategory/createReviewCategory",
+        `${API_BASE_URL}api/reviewcategory/createReviewCategory`,
         {
           method: "POST",
           headers: {
@@ -148,7 +149,7 @@ const CategoriesTable = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:8080/api/reviewcategory/deleteReviewCategory",
+        `${API_BASE_URL}api/reviewcategory/deleteReviewCategory`,
         {
           method: "DELETE",
           headers: {
@@ -193,7 +194,7 @@ const CategoriesTable = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:8080/api/reviewcategory/editReviewCategory",
+        `${API_BASE_URL}api/reviewcategory/editReviewCategory`,
         {
           method: "PUT",
           headers: {
