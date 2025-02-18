@@ -3,6 +3,7 @@ import { Lucid, Blockfrost, Constr, Data, fromHex, toHex } from "lucid-cardano";
 import dotenv from "dotenv";
 import cbor from "cbor";
 import { BlockFrostAPI } from "@blockfrost/blockfrost-js";
+// import { assets } from "@blockfrost/blockfrost-js/lib/endpoints/api/assets";
 
 // Load environment variables
 dotenv.config();
@@ -126,7 +127,32 @@ async function redeemFunds(datumToRedeem, redeemer) {
 
         const utxos = await lucid.utxosAt(scriptAddress);
 
-        console.log(utxos);
+        const paymentUtxos = await lucid.utxosAt(await lucid.wallet.address());
+
+        //console.log(paymentUtxos);
+
+
+        // Find matching UTXOs and print both sides
+        const matchingUtxos = utxos.flatMap(scriptUtxo => {
+            return paymentUtxos
+                .filter(paymentUtxo =>
+                    scriptUtxo.txHash === paymentUtxo.txHash)
+                .map(paymentUtxo => ({ scriptUtxo, paymentUtxo }));
+        });
+
+        // Print results
+        // matchingUtxos.forEach(({ scriptUtxo, paymentUtxo }, index) => {
+        //     console.log(`Match ${index + 1}:`);
+        //     console.log("Script UTXO:", scriptUtxo);
+        //     console.log("Payment UTXO:", paymentUtxo);
+        //     console.log("--------------------");
+        // });
+
+        const matchingPaymentUtxos = matchingUtxos.map(({ paymentUtxo }) => paymentUtxo);
+
+        console.log("Matching Payment UTXOs:", matchingPaymentUtxos[0].txHash);
+
+
 
         const referenceScriptUtxo = utxos.find((utxo) => Boolean(utxo.scriptRef));
         if (!referenceScriptUtxo) throw new Error("Reference script not found");
@@ -137,8 +163,8 @@ async function redeemFunds(datumToRedeem, redeemer) {
 
         console.log("🔹 Selected UTxO:", utxoToRedeem);
 
+
         const cborRedeemer = new Constr(0, ["72657669650001"]);
-        //const cborRedeemer = ["72657669650001"]
         console.log("🔹 Redeemer(CBOR): ", cborRedeemer);
 
 
@@ -147,21 +173,25 @@ async function redeemFunds(datumToRedeem, redeemer) {
         // Build Transaction
         let txBuilder = lucid.newTx();
 
-        if (referenceScriptUtxo) {
+        if (matchingPaymentUtxos[0]) {
             console.log("✅ Using reference script.");
-            txBuilder = txBuilder.readFrom([referenceScriptUtxo]);
+            txBuilder = txBuilder.readFrom([matchingPaymentUtxos[0]]);
         } else {
             console.log("✅ Attaching validator script manually.");
             txBuilder = txBuilder.attachSpendingValidator(script);
         }
 
+        console.log("Wallet Address: ", await lucid.wallet.address());
+
+
+
         const tx = await txBuilder
             .collectFrom([utxoToRedeem], Data.to(cborRedeemer))
             .addSigner(await lucid.wallet.address())
-            .payToAddress(await lucid.wallet.address(), {                   // Specify recipient and the output details
-                lovelace: BigInt(1),                              // Amount of ADA
-                inline: Data.to(b),                           // Attach the datum here
-            })
+            .payToAddress(
+                await lucid.wallet.address(),
+                { lovelace: 11377807n }
+            )
             .complete();
 
         console.log("Transaction Built:", tx);
@@ -178,6 +208,88 @@ async function redeemFunds(datumToRedeem, redeemer) {
         throw new Error("Transaction failed: " + error.message);
     }
 }
+
+
+
+// async function redeemFunds(datumToRedeem, redeemer) {
+//     try {
+//         if (typeof datumToRedeem !== "object" || datumToRedeem === null) {
+//             throw new Error("Invalid datum: Expected a valid JSON object.");
+//         }
+//         if (typeof redeemer.reviewId !== "string") {
+//             throw new Error("Invalid redeemer: Expected a string (reviewId).");
+//         }
+
+//         const b = new Constr(0, [
+//             "72657669650001",
+//             new Constr(1, []),
+//             BigInt(4),
+//             BigInt(1619190195),
+//             BigInt(23),
+//             BigInt(9),
+//             BigInt(400),
+//         ]);
+
+//         const datumCbor = Data.to(b);
+//         console.log("🔹 Encoded Datum (CBOR):", datumCbor);
+
+//         const utxos = await lucid.utxosAt(scriptAddress);
+//         const paymentUtxos = await lucid.utxosAt(await lucid.wallet.address());
+
+//         const matchingUtxos = utxos.flatMap(scriptUtxo => {
+//                         return paymentUtxos
+//                             .filter(paymentUtxo =>
+//                                 scriptUtxo.txHash === paymentUtxo.txHash)
+//                             .map(paymentUtxo => ({ scriptUtxo, paymentUtxo }));
+//                     });
+
+//         const matchingPaymentUtxos = matchingUtxos.map(({ paymentUtxo }) => paymentUtxo);
+
+//         // Get reference script UTxO
+//         const referenceScriptUtxo = utxos.find((utxo) => Boolean(utxo.scriptRef));
+//         if (!referenceScriptUtxo) throw new Error("Reference script not found");
+
+//         // Exclude reference UTxOs from spendable UTxOs
+//         const spendableUtxos = utxos.filter((utxo) => utxo.scriptRef);
+//         console.log("Spendable Utxos: ", spendableUtxos);
+        
+
+//         // Select the UTxO to redeem
+//         const utxoToRedeem = spendableUtxos.find((utxo) => utxo.datum === datumCbor);
+//         if (!utxoToRedeem) throw new Error("No valid UTxO with datum found!");
+
+//         console.log("🔹 Selected UTxO:", utxoToRedeem);
+
+//         const cborRedeemer = new Constr(0, ["72657669650001"]);
+//         console.log("🔹 Redeemer(CBOR): ", cborRedeemer);
+//         console.log("🔹 Encoded Redeemer(CBOR): ", Data.to(cborRedeemer));
+
+//         // Build Transaction
+//         let txBuilder = lucid.newTx().readFrom([referenceScriptUtxo]); // Use reference script only
+
+//         const tx = await txBuilder
+//             .collectFrom([matchingPaymentUtxos[0],utxoToRedeem], Data.to(cborRedeemer)) // Exclude reference UTxO
+//             .addSigner(await lucid.wallet.address())
+//             .payToAddress(
+//                 await lucid.wallet.address(),
+//                 { lovelace: 11377807n }
+//             )
+//             .complete();
+
+//         console.log("Transaction Built:", tx);
+
+//         // Sign & Submit
+//         const signedTx = await tx.sign().complete();
+//         const txHash = await signedTx.submit();
+
+//         console.log("Funds redeemed successfully with transaction:", txHash);
+//         return txHash;
+//     } catch (error) {
+//         console.error("❌ Error redeeming funds:", error.message);
+//         throw new Error("Transaction failed: " + error.message);
+//     }
+// }
+
 
 const getTransactionDetails = async (txHash) => {
     try {
