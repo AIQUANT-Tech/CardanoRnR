@@ -42,6 +42,7 @@ describe('User Controller Tests', () => {
         display_name: 'Test User',
         role: 'End User',
         status: true,
+        booking_id: 'NA',
       };
     });
 
@@ -53,7 +54,7 @@ describe('User Controller Tests', () => {
     });
 
     it('should return 400 if role is invalid', async () => {
-      req.body.role = 'InvalidRole';
+      req.body.role = 'Any';
       await createUser(req, res);
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({ user_crud_rs: { status: 'Invalid role provided.' } });

@@ -26,7 +26,7 @@ app.use('/api/user', userRoutes);
 app.use('/api/reply', replyTransData);
 app.use('/api/transaction', transactionRoutes);
 app.use('/api/hotel_booking_system/', HbsRoutes);
-app.use('/api/scheduler', schedulerRoutes);
+// app.use('/api/scheduler', schedulerRoutes);
 
 
 app.listen(process.env.PORT, () => {
