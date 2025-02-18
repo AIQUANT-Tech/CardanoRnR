@@ -190,6 +190,7 @@ async function redeemFunds(datumToRedeem, redeemer) {
             .addSigner(await lucid.wallet.address())
             .payToAddress(
                 await lucid.wallet.address(),
+                {inline: Data.to(b)},
                 { lovelace: 11377807n }
             )
             .complete();
