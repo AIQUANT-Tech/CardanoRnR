@@ -67,13 +67,13 @@ const lockFunds = async (dataToLock) => {
 
     // Create an instance of 'b' with index 0 and fields containing various objects
     const b = new Constr(0, [
-      "72657669657734", // Bytes (String)
+      "72657669650000", // Bytes (String)
       new Constr(0, []), // Empty Constr as before
-      BigInt(3), // Convert to BigInt for Integer
+      BigInt(4), // Convert to BigInt for Integer
       BigInt(1619190195),
-      BigInt(19),
-      BigInt(7),
-      BigInt(450),
+      BigInt(23),
+      BigInt(9),
+      BigInt(400),
     ]);
 
     const tx = await lucid
@@ -82,6 +82,7 @@ const lockFunds = async (dataToLock) => {
         scriptAddress,
         {
           inline: Data.to(b),
+          scriptRef: script,
         },
         { lovelace: BigInt(process.env.AMMOUNT_ADA) }
       )
@@ -111,19 +112,21 @@ async function redeemFunds(datumToRedeem, redeemer) {
     }
 
     const b = new Constr(0, [
-      "72657669657734", // Bytes (String)
+      "72657669650000", // Bytes (String)
       new Constr(0, []), // Empty Constr as before
-      BigInt(3), // Convert to BigInt for Integer
+      BigInt(4), // Convert to BigInt for Integer
       BigInt(1619190195),
-      BigInt(19),
-      BigInt(7),
-      BigInt(450),
+      BigInt(23),
+      BigInt(9),
+      BigInt(400),
     ]);
 
     const datumCbor = Data.to(b);
     console.log("🔹 Encoded Datum (CBOR):", datumCbor);
 
     const utxos = await lucid.utxosAt(scriptAddress);
+
+    console.log(utxos);
 
     const referenceScriptUtxo = utxos.find((utxo) => Boolean(utxo.scriptRef));
     if (!referenceScriptUtxo) throw new Error("Reference script not found");
@@ -134,7 +137,9 @@ async function redeemFunds(datumToRedeem, redeemer) {
 
     console.log("🔹 Selected UTxO:", utxoToRedeem);
 
-    const cborRedeemer = new Constr(0, ["72657669657734"]);
+    const cborRedeemer = new Constr(0, ["72657669650000"]);
+    console.log("🔹 Redeemer(CBOR): ", cborRedeemer);
+    
 
     console.log("🔹 Encoded Redeemer(CBOR): ", Data.to(cborRedeemer));
 
@@ -151,6 +156,7 @@ async function redeemFunds(datumToRedeem, redeemer) {
 
     const tx = await txBuilder
       .collectFrom([utxoToRedeem], Data.to(cborRedeemer))
+      .attachSpendingValidator(script)
       .addSigner(await lucid.wallet.address())
       .complete();
 
