@@ -68,7 +68,7 @@ const lockFunds = async (dataToLock) => {
 
         // Create an instance of 'b' with index 0 and fields containing various objects
         const b = new Constr(0, [
-            "72657669650001", // Bytes (String)
+            "726576690010", // Bytes (String)
             new Constr(1, []), // Empty Constr as before
             BigInt(4), // Convert to BigInt for Integer
             BigInt(1619190195),
@@ -113,7 +113,7 @@ async function redeemFunds(datumToRedeem, redeemer) {
         }
 
         const b = new Constr(0, [
-            "72657669650001", // Bytes (String)
+            "726576690010", // Bytes (String)
             new Constr(1, []), // Empty Constr as before
             BigInt(4), // Convert to BigInt for Integer
             BigInt(1619190195),
@@ -164,7 +164,7 @@ async function redeemFunds(datumToRedeem, redeemer) {
         console.log("🔹 Selected UTxO:", utxoToRedeem);
 
 
-        const cborRedeemer = new Constr(0, ["72657669650001"]);
+        const cborRedeemer = new Constr(0, ["726576690010"]);
         console.log("🔹 Redeemer(CBOR): ", cborRedeemer);
 
 
@@ -183,6 +183,8 @@ async function redeemFunds(datumToRedeem, redeemer) {
 
         console.log("Wallet Address: ", await lucid.wallet.address());
 
+        
+
 
 
         const tx = await txBuilder
@@ -190,7 +192,7 @@ async function redeemFunds(datumToRedeem, redeemer) {
             .addSigner(await lucid.wallet.address())
             .payToAddress(
                 await lucid.wallet.address(),
-                {inline: Data.to(b)},
+                // {inline: Data.to(b)},
                 { lovelace: 11377807n }
             )
             .complete();
