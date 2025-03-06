@@ -33,4 +33,4 @@ const userGuestMapSchema = new mongoose.Schema({
  });
 
  const UserGuestMap = new mongoose.model('UserGuestMap', userGuestMapSchema);
-    export default UserGuestMap;
+ export default UserGuestMap;
