@@ -89,6 +89,7 @@ const RatingReviewModal = ({
 
       setFilteredReviews(filtered);
     }
+    console.log(filteredReviews);
   }, 500);
 
   const handleSearchInputChange = (e) => {
@@ -280,7 +281,7 @@ const RatingReviewModal = ({
                         )}
                       </Typography>
                     )}
-                    {review && (
+                    {review.booking_details && (
                       <Box>
                         <Typography variant="body2" color="textSecondary">
                           Room Type:{" "}

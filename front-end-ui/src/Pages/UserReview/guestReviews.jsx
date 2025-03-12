@@ -82,7 +82,7 @@ const GuestReviews = () => {
         if (data.success) {
           setBusinessReplies(data.data || []);
         }
-        console.log(data);
+        // console.log(data);
       } catch (error) {
         console.error("Error fetching business replies:", error);
       }
