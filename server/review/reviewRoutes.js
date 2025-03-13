@@ -38,6 +38,6 @@ router.post("/reviews/user/selected", getUserReviews);
 //Get the total reviews
 router.get("/count", calculateReviewStats);
 
-router.post("/fetchReputation", getReputationScoreFromBlockchain);
+// router.post("/fetchReputation", getReputationScoreFromBlockchain);
 
 export default router;
