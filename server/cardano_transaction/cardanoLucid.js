@@ -3,6 +3,7 @@ import { Lucid, Blockfrost, Constr, Data, fromHex, toHex } from "lucid-cardano";
 import dotenv from "dotenv";
 import cbor from "cbor";
 import { BlockFrostAPI } from "@blockfrost/blockfrost-js";
+import { log } from "util";
 // import { assets } from "@blockfrost/blockfrost-js/lib/endpoints/api/assets";
 
 // Load environment variables
@@ -133,10 +134,15 @@ export async function redeemFunds(datumToRedeem, redeemer) {
     const oldDatum = Data.from(utxoToRedeem.datum);
 
     let review = {
-      totalScore: oldDatum.fields[6], // Reputation Score
+      totalScore: oldDatum.fields[4],
       ratingCount: oldDatum.fields[5], // Rating Count
       overallRating: oldDatum.fields[2], // New Rating
     };
+    // let review = {
+    //   totalScore: 45n,
+    //   ratingCount: 15n,
+    //   overallRating: oldDatum.fields[2],
+    // };
 
     console.log("Old Data:", review);
 
@@ -278,9 +284,12 @@ function calculateReputation(totalScore, ratingCount) {
   const wn = 50n; // Weight for normalized count
 
   if (ratingCount === 0n) return 0n; // Prevent division by zero
+  console.log("Total Score: ", totalScore);
+  console.log("Rating Count: ", ratingCount);
 
   const avgRating = totalScore / ratingCount;
-  const normalizeCount = ratingCount * 100n;
+  const normalizeCount = ratingCount / 100n;
+  console.log("Normalize Count: ", normalizeCount);
 
   return (wr * avgRating + wn * normalizeCount) / 100n; // BigInt division
 }
