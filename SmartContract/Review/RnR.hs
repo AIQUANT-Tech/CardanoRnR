@@ -99,7 +99,7 @@ calculateReputation totalScore ratingCount =
     let wr = 50 -- Weight for average rating
         wn = 50 -- Weight for normalized count
         avgRating = if ratingCount > 0 then totalScore `divide` ratingCount else 0
-        normalizeCount = ratingCount * 100
+        normalizeCount = ratingCount `divide` 100
     in (wr * avgRating + wn * normalizeCount) `divide` 100
  
 -- Validation function
@@ -113,15 +113,9 @@ validateReview review ctx =
             Nothing -> True
             Just refId -> traceIfFalse "Invalid reference ID" (refId /= "")
         updatedReview = updateReputation review
-        validReputation = traceIfFalse "Reputation score must be > 0" (reputationScore updatedReview > 0)
-        -- validDatum = traceIfFalse "Updated datum is missing from output"
-        --               (any (\out -> case txOutDatum out of
-        --                               OutputDatum (Datum d) -> d == toBuiltinData updatedReview
-        --                               _ -> False)
-        --               (txInfoOutputs info))
-                      
+        validReputation = traceIfFalse "Reputation score must be > 0" (reputationScore updatedReview > 0)             
     in validRating && validReferenceId && validReputation
-    -- && validDatum
+
  
 -- Wrap the validator
 {-# INLINABLE wrapValidator #-}
@@ -156,21 +150,6 @@ writePlutusScript file validator = do
 writeScript :: IO ()
 writeScript = writePlutusScript "Review/RnR.plutus" validator
  
--- saveUpdatedDatum :: FilePath -> Review -> IO ()
--- saveUpdatedDatum filePath review = do
---   -- Generate the updated datum (after modifying the review)
---   -- let updatedDatum = toBuiltinData (updateReputation review)
---   -- -- Serialize the datum to JSON and write it to the specified file
---   -- let jsonDatum = encode updatedDatum
---   -- writeFile filePath jsonDatum  -- Save the JSON representation of the datum to a file
---   -- putStrLn $ "Updated datum saved to " ++ filePath
---     let updatedDatum = toData (updateReputation review)  -- Convert to 'Data'
---         jsonDatum = encode updatedDatum          -- Convert to JSON
---     LBS.writeFile filePath jsonDatum             -- Save JSON to file
---     putStrLn $ "Updated datum saved to " ++ filePath
---     -- appendFile filePath (show updatedDatum)
---     -- putStrLn $ "Updated datum saved to " ++ filePath
- 
 saveUpdatedDatum :: FilePath -> Review -> IO ()
 saveUpdatedDatum filePath review = do
     let updatedDatum = toData (updateReputation review)  -- Convert to Plutus Data
@@ -178,19 +157,7 @@ saveUpdatedDatum filePath review = do
         encodedJson = encode jsonDatum                    
     LBS.writeFile filePath encodedJson                    
     putStrLn $ "Updated datum saved to " ++ filePath
- 
- 
--- main :: IO ()
--- main = do
---     putStrLn "Enter the input JSON file path:"
---     inputFilePath <- getLine
---     putStrLn "Enter the output file path:"
---     outputFilePath <- getLine
---     input <- LBS.readFile inputFilePath
---     case decode input of
---         Nothing -> putStrLn $ "Invalid JSON format." ++ show input
---         Just review -> saveUpdatedDatum outputFilePath review
- 
+
  
 main :: IO ()
 main = do
