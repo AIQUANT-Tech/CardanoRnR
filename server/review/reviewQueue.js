@@ -48,7 +48,7 @@ reviewQueue.process(async (job, done) => {
       reviewDatum,
       reviewRedeemer
     );
-    console.log("Background job: Review data redeemed, tx hash:", redeemTxHash);
+    // console.log("Background job: Review data redeemed, tx hash:", redeemTxHash);
     console.log("Background job: Updated Reputation Score:", reputationScore);
 
     // Update the review document. Convert redeemTxHash (and reputationScore if needed) to strings.
