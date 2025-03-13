@@ -296,11 +296,19 @@ export const createReview = async (req, res) => {
     }
 
     // Calculate dynamic fields.
-    const ratingCount = BigInt(category_wise_review_rating.length);
-    const totalScore = category_wise_review_rating.reduce(
-      (acc, catReview) => acc + BigInt(catReview.rating),
+    const overallRatingCount = await Review.find({ category_id: null });
+    // console.log(overallRatingCount);
+
+    const ratingCount = BigInt(overallRatingCount.length);
+    // console.log(ratingCount);
+
+    const totalScore = overallRatingCount.reduce(
+      (acc, catReview) => acc + BigInt(catReview.overall_rating),
       0n
     );
+    console.log("Controller Rating Count: ", ratingCount);
+    console.log("Controller total score : ", totalScore);
+
     const reputationScore = ratingCount > 0n ? totalScore / ratingCount : 0n;
     const timestamp = BigInt(Date.now());
 
@@ -967,7 +975,7 @@ export async function fetchReputationScore(userId) {
       const inlineData = utxo.inlineDatum || utxo.datum;
       if (inlineData) {
         const datum = Data.from(inlineData);
-        console.log("Datum: ", datum);
+        // console.log("Datum: ", datum);
 
         // console.log("Decoded datum:", datum);
         // Check if the datum has at least 7 fields and the first field matches our reviewId.
@@ -977,6 +985,8 @@ export async function fetchReputationScore(userId) {
           datum.fields[0] === reviewId
         ) {
           reputationScore = Number(datum.fields[6]);
+          console.log("repu:" + reputationScore);
+
           break;
         }
       }
@@ -1170,22 +1180,35 @@ export const getReviewsForEndUser = async (req, res) => {
 
     // Filter for overall reviews (assumed to be those without a category_id)
     const overallReviews = reviews.filter((r) => !r.category_id);
+    let blockchainReputationScore = 0;
 
     // Sort overall reviews by creation date (latest first)
     overallReviews.sort(
       (a, b) => new Date(b.created_at) - new Date(a.created_at)
     );
 
+    const lastUserId =
+      overallReviews.length > 0 ? overallReviews[0].user_id._id : null;
+    console.log(lastUserId);
+
+    if (overallReviews.length > 0) {
+      blockchainReputationScore = await fetchReputationScore(lastUserId);
+    }
+
+    console.log("ReputationScore: ", blockchainReputationScore);
+
     // For each overall review, fetch its own blockchain reputation score and booking details
     const reviewRatingDetailsOverall = await Promise.all(
       overallReviews.map(async (r) => {
         const userId = r.user_id._id;
-        // Fetch blockchain reputation score for this user
-        const repScore = await fetchReputationScore(userId);
+        // console.log(userId);
+
+        // // Fetch blockchain reputation score for this user
+        // const repScore = await fetchReputationScore(userId);
 
         let bookingDetailsForThisUser = null;
         const userFetch = await User.findOne({ _id: userId });
-        console.log("My Data:", userFetch);
+        // console.log("My Data:", userFetch);
 
         const userGuestMapping = await UserGuestMap.findOne({
           user_id: userFetch.user_id,
@@ -1203,7 +1226,7 @@ export const getReviewsForEndUser = async (req, res) => {
           created_at: r.created_at,
           review: r.overall_review,
           rating: r.overall_rating,
-          reputation_score: repScore,
+          reputation_score: blockchainReputationScore,
           booking_details: bookingDetailsForThisUser, // This includes room_type and check_out_date
         };
       })
