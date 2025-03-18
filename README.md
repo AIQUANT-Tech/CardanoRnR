@@ -50,19 +50,21 @@ _Note: Replace the placeholder values with your own details._
 
 **DB_CNN --**
 
+DB_CNN --
+ 
 a. Install MongoDB and MongoDB Compass
-
+ 
 b. Start MongoDB Server
-
+ 
 c. Connect to MongoDB Shell
-
+ 
 d. Create Database DB_CNN
-
+ 
 e. Create a Collection
-
+ 
 f. Connect MongoDB Remotely
-
-g. The Database DB_CNN provide it in the place of "your-database-connection-string" in DB_CNN
+ 
+g. The Database DB_CNN provide it in the place of "your-database-connection-string" in DB_CNN (ex. "mongodb+srv://<projectId>:<password>@rnrdb.allz7.mongodb.net/?retryWrites=true&w=majority&appName=RnRDb")
 
 **MNEMONIC --**
 
@@ -70,9 +72,9 @@ Choose a Cardano Wallet
 
 a. Install the Wallet
 
-b. Launch the Wallet & Create a New Wallet
+b. Launch the Wallet & Create a New Wallet or Import an existing wallet
 
-c. Automatic Seed Phrase Generation
+c. Automatic Seed Phrase Generation(12 words or 24 words)
 
 d. Record and Store Your Seed Phrase (Including Storing in a Text File)
 
@@ -80,7 +82,7 @@ e. Confirm Your Seed Phrase
 
 f. Finalize Wallet Setup
 
-g. Give the Seed Phrase in the place of "your-mnemonic-phrase" in the MNEMONIC
+g. Give the Seed Phrase provide it in the place of "your-mnemonic-phrase" in the MNEMONIC(ex. "slight magnet cage frost puzzle moon ripple undo toilet orphan crash heavy slight magnet cage frost puzzle moon ripple undo toilet orphan crash heavy")
 
 **BLOCKFROST_KEY --**
 
@@ -98,7 +100,7 @@ f. Retrieve Your API Key
 
 g. Securely Store Your API Key
 
-h. Your API Key be in place of the "your-blockfrost-key" in BLOCKFROST_KEY.
+h. Your API Key be provide it in the place of the "your-blockfrost-key" in BLOCKFROST_KEY(ex. "preprod1234567890abcdef1234567890abcdef")
 
 **## The Full Example of the .env File**
 
