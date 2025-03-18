@@ -2,7 +2,7 @@
 
 1. Technical design document: https://github.com/AIQUANT-Tech/CardanoRnR/blob/main/DesignDocs/CardanoRnR_TechDesign.pdf
 2. UI Design Document: https://www.figma.com/design/FACv8nNkArAruZd9gsdvpR/RnR?node-id=18-320&t=3BpMSOHQf3Sv40fG-1
-3. API Design Document: https://github.com/AIQUANT-Tech/CardanoRnR/tree/main/server/Published_API_Design_Doc
+3. Used API Document: https://github.com/AIQUANT-Tech/CardanoRnR/tree/main/server/Published_API_Design_Doc
    
 ## Installation
 
@@ -15,6 +15,7 @@ git clone https://github.com/AIQUANT-Tech/CardanoRnR.git
 Change directory to the backend folder and install dependencies:
 
 cd CardanoRnR/server
+
 npm install
 
 #### Configure the Environment Variables
@@ -136,6 +137,7 @@ npm install
 Inside `front-end-ui/src`, open `config.js` and set your API base URL:
 
 const API_BASE_URL = "http://localhost:8080/"; // change if needed
+
 export default API_BASE_URL;
 
 ## Running the Application
