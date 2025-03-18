@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -10,12 +10,15 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-} from '@mui/material';
+} from "@mui/material";
 
 const EditCategoryModal = ({ open, onClose, category, onSubmit }) => {
   const [formData, setFormData] = useState({
     ...category,
   });
+  useEffect(() => {
+    setFormData(category);
+  }, [category]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -49,20 +52,23 @@ const EditCategoryModal = ({ open, onClose, category, onSubmit }) => {
         />
         <FormControl fullWidth margin="n">
           <InputLabel
-           sx={{ 
-            paddingTop: '8px',
-            fontSize: '16px',
-            '&.Mui-focused': { 
-              color: 'Black' 
-            } 
-          }} 
-          id="status-label">Status</InputLabel>
+            sx={{
+              paddingTop: "8px",
+              fontSize: "16px",
+              "&.Mui-focused": {
+                color: "Black",
+              },
+            }}
+            id="status-label"
+          >
+            Status
+          </InputLabel>
           <Select
             name="Status"
             value={formData.Status}
             onChange={handleChange}
             fullWidth
-          margin="normal"
+            margin="normal"
           >
             <MenuItem value="Active">Active</MenuItem>
             <MenuItem value="Inactive">Inactive</MenuItem>
@@ -70,21 +76,25 @@ const EditCategoryModal = ({ open, onClose, category, onSubmit }) => {
         </FormControl>
       </DialogContent>
       <DialogActions>
-  <Button 
-    onClick={onClose} 
-    sx={{ color: 'black', borderColor: '#DA9C9C' }}
-  >
-    Cancel
-  </Button>
-  <Button 
-    onClick={handleSubmit} 
-    variant="contained" 
-    color="primary" 
-    sx={{ backgroundColor: '#DA9C9C', color: 'black', '&:hover': { backgroundColor: '#D68C8C' } }}
-  >
-    Save
-  </Button>
-</DialogActions>
+        <Button
+          onClick={onClose}
+          sx={{ color: "black", borderColor: "#DA9C9C" }}
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={handleSubmit}
+          variant="contained"
+          color="primary"
+          sx={{
+            backgroundColor: "#DA9C9C",
+            color: "black",
+            "&:hover": { backgroundColor: "#D68C8C" },
+          }}
+        >
+          Save
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 };
