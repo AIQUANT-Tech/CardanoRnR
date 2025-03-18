@@ -13,6 +13,7 @@ import {
 import reviewQueue from "./reviewQueue.js";
 
 import { Constr, Data, Lucid, Blockfrost } from "lucid-cardano";
+import review from "./Reviews.js";
 
 const lucid = await Lucid.new(
   new Blockfrost(
@@ -447,6 +448,85 @@ export const getReviewById = async (req, res) => {
 };
 
 // Get all reviews - Business user
+// export const getReviewsForBusinessUser = async (req, res) => {
+//   try {
+//     const { review_rating_info_rq } = req.body;
+
+//     // Validate the incoming request body
+//     if (!review_rating_info_rq) {
+//       return res.status(400).json({
+//         review_rating_info_rs: {
+//           review_rating_info_by_user: [],
+//           status: responses.validation.invalidRequest,
+//         },
+//       });
+//     }
+
+//     const {
+//       header: { user_name, product, request_type },
+//     } = review_rating_info_rq;
+
+//     // Validate request_type and product
+//     if (request_type !== "REVIEW_RATING_INFO" || product !== "rnr") {
+//       return res.status(400).json({
+//         review_rating_info_rs: {
+//           review_rating_info_by_user: [],
+//           status: responses.validation.invalidRequest,
+//         },
+//       });
+//     }
+
+//     // Query all reviews and populate relevant details
+//     const reviews = await Review.find()
+//       .populate("user_id", "display_name")
+//       .populate("category_id", "category_name")
+//       .select(
+//         "_id user_id category_id review rating overall_review overall_rating is_responded created_at"
+//       );
+
+//     // Check if no reviews are found
+//     if (!reviews || reviews.length === 0) {
+//       return res.status(404).json({
+//         review_rating_info_rs: {
+//           review_rating_info_by_user: [],
+//           status: responses.validation.NoReview,
+//         },
+//       });
+//     }
+
+//     console.log("Reviews: ", reviews);
+
+//     // Format the reviews as per the API specification
+//     const reviewRatingInfoByUser = reviews.map((review) => ({
+//       review_id: review._id?.toString(),
+//       user_id: review.user_id?._id?.toString() || null,
+//       user_display_name: review.user_id?.display_name || "Unknown User",
+//       category_id: review.category_id?._id?.toString() || null,
+//       review_responded: !!review.is_responded,
+//       review: review.review || review.overall_review,
+//       rating: review.rating?.toString() || review.overall_rating?.toString(),
+//       created_at: review.created_at,
+//     }));
+
+//     // Return the response
+//     return res.status(200).json({
+//       review_rating_info_rs: {
+//         review_rating_info_by_user: reviewRatingInfoByUser,
+//         status: responses.success.success,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Error fetching reviews for business user:", error.message);
+//     return res.status(500).json({
+//       review_rating_info_rs: {
+//         review_rating_info_by_user: [],
+//         status: responses.error.failedFetchReview,
+//       },
+//       error: error.message,
+//     });
+//   }
+// };
+
 export const getReviewsForBusinessUser = async (req, res) => {
   try {
     const { review_rating_info_rq } = req.body;
@@ -475,15 +555,15 @@ export const getReviewsForBusinessUser = async (req, res) => {
       });
     }
 
-    // Query all reviews and populate relevant details
+    // 1. Fetch all reviews with lean() to return plain objects
     const reviews = await Review.find()
       .populate("user_id", "display_name")
       .populate("category_id", "category_name")
       .select(
-        "_id user_id category_id review rating overall_review overall_rating is_responded"
-      );
+        "_id user_id category_id review rating overall_review overall_rating is_responded created_at"
+      )
+      .lean();
 
-    // Check if no reviews are found
     if (!reviews || reviews.length === 0) {
       return res.status(404).json({
         review_rating_info_rs: {
@@ -493,18 +573,105 @@ export const getReviewsForBusinessUser = async (req, res) => {
       });
     }
 
-    // Format the reviews as per the API specification
-    const reviewRatingInfoByUser = reviews.map((review) => ({
-      review_id: review._id?.toString(),
-      user_id: review.user_id?._id?.toString() || null,
-      user_display_name: review.user_id?.display_name || "Unknown User",
-      category_id: review.category_id?._id?.toString() || null,
-      review_responded: !!review.is_responded,
-      review: review.review || review.overall_review,
-      rating: review.rating?.toString() || review.overall_rating?.toString(),
-    }));
+    // 2. Extract unique user IDs (from the populated user _id)
+    const userMongoIds = [
+      ...new Set(
+        reviews.map((review) => review.user_id?._id.toString()).filter(Boolean)
+      ),
+    ];
 
-    // Return the response
+    // 3. Fetch full user documents to get the custom "user_id" field used in mapping
+    const users = await User.find({ _id: { $in: userMongoIds } }).lean();
+
+    // Build a lookup: map from Mongo _id to custom user id (e.g., user.user_id)
+    const customIdByMongoId = {};
+    users.forEach((user) => {
+      customIdByMongoId[user._id.toString()] = user.user_id; // adjust if the field name differs
+    });
+
+    // 4. Get the array of custom user ids (those used in UserGuestMap)
+    const customUserIds = Object.values(customIdByMongoId).filter(Boolean);
+
+    // 5. Batch fetch all UserGuestMap documents using the custom user ids
+    const userGuestMaps = await UserGuestMap.find({
+      user_id: { $in: customUserIds },
+    }).lean();
+
+    // Build a lookup: map from custom user id to the mapping
+    const guestMappingByCustomId = {};
+    userGuestMaps.forEach((mapping) => {
+      guestMappingByCustomId[mapping.user_id.toString()] = mapping;
+    });
+
+    // 6. Extract unique guest IDs from the mappings
+    const guestIds = [
+      ...new Set(
+        userGuestMaps
+          .map((mapping) => mapping.guest_id?.toString())
+          .filter(Boolean)
+      ),
+    ];
+
+    // 7. Batch fetch all BookingInfo records for these guest IDs
+    const bookings = await BookingInfo.find({ guest_id: { $in: guestIds } })
+      .select("room_type check_in_date check_out_date guest_id")
+      .lean();
+
+    // Build a lookup: map guest_id to booking info
+    const bookingByGuestId = {};
+    bookings.forEach((booking) => {
+      bookingByGuestId[booking.guest_id.toString()] = booking;
+    });
+
+    // 8. Helper to compute time of stay in days
+    const computeTimeOfStay = (checkIn, checkOut) => {
+      if (!checkIn || !checkOut) return "N/A";
+      const diffInMs = new Date(checkOut) - new Date(checkIn);
+      const diffInDays = Math.ceil(diffInMs / (1000 * 60 * 60 * 24));
+      return `${diffInDays} ${diffInDays === 1 ? "day" : "days"}`;
+    };
+
+    // 9. Merge all data per review
+    const reviewRatingInfoByUser = reviews.map((review) => {
+      const mongoUserId = review.user_id?._id.toString();
+      // Get the custom user id for this review
+      const customUserId = customIdByMongoId[mongoUserId];
+      // Use that to get the mapping
+      const guestMapping = guestMappingByCustomId[customUserId];
+      let bookingDetails = null;
+      let timeOfStay = "N/A";
+
+      if (guestMapping && guestMapping.guest_id) {
+        bookingDetails = bookingByGuestId[guestMapping.guest_id.toString()];
+        if (
+          bookingDetails &&
+          bookingDetails.check_in_date &&
+          bookingDetails.check_out_date
+        ) {
+          timeOfStay = computeTimeOfStay(
+            bookingDetails.check_in_date,
+            bookingDetails.check_out_date
+          );
+        }
+      }
+
+      return {
+        review_id: review._id.toString(),
+        user_id: mongoUserId,
+        user_display_name: review.user_id?.display_name || "Unknown User",
+        category_id: review.category_id?._id?.toString() || null,
+        category_name: review.category_id?.category_name || "Overall Rating",
+        review_responded: !!review.is_responded,
+        review: review.review || review.overall_review,
+        rating:
+          review.rating?.toString() ||
+          (review.overall_rating && review.overall_rating.toString()),
+        created_at: review.created_at,
+        booking_details: bookingDetails,
+        time_of_stay: timeOfStay,
+      };
+    });
+
     return res.status(200).json({
       review_rating_info_rs: {
         review_rating_info_by_user: reviewRatingInfoByUser,
@@ -643,6 +810,155 @@ export const getReviewsForBusinessUser = async (req, res) => {
 //     console.error("Error fetching reviews:", error.message);
 //     return res.status(500).json({
 //       review_rating_fetch_rs: { status: responses.error.failedFetchReview },
+//       error: error.message,
+//     });
+//   }
+// };
+
+// export const getReviewsForBusinessUser = async (req, res) => {
+//   try {
+//     const { review_rating_info_rq } = req.body;
+
+//     // Validate the incoming request body
+//     if (!review_rating_info_rq) {
+//       return res.status(400).json({
+//         review_rating_info_rs: {
+//           review_rating_info_by_user: [],
+//           status: responses.validation.invalidRequest,
+//         },
+//       });
+//     }
+
+//     const {
+//       header: { user_name, product, request_type },
+//     } = review_rating_info_rq;
+
+//     // Validate request_type and product
+//     if (request_type !== "REVIEW_RATING_INFO" || product !== "rnr") {
+//       return res.status(400).json({
+//         review_rating_info_rs: {
+//           review_rating_info_by_user: [],
+//           status: responses.validation.invalidRequest,
+//         },
+//       });
+//     }
+
+//     // 1. Fetch all reviews along with the necessary user and category data
+//     const reviews = await Review.find()
+//       .populate("user_id", "display_name")
+//       .populate("category_id", "category_name")
+//       .select(
+//         "_id user_id category_id review rating overall_review overall_rating is_responded"
+//       )
+//       .lean();
+
+//     if (!reviews || reviews.length === 0) {
+//       return res.status(404).json({
+//         review_rating_info_rs: {
+//           review_rating_info_by_user: [],
+//           status: responses.validation.NoReview,
+//         },
+//       });
+//     }
+
+//     // 2. Extract unique user IDs from reviews
+//     const userIds = [
+//       ...new Set(
+//         reviews.map((review) => review.user_id?._id?.toString()).filter(Boolean)
+//       ),
+//     ];
+
+//     // 3. Batch fetch UserGuestMap documents for these user IDs
+//     const userGuestMaps = await UserGuestMap.find({
+//       user_id: { $in: userIds },
+//     }).lean();
+
+//     // Create a lookup map: userId => mapping
+//     const guestMappingByUserId = userGuestMaps.reduce((acc, mapping) => {
+//       acc[mapping.user_id.toString()] = mapping;
+//       return acc;
+//     }, {});
+
+//     // 4. Extract unique guest IDs from the mappings
+//     const guestIds = [
+//       ...new Set(
+//         userGuestMaps
+//           .map((mapping) => mapping.guest_id?.toString())
+//           .filter(Boolean)
+//       ),
+//     ];
+
+//     // 5. Batch fetch BookingInfo for these guest IDs
+//     const bookings = await BookingInfo.find({ guest_id: { $in: guestIds } })
+//       .select("room_type check_in_date check_out_date guest_id")
+//       .lean();
+
+//     // Create a lookup map: guestId => booking details
+//     const bookingByGuestId = bookings.reduce((acc, booking) => {
+//       acc[booking.guest_id.toString()] = booking;
+//       return acc;
+//     }, {});
+
+//     // Helper function to compute time of stay in days
+//     const computeTimeOfStay = (checkInDate, checkOutDate) => {
+//       if (!checkInDate || !checkOutDate) return "N/A";
+//       const checkIn = new Date(checkInDate);
+//       const checkOut = new Date(checkOutDate);
+//       const diffInMs = checkOut - checkIn;
+//       const diffInDays = Math.ceil(diffInMs / (1000 * 60 * 60 * 24));
+//       return `${diffInDays} ${diffInDays === 1 ? "day" : "days"}`;
+//     };
+
+//     // 6. Merge the booking details into each review
+//     const reviewRatingInfoByUser = reviews.map((review) => {
+//       const userId = review.user_id?._id?.toString();
+//       const guestMapping = guestMappingByUserId[userId];
+//       let bookingDetails = null;
+//       let timeOfStay = "N/A";
+
+//       if (guestMapping && guestMapping.guest_id) {
+//         bookingDetails = bookingByGuestId[guestMapping.guest_id.toString()];
+//         if (
+//           bookingDetails &&
+//           bookingDetails.check_in_date &&
+//           bookingDetails.check_out_date
+//         ) {
+//           timeOfStay = computeTimeOfStay(
+//             bookingDetails.check_in_date,
+//             bookingDetails.check_out_date
+//           );
+//         }
+//       }
+
+//       return {
+//         review_id: review._id?.toString(),
+//         user_id: userId || null,
+//         user_display_name: review.user_id?.display_name || "Unknown User",
+//         category_id: review.category_id?._id?.toString() || null,
+//         category_name: review.category_id?.category_name || "Overall Rating",
+//         review_responded: !!review.is_responded,
+//         review: review.review || review.overall_review,
+//         rating:
+//           review.rating?.toString() ||
+//           (review.overall_rating && review.overall_rating.toString()),
+//         booking_details: bookingDetails,
+//         time_of_stay: timeOfStay,
+//       };
+//     });
+
+//     return res.status(200).json({
+//       review_rating_info_rs: {
+//         review_rating_info_by_user: reviewRatingInfoByUser,
+//         status: responses.success.success,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Error fetching reviews for business user:", error.message);
+//     return res.status(500).json({
+//       review_rating_info_rs: {
+//         review_rating_info_by_user: [],
+//         status: responses.error.failedFetchReview,
+//       },
 //       error: error.message,
 //     });
 //   }
@@ -1201,10 +1517,6 @@ export const getReviewsForEndUser = async (req, res) => {
     const reviewRatingDetailsOverall = await Promise.all(
       overallReviews.map(async (r) => {
         const userId = r.user_id._id;
-        // console.log(userId);
-
-        // // Fetch blockchain reputation score for this user
-        // const repScore = await fetchReputationScore(userId);
 
         let bookingDetailsForThisUser = null;
         const userFetch = await User.findOne({ _id: userId });
