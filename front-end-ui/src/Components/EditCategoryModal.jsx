@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect  } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -16,8 +16,11 @@ const EditCategoryModal = ({ open, onClose, category, onSubmit }) => {
   const [formData, setFormData] = useState({
     ...category,
   });
+
   useEffect(() => {
-    setFormData(category);
+    if (category) {
+      setFormData(category);
+    }
   }, [category]);
 
   const handleChange = (e) => {
