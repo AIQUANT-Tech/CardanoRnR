@@ -219,27 +219,6 @@ This repository includes a unit test for Plutus smart contract (e.g., in the fil
    **c. Run the test file**
    
    In "Review.RnrTest>" write main function.
-
-3. **On Chain test**
-This repository includes a on chain test for Plutus smart contract (e.g., in the file `SmartContract/Test/RnRContractTest.sh`). To run the test file of the smart contract, follow these steps mentioned in the Shell script file. In summery:
-
-   **a. Generate the address and private key and public key**
-   
-      Generate the address and private key and public key with the first step mentioned in the shell script.
-
-   **b. Run the haskell file**
-   
-      Run the haskel file like mentioned previously and give the datum source "src/Review/datum.json" and updated datum in "src/Review/datum.json" get the updated datum in other file "src/Review/updatedDatum.json". 
-
-   **c. Run bash script file**
-   
-      1> Go to the directory containing your smart contract file. For example:
-   
-      cd path/to/smart-contract-directory
-   
-      2> Run "chmod +x RnRContractTest.sh" to give permission to the file
-   
-      3> Run "./RnRContractTest.sh"
    
 
 **_Note: Ensure that you have all the necessary dependencies and proper Cabal configuration before running these commands._**
