@@ -10,7 +10,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
  
-module Review.RnR (Review (..), validator,  writeScript, saveUpdatedDatum, main, calculateReputation, validateReview, updateReputation, wrapValidator ) where
+module Reputation.RnR (Review (..), Redeem (..), validator,  writeScript, saveUpdatedDatum, main, calculateReputation, validateReview, updateReputation, wrapValidator ) where
  
 import Plutus.V2.Ledger.Api (
     BuiltinByteString,
@@ -173,19 +173,30 @@ validateReview review redeem ctx =
       -- Ensure updated reputation score is greater than 0
       validReputationScore = traceIfFalse "Reputation score must be > 0!" (reputationScore updatedReview > 0)
 
+      -- Expected inline datum (the updated review state)
+      expectedDatum = Datum (toBuiltinData updatedReview)
+
+      -- Check outputs: Ensure at least one output includes the inline datum with the expected updated state.
+      outputs = txInfoOutputs info
+      validInlineDatum = traceIfFalse "Updated inline datum not found!" $
+                         any (\output -> case txOutDatum output of
+                                  OutputDatum d -> d == expectedDatum
+                                  _                   -> False
+                             ) outputs
+
+      -- Check that one of the outputs is sent to the reviewer's address      
       preAddress = Address
         { addressCredential = PubKeyCredential (reviewerPKH review)
         , addressStakingCredential = Nothing
         }
 
       -- Output validation
-      outputs = txInfoOutputs info 
-      correctOutput = any (\output ->
-        txOutAddress output == preAddress) outputs
+      validAddress = traceIfFalse "Incorrect address!" $
+                     any (\output -> txOutAddress output == preAddress) outputs
 
-      validaddress = traceIfFalse "Incorrect address!" correctOutput
 
-  in  validSigner && txSignedByReviewer && validReviewId && validRating && validReferenceId && validReputationChange && validReputationScore && validaddress
+  in  validSigner && txSignedByReviewer && validReviewId && validRating && validReferenceId && validReputationChange && validReputationScore &&
+      validInlineDatum && validAddress
  
 -- Validator function
 {-# INLINEABLE wrapValidator #-}
