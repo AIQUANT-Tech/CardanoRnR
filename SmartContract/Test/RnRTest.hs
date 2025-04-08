@@ -8,7 +8,7 @@
 {-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE DeriveGeneric     #-}
 
-module Review.RnRTest (tests, mains) where
+module Reputation.QuickCheckTests (tests, mains) where
 
 import Prelude hiding (fail)
 import GHC.Generics (Generic)
@@ -18,39 +18,8 @@ import Data.Maybe (isJust, fromJust)
 import Test.Tasty
 import Test.Tasty.HUnit (testCase, assertBool, Assertion)
 import Test.Tasty.QuickCheck 
-    ( testProperty
-    , Arbitrary (..)
-    , Positive (..)
-    , Property
-    , chooseInt
-    , elements
-    , (===)
-    , (==>)
-    , Gen
-    , (.&&.)
-    , property
-    , listOf1
-    , vectorOf
-    , suchThat
-    )
-
--- Plutus imports
-import Plutus.V1.Ledger.Credential (Credential(..))
-import Plutus.V2.Ledger.Api
-import Plutus.V2.Ledger.Contexts
-import qualified PlutusTx
-import qualified PlutusTx.Prelude as P
-import qualified PlutusTx.AssocMap as AssocMap
-import qualified Data.ByteString.Char8 as BS
-import qualified Data.ByteString.Lazy as LBS
-import qualified Data.Text as T
-import PlutusTx.Builtins (toBuiltin)
-
-
-import Reputation.RnR
-
-
--- Arbitrary Instances for QuickCheck
+Reputation
+-- Arbitrary instances for generating test data
 
 instance Arbitrary PubKeyHash where
   arbitrary = PubKeyHash . toBuiltin . BS.pack <$> vectorOf 28 (elements ['a'..'z'])
@@ -60,12 +29,12 @@ instance Arbitrary BuiltinByteString where
 
 instance Arbitrary Review where
   arbitrary = do
-    ridStr   <- arbitrary `suchThat` (not . null)   
-    refIdStr <- arbitrary `suchThat` (not . null)   
+    ridStr   <- arbitrary `suchThat` (not . null)
+    refIdStr <- arbitrary `suchThat` (not . null)
     rating   <- chooseInt (1, 5)
-    ts       <- (arbitrary :: Gen Integer)          
-    totalS   <- chooseInt (1, 100)
+    ts <- arbitrary :: Gen Integer
     count    <- chooseInt (1, 20)
+    totalS   <- chooseInt (1, count * 5)
     pkh      <- arbitrary
     let rep = calculateReputation (fromIntegral totalS) (fromIntegral count)
     return $ Review 
@@ -84,12 +53,12 @@ instance Arbitrary Redeem where
     pkh    <- arbitrary
     return $ Redeem (toBuiltin $ BS.pack ridStr) pkh
 
--- Dummy Builders
+-- Helpers to build dummy transactions and contexts
+
 
 dummyTxOutRef :: TxOutRef
 dummyTxOutRef = TxOutRef (TxId "dummyTxId") 0
 
--- | Build a TxOut carrying the *original* Review datum
 buildOriginalTxOut :: Review -> TxOut
 buildOriginalTxOut review =
   TxOut
@@ -98,7 +67,6 @@ buildOriginalTxOut review =
     (OutputDatum $ Datum $ PlutusTx.toBuiltinData review)
     Nothing
 
--- | Build a TxOut carrying the *updated* Review datum
 buildDummyTxOut :: Review -> TxOut
 buildDummyTxOut review =
   let updated = updateReputation review
@@ -108,10 +76,9 @@ buildDummyTxOut review =
        (OutputDatum $ Datum $ PlutusTx.toBuiltinData updated)
        Nothing
 
--- | Build a TxInfo carrying the transaction details
 buildDummyTxInfo :: Review -> [TxOut] -> TxInfo
 buildDummyTxInfo review outs = TxInfo
-  { txInfoInputs           = []             
+  { txInfoInputs           = []
   , txInfoReferenceInputs  = []
   , txInfoOutputs          = outs
   , txInfoFee              = mempty
@@ -127,7 +94,10 @@ buildDummyTxInfo review outs = TxInfo
 buildScriptContext :: TxInfo -> ScriptContext
 buildScriptContext info = ScriptContext info (Spending dummyTxOutRef)
 
--- Unit Tests
+pubKeyHashAddress :: PubKeyHash -> Maybe StakingCredential -> Address
+pubKeyHashAddress pkh stake = Address (PubKeyCredential pkh) stake
+
+-- Unit tests for simple, hand-crafted scenarios
 
 sampleReview :: Review
 sampleReview = Review
@@ -164,9 +134,17 @@ unitTests = testGroup "Unit Tests"
       let badReview = sampleReview { reviewReferenceId = Just "" }
           ctx = buildScriptContext $ buildDummyTxInfo badReview [buildDummyTxOut badReview]
       assertBool "Empty refId should fail" $ not $ validateReview badReview sampleRedeem ctx
+
+  , testCase "Succeeds if all outputs go to reviewer address" $ do
+      let out1 = buildDummyTxOut sampleReview
+          out2 = buildDummyTxOut sampleReview
+          txInfo = buildDummyTxInfo sampleReview [out1, out2]
+          ctx = buildScriptContext txInfo
+      assertBool "All outputs to reviewer should pass" $
+        validateReview sampleReview sampleRedeem ctx
   ]
 
--- Property Tests
+-- Property-based tests using randomly generated data
 
 prop_validRating :: Review -> Property
 prop_validRating review =
@@ -223,7 +201,45 @@ prop_identityPreservation review =
   in (reviewId updated === reviewId review)
      .&&. (reviewerPKH updated === reviewerPKH review)
 
--- Main Test Tree
+prop_outputsGoToReviewer :: Review -> Property
+prop_outputsGoToReviewer review =
+  let out = buildDummyTxOut review
+      txInfo = buildDummyTxInfo review [out]
+      ctx = buildScriptContext txInfo
+      redeem = Redeem (reviewId review) (reviewerPKH review)
+
+      dummyValidate _ _ ctx' =
+        let outputs = txInfoOutputs $ scriptContextTxInfo ctx'
+            allToReviewer = all (\o -> txOutAddress o == pubKeyHashAddress (reviewerPKH review) Nothing) outputs
+        in P.traceIfFalse "Not all outputs to reviewer" allToReviewer
+
+  in dummyValidate review redeem ctx === True
+
+
+
+prop_failsWithNonReviewerOutput :: Review -> Property
+prop_failsWithNonReviewerOutput review =
+  let
+    validOut = buildDummyTxOut review
+    invalidOut = TxOut
+      (Address (PubKeyCredential (PubKeyHash "notReviewer")) Nothing)
+      mempty
+      NoOutputDatum
+      Nothing
+
+    txInfo = buildDummyTxInfo review [validOut, invalidOut]
+    ctx = buildScriptContext txInfo
+
+    expectedAddress = Address (PubKeyCredential (reviewerPKH review)) Nothing
+    allToReviewer = all (\o -> txOutAddress o == expectedAddress) (txInfoOutputs txInfo)
+
+  in allToReviewer === False
+
+
+
+--------------------------------------------------------------------------------
+-- Entry point for running all tests
+--------------------------------------------------------------------------------
 
 tests :: TestTree
 tests = testGroup "Reputation.RnR Tests"
@@ -237,6 +253,8 @@ tests = testGroup "Reputation.RnR Tests"
       , testProperty "Total score increments" prop_updateIncrementsTotalScore
       , testProperty "Review identity is preserved" prop_identityPreservation
       , testProperty "Signer check matches expectations" prop_signerMatchesAndSigned
+      , testProperty "All outputs go to reviewer" prop_outputsGoToReviewer
+      , testProperty "Fails if any output not to reviewer" prop_failsWithNonReviewerOutput
       ]
   ]
 
