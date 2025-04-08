@@ -3,7 +3,8 @@
 1. Technical design document: https://github.com/AIQUANT-Tech/CardanoRnR/blob/main/DesignDocs/CardanoRnR_TechDesign.pdf
 2. UI Design Document: https://www.figma.com/design/FACv8nNkArAruZd9gsdvpR/RnR?node-id=18-320&t=3BpMSOHQf3Sv40fG-1
 3. Used API Document: https://github.com/AIQUANT-Tech/CardanoRnR/tree/main/server/Published_API_Design_Doc
-   
+4. CardanoRnR Test Report for Smart Contract TestScenario : https://github.com/AIQUANT-Tech/CardanoRnR/tree/main/TestReport/RnRSmartContractTestScenario
+5. CardanoRnR Test Cases Report for Overall : https://github.com/AIQUANT-Tech/CardanoRnR/tree/main/TestReport/TestCaseReportCardanoRnR
 ## Installation
 
 ### 1. Clone the Repository
