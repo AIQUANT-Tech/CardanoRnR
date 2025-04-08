@@ -8,7 +8,7 @@
 {-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE DeriveGeneric     #-}
 
-module Review.QuickCheckTests (tests, mains) where
+module Review.RnRTest (tests, mains) where
 
 import Prelude hiding (fail)
 import GHC.Generics (Generic)
