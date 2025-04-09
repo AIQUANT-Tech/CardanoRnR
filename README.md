@@ -7,15 +7,15 @@
 5. CardanoRnR Test Cases Report for Overall : https://github.com/AIQUANT-Tech/CardanoRnR/tree/main/TestReport/TestCaseReportCardanoRnR
 
 6. Deployment URLs
-Business User
-The deployment URL for Business users is designed to provide access to all business-related functionalities and features. You can access it here:
+   Business User
+   The deployment URL for Business users is designed to provide access to all business-related functionalities and features. You can access it here:
 
-http://16.171.10.6/
+     http://51.21.61.199/     
 
-End User
-The deployment URL for End users is tailored to offer a seamless experience for our end customers. You can access it here:
+   End User
+   The deployment URL for End users is tailored to offer a seamless experience for our end customers. You can access it here:
 
-http://16.171.10.6/user/X
+     http://51.21.61.199/user/X 
 
 ## Installation
 
