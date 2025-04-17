@@ -8,36 +8,59 @@
 {-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE DeriveGeneric     #-}
 
-module Review.RnRTest (tests, mains) where
+module Test.RnRTest (tests, mains) where
 
 import Prelude hiding (fail)
 import GHC.Generics (Generic)
 import Control.Monad (replicateM)
 import Data.Maybe (isJust, fromJust)
+import Data.Char (isPrint)
 
 import Test.Tasty
-import Test.Tasty.HUnit (testCase, assertBool, Assertion)
+import Test.Tasty.HUnit (testCase, assertBool)
 import Test.Tasty.QuickCheck 
-Reputation
--- Arbitrary instances for generating test data
+    ( testProperty
+    , Arbitrary (..)
+    , Property
+    , chooseInt
+    , elements
+    , (===)
+    , Gen
+    , listOf1
+    , vectorOf
+    , suchThat
+    , property
+    , (==>)
+    )
 
+import Plutus.V1.Ledger.Credential (Credential(..))
+import Plutus.V2.Ledger.Api
+import Plutus.V2.Ledger.Contexts
+import qualified PlutusTx
+import qualified PlutusTx.Prelude as P
+import qualified PlutusTx.AssocMap as AssocMap
+import qualified Data.ByteString.Char8 as BS
+import qualified Data.Text as T
+import PlutusTx.Builtins (toBuiltin)
+
+import Test.RnR
+
+-- Arbitrary instances
 instance Arbitrary PubKeyHash where
   arbitrary = PubKeyHash . toBuiltin . BS.pack <$> vectorOf 28 (elements ['a'..'z'])
-
 instance Arbitrary BuiltinByteString where
   arbitrary = toBuiltin . BS.pack <$> listOf1 (elements ['a'..'z'])
-
 instance Arbitrary Review where
   arbitrary = do
-    ridStr   <- arbitrary `suchThat` (not . null)
-    refIdStr <- arbitrary `suchThat` (not . null)
-    rating   <- chooseInt (1, 5)
-    ts <- arbitrary :: Gen Integer
-    count    <- chooseInt (1, 20)
-    totalS   <- chooseInt (1, count * 5)
+    ridStr   <- arbitrary `suchThat` (not . null) `suchThat` (all isPrint)
+    refIdStr <- arbitrary `suchThat` (not . null) `suchThat` (all isPrint)
+    rating   <- chooseInt (1,5)
+    ts       <- chooseInt (0, 2_000_000_000)
+    count    <- chooseInt (1,20)
+    totalS   <- chooseInt (1,count*5)
     pkh      <- arbitrary
     let rep = calculateReputation (fromIntegral totalS) (fromIntegral count)
-    return $ Review 
+    return $ Review
       (toBuiltin $ BS.pack ridStr)
       (Just $ toBuiltin $ BS.pack refIdStr)
       (fromIntegral rating)
@@ -46,59 +69,35 @@ instance Arbitrary Review where
       (fromIntegral count)
       rep
       pkh
-
 instance Arbitrary Redeem where
-  arbitrary = do
-    ridStr <- arbitrary `suchThat` (not . null)
-    pkh    <- arbitrary
-    return $ Redeem (toBuiltin $ BS.pack ridStr) pkh
+  arbitrary = Redeem <$> (toBuiltin . BS.pack <$> listOf1 (elements ['a'..'z']))
 
--- Helpers to build dummy transactions and contexts
-
-
+-- Helpers
 dummyTxOutRef :: TxOutRef
 dummyTxOutRef = TxOutRef (TxId "dummyTxId") 0
-
-buildOriginalTxOut :: Review -> TxOut
-buildOriginalTxOut review =
-  TxOut
-    (Address (PubKeyCredential $ reviewerPKH review) Nothing)
-    mempty
-    (OutputDatum $ Datum $ PlutusTx.toBuiltinData review)
-    Nothing
-
 buildDummyTxOut :: Review -> TxOut
 buildDummyTxOut review =
   let updated = updateReputation review
-  in TxOut 
-       (Address (PubKeyCredential $ reviewerPKH review) Nothing)
-       mempty
-       (OutputDatum $ Datum $ PlutusTx.toBuiltinData updated)
-       Nothing
-
+  in TxOut (Address (PubKeyCredential $ businessUserPKH review) Nothing)
+           mempty (OutputDatum $ Datum $ PlutusTx.toBuiltinData updated) Nothing
 buildDummyTxInfo :: Review -> [TxOut] -> TxInfo
 buildDummyTxInfo review outs = TxInfo
-  { txInfoInputs           = []
-  , txInfoReferenceInputs  = []
-  , txInfoOutputs          = outs
-  , txInfoFee              = mempty
-  , txInfoMint             = mempty
-  , txInfoDCert            = []
-  , txInfoWdrl             = AssocMap.empty
-  , txInfoValidRange       = always
-  , txInfoSignatories      = [ reviewerPKH review ]
-  , txInfoData             = AssocMap.empty
-  , txInfoId               = TxId "dummyTxId"
+  { txInfoInputs = []
+  , txInfoReferenceInputs = []
+  , txInfoOutputs = outs
+  , txInfoFee = mempty
+  , txInfoMint = mempty
+  , txInfoDCert = []
+  , txInfoWdrl = AssocMap.empty
+  , txInfoValidRange = always
+  , txInfoSignatories = [businessUserPKH review]
+  , txInfoData = AssocMap.empty
+  , txInfoId = TxId "dummyTxId"
   }
-
 buildScriptContext :: TxInfo -> ScriptContext
 buildScriptContext info = ScriptContext info (Spending dummyTxOutRef)
 
-pubKeyHashAddress :: PubKeyHash -> Maybe StakingCredential -> Address
-pubKeyHashAddress pkh stake = Address (PubKeyCredential pkh) stake
-
--- Unit tests for simple, hand-crafted scenarios
-
+-- Unit tests
 sampleReview :: Review
 sampleReview = Review
   { reviewId = "review1"
@@ -108,153 +107,122 @@ sampleReview = Review
   , totalScore = 10
   , ratingCount = 2
   , reputationScore = calculateReputation 10 2
-  , reviewerPKH = PubKeyHash "abc"
+  , businessUserPKH = PubKeyHash "abc"
   }
-
 sampleRedeem :: Redeem
-sampleRedeem = Redeem "review1" (reviewerPKH sampleReview)
-
+sampleRedeem = Redeem (reviewId sampleReview)
 unitTests :: TestTree
 unitTests = testGroup "Unit Tests"
   [ testCase "Valid transaction passes" $ do
       let ctx = buildScriptContext $ buildDummyTxInfo sampleReview [buildDummyTxOut sampleReview]
       assertBool "Valid tx should pass" $ validateReview sampleReview sampleRedeem ctx
 
-  , testCase "Invalid signer fails" $ do
-      let badRedeem = sampleRedeem { signerPKH = PubKeyHash "wrong" }
-          ctx = buildScriptContext $ buildDummyTxInfo sampleReview [buildDummyTxOut sampleReview]
-      assertBool "Bad signer should fail" $ not $ validateReview sampleReview badRedeem ctx
+  , testCase "Transaction not signed by business user fails" $ do
+      let txInfo = (buildDummyTxInfo sampleReview [buildDummyTxOut sampleReview])
+                     { txInfoSignatories = [PubKeyHash "wrong"] }
+          ctx    = buildScriptContext txInfo
+      assertBool "Unsigned tx should fail" $ not $ validateReview sampleReview sampleRedeem ctx
 
   , testCase "Invalid rating fails" $ do
       let badReview = sampleReview { overallRating = 6 }
-          ctx = buildScriptContext $ buildDummyTxInfo badReview [buildDummyTxOut badReview]
+          ctx       = buildScriptContext $ buildDummyTxInfo badReview [buildDummyTxOut badReview]
       assertBool "Rating > 5 should fail" $ not $ validateReview badReview sampleRedeem ctx
 
   , testCase "Empty reference ID fails" $ do
       let badReview = sampleReview { reviewReferenceId = Just "" }
-          ctx = buildScriptContext $ buildDummyTxInfo badReview [buildDummyTxOut badReview]
+          ctx       = buildScriptContext $ buildDummyTxInfo badReview [buildDummyTxOut badReview]
       assertBool "Empty refId should fail" $ not $ validateReview badReview sampleRedeem ctx
 
-  , testCase "Succeeds if all outputs go to reviewer address" $ do
-      let out1 = buildDummyTxOut sampleReview
-          out2 = buildDummyTxOut sampleReview
-          txInfo = buildDummyTxInfo sampleReview [out1, out2]
-          ctx = buildScriptContext txInfo
-      assertBool "All outputs to reviewer should pass" $
-        validateReview sampleReview sampleRedeem ctx
+  , testCase "Fails with multiple identical valid outputs" $ do
+  let updated = updateReputation sampleReview
+      out     = TxOut (Address (PubKeyCredential $ businessUserPKH updated) Nothing)
+                      mempty (OutputDatum $ Datum $ PlutusTx.toBuiltinData updated) Nothing
+      outs    = [out, out]  -- Two valid identical outputs
+      ctx     = buildScriptContext $ buildDummyTxInfo sampleReview outs
+  assertBool "Should fail if multiple valid outputs are present" $ not $ validateReview sampleReview sampleRedeem ctx
+      
+
+  , testCase "Succeeds if at least one valid output present" $ do
+      let validOut   = buildDummyTxOut sampleReview
+          invalidOut = TxOut (Address (PubKeyCredential (PubKeyHash "x")) Nothing) mempty NoOutputDatum Nothing
+          ctx        = buildScriptContext $ buildDummyTxInfo sampleReview [invalidOut, validOut]
+      assertBool "Should pass when at least one valid output present" $ validateReview sampleReview sampleRedeem ctx
+
+  , testCase "Mismatched review ID fails" $ do
+  let badRedeem = Redeem "otherReviewId"
+      ctx = buildScriptContext $ buildDummyTxInfo sampleReview [buildDummyTxOut sampleReview]
+  assertBool "Mismatched review ID should fail" $ not $ validateReview sampleReview badRedeem ctx
   ]
 
--- Property-based tests using randomly generated data
-
+-- Property-based tests
 prop_validRating :: Review -> Property
-prop_validRating review =
-  (overallRating review >= 1 && overallRating review <= 5) === True
+prop_validRating review = property $ overallRating review >= 1 && overallRating review <= 5
 
 prop_validReferenceId :: Review -> Property
-prop_validReferenceId review =
-  case reviewReferenceId review of
-    Just ref -> (BS.unpack (fromBuiltin ref) /= "") === True
-    Nothing  -> property False
+prop_validReferenceId review = case reviewReferenceId review of
+    Just ref -> property $ BS.unpack (fromBuiltin ref) /= ""
+    Nothing  -> property True
 
 prop_reputationCalculation :: Review -> Property
-prop_reputationCalculation r =
-  let new = updateReputation r
-      expected = calculateReputation (totalScore r + overallRating r) (ratingCount r + 1)
-  in reputationScore new === expected
+prop_reputationCalculation r = let new = updateReputation r
+                                   expected = calculateReputation (totalScore r + overallRating r) (ratingCount r + 1)
+                               in property $ reputationScore new == expected
 
-prop_signerMatchesAndSigned :: Review -> PubKeyHash -> Property
-prop_signerMatchesAndSigned review pkh =
-  let redeem = Redeem (reviewId review) pkh
-      txInfo = (buildDummyTxInfo review [buildDummyTxOut review])
-                 { txInfoSignatories = [pkh] }
-      ctx = buildScriptContext txInfo
-
-      signerMatches = reviewerPKH review == signerPKH redeem
-      txSignedByReviewer = txSignedBy txInfo (reviewerPKH review)
-
-      expected = signerMatches && txSignedByReviewer
-
-      actual = 
-        let validSigner = reviewerPKH review == signerPKH redeem
-            signed = txSignedBy (scriptContextTxInfo ctx) (reviewerPKH review)
-         in validSigner && signed
-  in actual === expected
-
-prop_validateWithWrongSignerFails :: Review -> Property
-prop_validateWithWrongSignerFails r =
-  let txInfo = buildDummyTxInfo r [buildDummyTxOut r]
-      ctx = buildScriptContext txInfo
-      redeem = Redeem (reviewId r) (PubKeyHash "badSigner")
-  in validateReview r redeem ctx === False
+prop_txNotSignedByBusinessFails :: Review -> Property
+prop_txNotSignedByBusinessFails review =
+  let txInfo = (buildDummyTxInfo review [buildDummyTxOut review]) { txInfoSignatories = [PubKeyHash "other"] }
+      ctx    = buildScriptContext txInfo
+      redeem = Redeem (reviewId review)
+  in property $ not $ validateReview review redeem ctx
 
 prop_updateIncrementsRatingCount :: Review -> Property
-prop_updateIncrementsRatingCount review =
-  ratingCount (updateReputation review) === (ratingCount review + 1)
+prop_updateIncrementsRatingCount review = property $ ratingCount (updateReputation review) == ratingCount review + 1
 
 prop_updateIncrementsTotalScore :: Review -> Property
-prop_updateIncrementsTotalScore review =
-  totalScore (updateReputation review) === (totalScore review + overallRating review)
+prop_updateIncrementsTotalScore review = property $ totalScore (updateReputation review) == totalScore review + overallRating review
 
 prop_identityPreservation :: Review -> Property
-prop_identityPreservation review =
-  let updated = updateReputation review
-  in (reviewId updated === reviewId review)
-     .&&. (reviewerPKH updated === reviewerPKH review)
+prop_identityPreservation review = let updated = updateReputation review
+                                  in property $ reviewId updated == reviewId review && businessUserPKH updated == businessUserPKH review
 
-prop_outputsGoToReviewer :: Review -> Property
-prop_outputsGoToReviewer review =
-  let out = buildDummyTxOut review
-      txInfo = buildDummyTxInfo review [out]
-      ctx = buildScriptContext txInfo
-      redeem = Redeem (reviewId review) (reviewerPKH review)
+prop_validOutputPresent :: Review -> Property
+prop_validOutputPresent review =
+  let updatedReview = updateReputation review
+  in property $ reputationScore updatedReview > 0 ==>  
+       let validOut = buildDummyTxOut updatedReview
+           ctx = buildScriptContext $ buildDummyTxInfo updatedReview [validOut]
+           redeem = Redeem (reviewId updatedReview)
+       in validateReview updatedReview redeem ctx
 
-      dummyValidate _ _ ctx' =
-        let outputs = txInfoOutputs $ scriptContextTxInfo ctx'
-            allToReviewer = all (\o -> txOutAddress o == pubKeyHashAddress (reviewerPKH review) Nothing) outputs
-        in P.traceIfFalse "Not all outputs to reviewer" allToReviewer
-
-  in dummyValidate review redeem ctx === True
-
-
-
-prop_failsWithNonReviewerOutput :: Review -> Property
-prop_failsWithNonReviewerOutput review =
-  let
-    validOut = buildDummyTxOut review
-    invalidOut = TxOut
-      (Address (PubKeyCredential (PubKeyHash "notReviewer")) Nothing)
-      mempty
-      NoOutputDatum
-      Nothing
-
-    txInfo = buildDummyTxInfo review [validOut, invalidOut]
-    ctx = buildScriptContext txInfo
-
-    expectedAddress = Address (PubKeyCredential (reviewerPKH review)) Nothing
-    allToReviewer = all (\o -> txOutAddress o == expectedAddress) (txInfoOutputs txInfo)
-
-  in allToReviewer === False
+prop_invalidOutputFails :: Review -> Property
+prop_invalidOutputFails review =
+  let invalidOut = TxOut (Address (PubKeyCredential $ PubKeyHash "bad") Nothing) mempty NoOutputDatum Nothing
+      ctx = buildScriptContext $ buildDummyTxInfo review [invalidOut]
+      redeem = Redeem (reviewId review)
+  in property $ not $ validateReview review redeem ctx
 
 
-
---------------------------------------------------------------------------------
--- Entry point for running all tests
---------------------------------------------------------------------------------
+prop_failsWithNoValidOutput :: Review -> Property
+prop_failsWithNoValidOutput review =
+  let invalidOuts = replicate 3 $ TxOut (Address (PubKeyCredential (PubKeyHash "xyz")) Nothing) mempty NoOutputDatum Nothing
+      ctx         = buildScriptContext $ buildDummyTxInfo review invalidOuts
+      redeem      = Redeem (reviewId review)
+  in property $ not $ validateReview review redeem ctx
 
 tests :: TestTree
 tests = testGroup "Reputation.RnR Tests"
   [ unitTests
-  , testGroup "QuickCheck Property Tests"
+  , testGroup "Property Tests"
       [ testProperty "Overall rating is valid" prop_validRating
-      , testProperty "Reference ID is non-empty" prop_validReferenceId
-      , testProperty "Reputation score is correctly updated" prop_reputationCalculation
-      , testProperty "Wrong signer fails" prop_validateWithWrongSignerFails
+      , testProperty "Reference ID non-empty" prop_validReferenceId
+      , testProperty "Reputation score updated correctly" prop_reputationCalculation
+      , testProperty "Tx not signed by business user fails" prop_txNotSignedByBusinessFails
       , testProperty "Rating count increments" prop_updateIncrementsRatingCount
       , testProperty "Total score increments" prop_updateIncrementsTotalScore
-      , testProperty "Review identity is preserved" prop_identityPreservation
-      , testProperty "Signer check matches expectations" prop_signerMatchesAndSigned
-      , testProperty "All outputs go to reviewer" prop_outputsGoToReviewer
-      , testProperty "Fails if any output not to reviewer" prop_failsWithNonReviewerOutput
+      , testProperty "Identity preserved" prop_identityPreservation
+      , testProperty "Valid output passes" prop_validOutputPresent
+      , testProperty "Invalid output fails" prop_invalidOutputFails
+      , testProperty "Fails if no valid output" prop_failsWithNoValidOutput
       ]
   ]
 
