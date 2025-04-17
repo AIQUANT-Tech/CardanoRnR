@@ -116,12 +116,6 @@ instance FromJSON Review where
       <*> v .: "reputationScore"
       <*> v .: "reviewerPKH"
 
--- instance FromJSON Redeem where
---   parseJSON = withObject "Redeem" $ \v ->
---     Redeem
---       <$> v .: "reviewId"
---       <*> v .: "reviewerPKH"
- 
 -- Helper function to update the reputation score
 {-# INLINEABLE updateReputation #-}
 updateReputation :: Review -> Review
@@ -152,8 +146,6 @@ validateReview :: Review -> Redeem -> ScriptContext -> Bool
 validateReview review redeem ctx =
   let info :: TxInfo
       info = scriptContextTxInfo ctx
-
-      -- validBusinessUser = traceIfFalse "Not correct Business user's Datum!!" (businessUserPKH review == signerPKH redeem)
 
       -- Check if transaction is actually signed by the Business User, so that the malicious actor cannot intevain in the datum
       txSignedByBusinessUser = traceIfFalse "Transaction not signed by Business user!" (txSignedBy info (businessUserPKH review))
