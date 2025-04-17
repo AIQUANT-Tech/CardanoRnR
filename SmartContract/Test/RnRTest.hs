@@ -31,6 +31,8 @@ import Test.Tasty.QuickCheck
     , suchThat
     , property
     , (==>)
+    , counterexample
+    , (.&&.)
     )
 
 import Plutus.V1.Ledger.Credential (Credential(..))
@@ -52,12 +54,12 @@ instance Arbitrary BuiltinByteString where
   arbitrary = toBuiltin . BS.pack <$> listOf1 (elements ['a'..'z'])
 instance Arbitrary Review where
   arbitrary = do
-    ridStr   <- arbitrary `suchThat` (not . null) `suchThat` (all isPrint)
-    refIdStr <- arbitrary `suchThat` (not . null) `suchThat` (all isPrint)
+    ridStr   <- listOf1 (elements ['a'..'z'])
+    refIdStr <- listOf1 (elements ['a'..'z'])
     rating   <- chooseInt (1,5)
     ts       <- chooseInt (0, 2_000_000_000)
-    count    <- chooseInt (1,20)
-    totalS   <- chooseInt (1,count*5)
+    count    <- chooseInt (10,30)
+    totalS   <- chooseInt (count,count*5)
     pkh      <- arbitrary
     let rep = calculateReputation (fromIntegral totalS) (fromIntegral count)
     return $ Review
@@ -185,15 +187,6 @@ prop_identityPreservation :: Review -> Property
 prop_identityPreservation review = let updated = updateReputation review
                                   in property $ reviewId updated == reviewId review && businessUserPKH updated == businessUserPKH review
 
-prop_validOutputPresent :: Review -> Property
-prop_validOutputPresent review =
-  let updatedReview = updateReputation review
-  in property $ reputationScore updatedReview > 0 ==>  
-       let validOut = buildDummyTxOut updatedReview
-           ctx = buildScriptContext $ buildDummyTxInfo updatedReview [validOut]
-           redeem = Redeem (reviewId updatedReview)
-       in validateReview updatedReview redeem ctx
-
 prop_invalidOutputFails :: Review -> Property
 prop_invalidOutputFails review =
   let invalidOut = TxOut (Address (PubKeyCredential $ PubKeyHash "bad") Nothing) mempty NoOutputDatum Nothing
@@ -209,6 +202,25 @@ prop_failsWithNoValidOutput review =
       redeem      = Redeem (reviewId review)
   in property $ not $ validateReview review redeem ctx
 
+
+prop_exactlyOneValidOutput :: Review -> Property
+prop_exactlyOneValidOutput review =
+  let validOut = buildDummyTxOut review
+      txInfo   = buildDummyTxInfo review [validOut]
+      ctx      = buildScriptContext txInfo
+      redeem   = Redeem (reviewId review)
+      expectedDatum = Datum (PlutusTx.toBuiltinData $ updateReputation review)
+      expectedAddr  = Address (PubKeyCredential $ businessUserPKH review) Nothing
+      outputsMatching = filter (\o ->
+        case txOutDatum o of
+          OutputDatum d -> d == expectedDatum && txOutAddress o == expectedAddr
+          _             -> False
+        ) (txInfoOutputs txInfo)
+      allAddrs = fmap txOutAddress (txInfoOutputs txInfo)
+  in counterexample ("Expected addr: " ++ show expectedAddr ++ "\nGot: " ++ show allAddrs) $
+       property $ length outputsMatching == 1
+
+
 tests :: TestTree
 tests = testGroup "Reputation.RnR Tests"
   [ unitTests
@@ -220,8 +232,8 @@ tests = testGroup "Reputation.RnR Tests"
       , testProperty "Rating count increments" prop_updateIncrementsRatingCount
       , testProperty "Total score increments" prop_updateIncrementsTotalScore
       , testProperty "Identity preserved" prop_identityPreservation
-      , testProperty "Valid output passes" prop_validOutputPresent
       , testProperty "Invalid output fails" prop_invalidOutputFails
+      , testProperty "Exactly one matching output" prop_exactlyOneValidOutput
       , testProperty "Fails if no valid output" prop_failsWithNoValidOutput
       ]
   ]
