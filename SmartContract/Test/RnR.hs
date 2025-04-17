@@ -10,7 +10,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
  
-module Reputation.RnR (Review (..), Redeem (..), validator,  writeScript, saveUpdatedDatum, main, calculateReputation, validateReview, updateReputation, wrapValidator ) where
+module Test.RnR (Review (..), Redeem (..), validator,  writeScript, saveUpdatedDatum, main, calculateReputation, validateReview, updateReputation, wrapValidator ) where
  
 import Plutus.V2.Ledger.Api (
     BuiltinByteString,
@@ -52,11 +52,11 @@ import qualified Plutus.Script.Utils.V2.Typed.Scripts as Scripts
 import Plutus.V2.Ledger.Api (BuiltinByteString, BuiltinData, Datum (..), OutputDatum (..), POSIXTime (..), ScriptContext, ScriptPurpose (..), TxOut (..), TxOutRef, Validator, fromData, mkValidatorScript, txInfoOutputs, txOutDatum, unValidatorScript, unsafeFromBuiltinData)
 import Plutus.V2.Ledger.Contexts (scriptContextTxInfo)
 import PlutusTx (ToData, compile, toBuiltinData, toData, unstableMakeIsData)
-import PlutusTx.Prelude (Bool (..), fromBuiltin, Either (..), Eq (..), Integer, Maybe (..), any, divide, toBuiltin, traceError, traceIfFalse, ($), (&&), (*), (+), (++), (/=), (<=), (==), (>))
+import PlutusTx.Prelude (Bool (..), fromBuiltin, Either (..), Eq (..), Integer, Maybe (..), any, divide, toBuiltin, traceError, traceIfFalse, ($), (&&), (*), (+), (++), (/=), (<=), (==), (>), filter)
 import System.Directory (createDirectoryIfMissing)
 import System.FilePath (takeDirectory)
 import System.IO (appendFile, getLine, writeFile)
-import Prelude (FilePath, IO, Show, String, floor, print, putStrLn, return, show, writeFile, (.), (<$>), (<*>), fail)
+import Prelude (FilePath, IO, Show, String, floor, print, putStrLn, return, show, writeFile, (.), (<$>), (<*>), fail, length)
 import qualified Data.Text.Encoding as TE
 import qualified Data.ByteString.Base16 as B16
 import PlutusTx.Builtins (toBuiltin)
@@ -89,7 +89,7 @@ data Review = Review
     totalScore :: Integer,
     ratingCount :: Integer,
     reputationScore :: Integer,
-    reviewerPKH :: PubKeyHash  
+    businessUserPKH :: PubKeyHash  
   }
   deriving (Show)
  
@@ -97,8 +97,8 @@ PlutusTx.unstableMakeIsData ''Review
  
 -- Redeemer for Redeeming Review
 data Redeem = Redeem
-  { redeemReviewId :: BuiltinByteString,
-    signerPKH :: PubKeyHash  -- Ensures only the original reviewer can redeem
+  { redeemReviewId :: BuiltinByteString
+   -- signerPKH :: PubKeyHash  -- Ensures only the original reviewer can redeem
   }
   deriving (Show)
  
@@ -141,6 +141,10 @@ calculateReputation totalScore ratingCount =
       normalizeCount = ratingCount `divide` 100
    in (wr * avgRating + wn * normalizeCount) `divide` 100
 
+{-# INLINEABLE listLength #-}
+listLength :: [a] -> Integer
+listLength []     = 0
+listLength (_:xs) = 1 + listLength xs
  
 -- Validation logic for Redeeming & Updating a Review
 {-# INLINEABLE validateReview #-}
@@ -149,11 +153,10 @@ validateReview review redeem ctx =
   let info :: TxInfo
       info = scriptContextTxInfo ctx
 
-      -- Check if the redeemer's PKH matches the original reviewer
-      validSigner = traceIfFalse "Unauthorized signer!" (reviewerPKH review == signerPKH redeem)
+      -- validBusinessUser = traceIfFalse "Not correct Business user's Datum!!" (businessUserPKH review == signerPKH redeem)
 
-      -- Check if transaction is actually signed by the reviewer
-      txSignedByReviewer = traceIfFalse "Transaction not signed by reviewer!" (txSignedBy info (reviewerPKH review))
+      -- Check if transaction is actually signed by the Business User, so that the malicious actor cannot intevain in the datum
+      txSignedByBusinessUser = traceIfFalse "Transaction not signed by Business user!" (txSignedBy info (businessUserPKH review))
 
       -- Check if the review ID matches
       validReviewId = traceIfFalse "Invalid Review ID!" (reviewId review == redeemReviewId redeem)
@@ -168,35 +171,24 @@ validateReview review redeem ctx =
 
       -- Update the review and validate reputation logic
       updatedReview = updateReputation review
-      validReputationChange = traceIfFalse "Invalid reputation update!" (reputationScore updatedReview >= reputationScore review)
-
-      -- Ensure updated reputation score is greater than 0
+      -- Ensure updated reputation score is greater than 0, if not calculated then retuns 0 as updated reputation score
       validReputationScore = traceIfFalse "Reputation score must be > 0!" (reputationScore updatedReview > 0)
 
       -- Expected inline datum (the updated review state)
       expectedDatum = Datum (toBuiltinData updatedReview)
+      businessAddress = Address { 
+        addressCredential = PubKeyCredential (businessUserPKH review)
+        , addressStakingCredential = Nothing }
+      
+      --Checks if the transaction contains exactly one output with the correct updated datum at the correct address
+      checkOutput output = 
+        case txOutDatum output of
+          OutputDatum d -> d == expectedDatum && txOutAddress output == businessAddress
+          _             -> False
+      outputsMatching        = filter checkOutput (txInfoOutputs info)
+      validCombinedOutput    = traceIfFalse "Transaction must contain exactly one output with the correct updated datum at the correct address!" (listLength outputsMatching == 1)
 
-      -- Check outputs: Ensure at least one output includes the inline datum with the expected updated state.
-      outputs = txInfoOutputs info
-      validInlineDatum = traceIfFalse "Updated inline datum not found!" $
-                         any (\output -> case txOutDatum output of
-                                  OutputDatum d -> d == expectedDatum
-                                  _                   -> False
-                             ) outputs
-
-      -- Check that one of the outputs is sent to the reviewer's address      
-      preAddress = Address
-        { addressCredential = PubKeyCredential (reviewerPKH review)
-        , addressStakingCredential = Nothing
-        }
-
-      -- Output validation
-      validAddress = traceIfFalse "Incorrect address!" $
-                     any (\output -> txOutAddress output == preAddress) outputs
-
-
-  in  validSigner && txSignedByReviewer && validReviewId && validRating && validReferenceId && validReputationChange && validReputationScore &&
-      validInlineDatum && validAddress
+  in  txSignedByBusinessUser && validReviewId && validRating && validReferenceId && validReputationScore && validCombinedOutput
  
 -- Validator function
 {-# INLINEABLE wrapValidator #-}
