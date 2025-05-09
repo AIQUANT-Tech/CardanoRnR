@@ -10,7 +10,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
  
-module Review.RnR (Review (..), Redeem (..), validator,  writeScript, saveUpdatedDatum, main, calculateReputation, validateReview, updateReputation, wrapValidator ) where
+module Review.RnR (Review (..), Redeem (..), validator,  writeScript, saveUpdatedDatum, main, calculateReputation, mkValidateReview, updateReputation, wrapValidator ) where
  
 import Plutus.V2.Ledger.Api (
     BuiltinByteString,
@@ -33,7 +33,7 @@ import Plutus.V2.Ledger.Api (
   )
 import Plutus.V1.Ledger.Credential (Credential(..))
 import Plutus.V2.Ledger.Contexts (txSignedBy, TxOut(..), scriptContextTxInfo)
-import PlutusTx (compile, toBuiltinData, unstableMakeIsData)
+import PlutusTx (compile, toBuiltinData, unstableMakeIsData, applyCode, liftCode)
 import PlutusTx.Prelude (Bool (..), Integer, Maybe (..), traceError, traceIfFalse, (&&), (>), (>=), (<=), (==))
 import Cardano.Api (PlutusScriptV2, ScriptDataJsonSchema (..), scriptDataFromJson, scriptDataToJson)
 import Cardano.Api.Shelley (PlutusScript (PlutusScriptSerialised), displayError, fromPlutusData, toPlutusData, writeFileTextEnvelope)
@@ -50,7 +50,7 @@ import Data.Scientific (toBoundedInteger)
 import qualified Data.Text as T
 import qualified Plutus.Script.Utils.V2.Typed.Scripts as Scripts
 import Plutus.V2.Ledger.Api (BuiltinByteString, BuiltinData, Datum (..), OutputDatum (..), POSIXTime (..), ScriptContext, ScriptPurpose (..), TxOut (..), TxOutRef, Validator, fromData, mkValidatorScript, txInfoOutputs, txOutDatum, unValidatorScript, unsafeFromBuiltinData)
-import Plutus.V2.Ledger.Contexts (scriptContextTxInfo)
+import Plutus.V2.Ledger.Contexts (scriptContextTxInfo, getContinuingOutputs)
 import PlutusTx (ToData, compile, toBuiltinData, toData, unstableMakeIsData)
 import PlutusTx.Prelude (Bool (..), fromBuiltin, Either (..), Eq (..), Integer, Maybe (..), any, divide, toBuiltin, traceError, traceIfFalse, ($), (&&), (*), (+), (++), (/=), (<=), (==), (>), filter)
 import System.Directory (createDirectoryIfMissing)
@@ -60,19 +60,19 @@ import Prelude (FilePath, IO, Show, String, floor, print, putStrLn, return, show
 import qualified Data.Text.Encoding as TE
 import qualified Data.ByteString.Base16 as B16
 import PlutusTx.Builtins (toBuiltin)
-
-
-
+ 
+ 
+ 
 -- FromJSON instance for BuiltinByteString
 instance FromJSON BuiltinByteString where
   parseJSON = withText "BuiltinByteString" $ \t ->
     return . toBuiltin . BS.pack $ T.unpack t
-
+ 
 -- FromJSON instance for POSIXTime
 instance FromJSON POSIXTime where
   parseJSON = withScientific "POSIXTime" $ \s ->
     return . POSIXTime . floor $ s
-
+ 
 -- FromJSON instance for PubKeyHash
 instance FromJSON PubKeyHash where
   parseJSON = withText "PubKeyHash" $ \t ->
@@ -81,162 +81,142 @@ instance FromJSON PubKeyHash where
       Left _        -> fail "Invalid PubKeyHash: Hex decoding failed"
  
 -- Data Structure for a Review
+-- | Review datum
 data Review = Review
-  { reviewId :: BuiltinByteString,
-    reviewReferenceId :: Maybe BuiltinByteString,
-    overallRating :: Integer,
-    timestamp :: POSIXTime,
-    totalScore :: Integer,
-    ratingCount :: Integer,
-    reputationScore :: Integer,
-    businessUserPKH :: PubKeyHash  
-  }
-  deriving (Show)
+  { reviewId           :: BuiltinByteString
+  , reviewReferenceId  :: Maybe BuiltinByteString
+  , overallRating      :: Integer
+  , timestamp          :: POSIXTime
+  , totalScore         :: Integer
+  , ratingCount        :: Integer
+  , reputationScore    :: Integer
+  } deriving Show
  
 PlutusTx.unstableMakeIsData ''Review
  
--- Redeemer for Redeeming Review
+-- | Redeemer for redeeming/updating a review
 data Redeem = Redeem
-  { redeemReviewId :: BuiltinByteString
-   -- signerPKH :: PubKeyHash  -- Ensures only the original reviewer can redeem
-  }
-  deriving (Show)
+  { redeemReviewId :: BuiltinByteString }
+  deriving Show
  
 PlutusTx.unstableMakeIsData ''Redeem
-
-instance FromJSON Review where
-  parseJSON = withObject "Review" $ \v ->
-    Review
-      <$> v .: "reviewId"
-      <*> v .: "reviewReferenceId"
-      <*> v .: "overallRating"
-      <*> v .: "timestamp"
-      <*> v .: "totalScore"
-      <*> v .: "ratingCount"
-      <*> v .: "reputationScore"
-      <*> v .: "reviewerPKH"
-
--- Helper function to update the reputation score
-{-# INLINEABLE updateReputation #-}
-updateReputation :: Review -> Review
-updateReputation review =
-  let newTotalScore = totalScore review + overallRating review
-      newRatingCount = ratingCount review + 1
-      newReputationScore = calculateReputation newTotalScore newRatingCount
-   in review {totalScore = newTotalScore, ratingCount = newRatingCount, reputationScore = newReputationScore}
  
--- Formula to calculate reputation
+-- Calculate reputation from totalScore and ratingCount
 {-# INLINEABLE calculateReputation #-}
 calculateReputation :: Integer -> Integer -> Integer
 calculateReputation totalScore ratingCount =
-  let wr = 50  -- Weight for average rating
-      wn = 50  -- Weight for normalized count
+  let wr = 50  -- weight for average rating
+      wn = 50  -- weight for normalized count
       avgRating = if ratingCount > 0 then totalScore `divide` ratingCount else 0
       normalizeCount = ratingCount `divide` 100
-   in (wr * avgRating + wn * normalizeCount) `divide` 100
-
+  in (wr * avgRating + wn * normalizeCount) `divide` 100
+ 
 {-# INLINEABLE listLength #-}
 listLength :: [a] -> Integer
 listLength []     = 0
 listLength (_:xs) = 1 + listLength xs
  
--- Validation logic for Redeeming & Updating a Review
-{-# INLINEABLE validateReview #-}
-validateReview :: Review -> Redeem -> ScriptContext -> Bool
-validateReview review redeem ctx =
-  let info :: TxInfo
-      info = scriptContextTxInfo ctx
-
-      -- Check if transaction is actually signed by the Business User, so that the malicious actor cannot intevain in the datum
-      txSignedByBusinessUser = traceIfFalse "Transaction not signed by Business user!" (txSignedBy info (businessUserPKH review))
-
-      -- Check if the review ID matches
-      validReviewId = traceIfFalse "Invalid Review ID!" (reviewId review == redeemReviewId redeem)
-
-      -- Validate rating range (1 to 5)
-      validRating = traceIfFalse "Invalid Rating! Must be between 1 and 5" (overallRating review > 0 && overallRating review <= 5)
-
-      -- Validate optional reference ID: Nothing is okay, Just "" is invalid
-      validReferenceId = case reviewReferenceId review of
-        Nothing -> True
-        Just refId -> traceIfFalse "Invalid reference ID!" (refId /= "")
-
-      -- Update the review and validate reputation logic
-      updatedReview = updateReputation review
-      -- Ensure updated reputation score is greater than 0, if not calculated then retuns 0 as updated reputation score
-      validReputationScore = traceIfFalse "Reputation score must be > 0!" (reputationScore updatedReview > 0)
-
+-- Update a review's reputation fields
+{-# INLINEABLE updateReputation #-}
+updateReputation :: Review -> Review
+updateReputation r =
+  let newTotal  = totalScore r + overallRating r
+      newCount  = ratingCount r + 1
+      newReput  = calculateReputation newTotal newCount
+  in r { totalScore = newTotal, ratingCount = newCount, reputationScore = newReput }
+ 
+-- Only review author may sign, and exactly one continuing output with updated datum
+{-# INLINEABLE mkValidateReview #-}
+mkValidateReview :: PubKeyHash -> Review -> Redeem -> ScriptContext -> Bool
+mkValidateReview businessPKH review redeem ctx =
+  let info = scriptContextTxInfo ctx
+      -- must be signed by the Business user
+      txSignedByBusinessUser = traceIfFalse "Transaction not signed by review author!"
+                                         (txSignedBy info businessPKH)
+      -- reviewId matches redeemer
+      validReviewId  = traceIfFalse "Invalid Review ID!"
+                                         (reviewId review == redeemReviewId redeem)
+      -- rating in [1,5]
+      validRating    = traceIfFalse "Invalid Rating! Must be between 1 and 5"
+                                         (overallRating review > 0 && overallRating review <= 5)
+      -- reference ID, if present, non-empty
+      validReferenceId       = case reviewReferenceId review of
+                         Nothing -> True
+                         Just x  -> traceIfFalse "Invalid reference ID!" (x /= "")
+      -- update and check reputation
+      updatedReview        = updateReputation review
+      validReputation     = traceIfFalse "Reputation score must be > 0 !!" (reputationScore updatedReview > 0)
       -- Expected inline datum (the updated review state)
       expectedDatum = Datum (toBuiltinData updatedReview)
-      businessAddress = Address { 
-        addressCredential = PubKeyCredential (businessUserPKH review)
+      businessAddress = Address {
+        addressCredential = PubKeyCredential businessPKH
         , addressStakingCredential = Nothing }
       
       --Checks if the transaction contains exactly one output with the correct updated datum at the correct address
-      checkOutput output = 
+      checkOutput output =
         case txOutDatum output of
           OutputDatum d -> d == expectedDatum && txOutAddress output == businessAddress
           _             -> False
       outputsMatching        = filter checkOutput (txInfoOutputs info)
       validCombinedOutput    = traceIfFalse "Transaction must contain exactly one output with the correct updated datum at the correct address!" (listLength outputsMatching == 1)
-
-  in  txSignedByBusinessUser && validReviewId && validRating && validReferenceId && validReputationScore && validCombinedOutput
+  in txSignedByBusinessUser && validReviewId && validRating && validReferenceId && validReputation && validCombinedOutput
  
--- Validator function
+-- | Wrap into built-in types
 {-# INLINEABLE wrapValidator #-}
-wrapValidator :: BuiltinData -> BuiltinData -> BuiltinData -> ()
-wrapValidator datum redeemer context =
-  let review :: Review = unsafeFromBuiltinData datum
-      redeem :: Redeem = unsafeFromBuiltinData redeemer
-      ctx :: ScriptContext = unsafeFromBuiltinData context
-  in if validateReview review redeem ctx
-     then ()  -- Validation passes
-     else traceError "Validation Failed!"
+wrapValidator :: PubKeyHash -> BuiltinData -> BuiltinData -> BuiltinData -> ()
+wrapValidator businessPKH d r ctx =
+  let review = unsafeFromBuiltinData d
+      red    = unsafeFromBuiltinData r
+      sc     = unsafeFromBuiltinData ctx
+  in if mkValidateReview businessPKH review red sc
+       then ()
+       else traceError "Validation failed!"
  
--- Create the Validator
-validator :: Validator
-validator = mkValidatorScript $$(compile [||wrapValidator||])
-
+-- | The compiled Validator
+validator :: PubKeyHash -> Validator
+validator businessPKH =
+  mkValidatorScript
+    (   $$(compile [|| wrapValidator ||])
+    `applyCode` liftCode businessPKH
+    )
+ 
 -- Writing the Plutus Script
-writePlutusScript :: FilePath -> Validator -> IO ()
-writePlutusScript file validator = do
+writeScript :: FilePath -> PubKeyHash -> IO ()
+writeScript file businessPKH = do
+  let val = validator businessPKH
   createDirectoryIfMissing True (takeDirectory file)
-  let script = serialise (unValidatorScript validator)
-  let shortScript = SBS.toShort (LBS.toStrict script)
-  result <- writeFileTextEnvelope @(PlutusScript PlutusScriptV2) file Nothing (PlutusScriptSerialised shortScript)
+  let script      = serialise (unValidatorScript val)
+      shortScript = SBS.toShort (LBS.toStrict script)
+  result <- writeFileTextEnvelope @(PlutusScript PlutusScriptV2)
+                                    file
+                                    Nothing
+                                    (PlutusScriptSerialised shortScript)
   case result of
-    Left err -> print $ displayError err
-    Right () -> putStrLn "Successfully wrote Plutus script to file."
-
--- Function to write the script to a file
-writeScript :: IO ()
-writeScript = writePlutusScript "src/Reputation/RnR.plutus" validator
-
+    Left err -> print (displayError err)
+    Right () -> putStrLn $ "Wrote script to " ++ file
+ 
 -- Save the updated datum to a JSON file
 saveUpdatedDatum :: FilePath -> Review -> IO ()
 saveUpdatedDatum filePath review = do
-  let updatedDatum = toData (updateReputation review) -- Convert updated review to Plutus Data
-      jsonDatum = scriptDataToJson ScriptDataJsonDetailedSchema (fromPlutusData updatedDatum) -- Convert to JSON
+  let updatedDatum = toData (updateReputation review)
+      jsonDatum = scriptDataToJson ScriptDataJsonDetailedSchema (fromPlutusData updatedDatum)
       encodedJson = encode jsonDatum
-  createDirectoryIfMissing True (takeDirectory filePath) -- Ensure the output directory exists
+  createDirectoryIfMissing True (takeDirectory filePath)
   LBS.writeFile filePath encodedJson
   putStrLn $ "Updated datum saved to " ++ filePath
-
+ 
 -- Main function to read JSON, process it, and save updated review datum
 main :: IO ()
 main = do
-  putStrLn "Enter the input JSON file path:"
-  inputFilePath <- getLine
-  putStrLn "Enter the output file path:"
-  outputFilePath <- getLine
-  input <- LBS.readFile inputFilePath
-  case eitherDecode input :: Either String Value of
-    Left err -> putStrLn $ "Error parsing JSON: " ++ err
-    Right val ->
-      case scriptDataFromJson ScriptDataJsonDetailedSchema val of
-        Left sErr -> putStrLn $ "Error parsing ScriptData: " ++ show sErr
-        Right sData -> do
-          let pData = toPlutusData sData
-          case fromData pData :: Maybe Review of
-            Nothing -> putStrLn "Error: Could not convert Plutus Data to Review"
-            Just review -> saveUpdatedDatum outputFilePath review
+  putStrLn "Enter business PubKeyHash (hex):"
+  pkhHex <- getLine
+  putStrLn "Enter output filepath (e.g. compiled/ReputationRnR.plutus):"
+  outPath <- getLine
+  case B16.decode (BS.pack pkhHex) of
+    Right raw -> do
+      let businessPkh = PubKeyHash (toBuiltin raw)
+      -- write the parameterized script
+      writeScript outPath businessPkh
+      putStrLn "Script written."
+    Left _ -> putStrLn "Invalid hex for PubKeyHash. Exiting."
+ 
