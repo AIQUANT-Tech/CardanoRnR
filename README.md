@@ -18,6 +18,15 @@
 
      http://51.21.61.199/user/X 
 
+
+7. Test Script Address : addr_test1wzeez0kg9flu96ekkxwq3kur9jxa847pawansrr259u7cagrscnpu     **It be Differ for Each Entity**
+
+      Test Script Address in Cardano Scan : https://preprod.cardanoscan.io/address/70b3913ec82a7fc2eb36b19c08db832c8dd3d7c1ebbb380c6aa179ec75
+      
+8. Test Transaction hash of one Succesful Review Redeemtion and Reputation Score Generation --   b04bb963145741a0f08676d8997e1b04d483220e1a03dc46cdd199b6a18a5844
+
+      Cardano Scan Link in Prepod of Test Transaction hash -- https://preprod.cardanoscan.io/transaction/b04bb963145741a0f08676d8997e1b04d483220e1a03dc46cdd199b6a18a5844 
+   
 ## Installation
 
 ### 1. Clone the Repository
