@@ -10,7 +10,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
  
-module Review.RnR (Review (..), Redeem (..), validator,  writeScript, saveUpdatedDatum, main, calculateReputation, mkValidateReview, updateReputation, wrapValidator ) where
+module Test.RnR (Review (..), Redeem (..), validator,  writeScript, saveUpdatedDatum, main, calculateReputation, mkValidateReview, updateReputation, wrapValidator ) where
  
 import Plutus.V2.Ledger.Api (
     BuiltinByteString,
