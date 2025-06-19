@@ -35,6 +35,39 @@ const script = {
 export const scriptAddress = lucid.utils.validatorToAddress(script);
 console.log(scriptAddress);
 
+const businessAddress = await lucid.wallet.address();
+
+const addr = await lucid.wallet.rewardAddress();
+console.log("Reward Address:", addr);
+
+const pkh =
+  lucid.utils.getAddressDetails(businessAddress).paymentCredential.hash;
+
+const enterpriseAddress = lucid.utils.credentialToAddress(
+  lucid.utils.keyHashToCredential(pkh)
+);
+
+console.log("Business Address:", businessAddress);
+console.log("Enterprise Address:", enterpriseAddress);
+console.log(lucid.utils.keyHashToCredential(pkh));
+
+
+const Signkey = lucid.utils.generatePrivateKey(
+  businessAddress
+);
+const priv = lucid.utils.generatePrivateKey(
+  enterpriseAddress
+);
+console.log("priv:", priv);
+
+const SIGNERkey =  lucid.utils.getAddressDetails(enterpriseAddress).paymentCredential.hash;
+
+console.log("Signer Key Hash:", SIGNERkey);
+
+
+console.log("Signkey Hash:", Signkey);
+
+
 // Lock ADA at the script
 export const lockFunds = async (dataToLock) => {
   if (typeof dataToLock !== "object" || dataToLock === null) {
@@ -83,10 +116,9 @@ export const lockFunds = async (dataToLock) => {
       .payToContract(
         scriptAddress,
         {
-          inline: Data.to(dataToLock),
-          scriptRef: script,
+          inline: Data.to(dataToLock)
         },
-        { lovelace: BigInt(process.env.AMMOUNT_ADA) }
+        { lovelace:1000000n }
       )
       .complete();
 
@@ -109,6 +141,10 @@ export async function redeemFunds(datumToRedeem, redeemer) {
     console.log("🔹 Encoded Datum (CBOR):", datumCbor);
 
     const utxos = await lucid.utxosAt(scriptAddress);
+    console.log("🔹 UTxOs at Script Address:", utxos.length);
+    console.log("🔹 UTxOs:", utxos);
+    
+    
     const paymentUtxos = await lucid.utxosAt(await lucid.wallet.address());
 
     const matchingUtxos = utxos.flatMap((scriptUtxo) => {
@@ -116,6 +152,7 @@ export async function redeemFunds(datumToRedeem, redeemer) {
         .filter((paymentUtxo) => scriptUtxo.txHash === paymentUtxo.txHash)
         .map((paymentUtxo) => ({ scriptUtxo, paymentUtxo }));
     });
+
 
     const matchingPaymentUtxos = matchingUtxos.map(
       ({ paymentUtxo }) => paymentUtxo
@@ -167,27 +204,35 @@ export async function redeemFunds(datumToRedeem, redeemer) {
     // Build Transaction
     let txBuilder = lucid.newTx();
 
-    if (matchingPaymentUtxos[0]) {
-      console.log("✅ Using reference script.");
-      txBuilder = txBuilder.readFrom([matchingPaymentUtxos[0]]);
-    } else {
-      console.log("✅ Attaching validator script manually.");
-      txBuilder = txBuilder.attachSpendingValidator(script);
-    }
+    // if (matchingPaymentUtxos[0]) {
+    //   console.log("✅ Using reference script.");
+    //   txBuilder = txBuilder.readFrom([matchingPaymentUtxos[0]]);
+    // } else {
+    //   console.log("✅ Attaching validator script manually.");
+    //   txBuilder = txBuilder.attachSpendingValidator(script);
+    // }
 
     console.log("Wallet Address: ", await lucid.wallet.address());
 
     const tx = await txBuilder
       .collectFrom([utxoToRedeem], Data.to(redeemer))
-      .addSigner(await lucid.wallet.address())
-      .payToContract(
-        await lucid.wallet.address(),
-        { inline: Data.to(updatedDatum) },
-        { lovelace: 11377807n }
+      .attachSpendingValidator(script)
+      .addSigner(enterpriseAddress)
+      .payToAddressWithData(
+        enterpriseAddress,
+        { inline: Data.to(updatedDatum)
+        },
+
+        { lovelace: BigInt(process.env.AMMOUNT_ADA) }
       )
+      .payToAddressWithData(
+        businessAddress,
+        { inline: Data.to(updatedDatum) },
+        { lovelace: utxoToRedeem.assets.lovelace - BigInt(process.env.AMMOUNT_ADA) })
       .complete();
 
     console.log("Transaction Built:", tx);
+    
 
     // Sign & Submit
     const signedTx = await tx.sign().complete();
