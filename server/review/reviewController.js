@@ -14,6 +14,7 @@ import reviewQueue from "./reviewQueue.js";
 
 import { Constr, Data, Lucid, Blockfrost } from "lucid-cardano";
 import review from "./Reviews.js";
+import { log } from "console";
 
 const lucid = await Lucid.new(
   new Blockfrost(
@@ -1005,7 +1006,7 @@ export const getUserReviews = async (req, res) => {
     const totalOverallRating =
       validOverallRatings.length > 0
         ? validOverallRatings.reduce((sum, rating) => sum + rating, 0) /
-          validOverallRatings.length
+        validOverallRatings.length
         : 0.0;
 
     const categoryIds = [...new Set(reviews.map((r) => r.category_id))];
@@ -1283,12 +1284,22 @@ export async function fetchReputationScore(userId) {
     console.log("ReviewId:", reviewId);
 
     // Assume the redeemed UTXO is at the wallet address
-    const walletAddr = await lucid.wallet.address();
-    const utxos = await lucid.utxosAt(walletAddr);
+    const businessAddress = await lucid.wallet.address();
+    const pkh =
+      lucid.utils.getAddressDetails(businessAddress).paymentCredential.hash;
+
+    const enterpriseAddress = lucid.utils.credentialToAddress(
+      lucid.utils.keyHashToCredential(pkh)
+    );
+    const utxos = await lucid.utxosAt(enterpriseAddress);
     let reputationScore = 0;
+
+
     // Iterate through UTXOs and check for an inline datum (or datum field) that matches our reviewId.
     for (const utxo of utxos) {
       const inlineData = utxo.inlineDatum || utxo.datum;
+      console.log("Debug: ", inlineData);
+
       if (inlineData) {
         const datum = Data.from(inlineData);
         // console.log("Datum: ", datum);
