@@ -376,6 +376,12 @@ export const createReview = async (req, res) => {
     const serializedReviewDatum = Data.to(reviewDatum);
     const serializedReviewRedeemer = Data.to(reviewRedeemer);
 
+
+    console.log("Saved Overall Review ID:", savedOverall._id.toString());
+    console.log("Serialized Datum:", serializedReviewDatum);
+    console.log("Serialized Redeemer:", serializedReviewRedeemer);  
+    console.log("Lock Tx Hash:", lockTxHash);
+
     // Enqueue a background job to process the blockchain redemption.
     reviewQueue.add({
       reviewId: savedOverall._id.toString(),
@@ -1006,7 +1012,7 @@ export const getUserReviews = async (req, res) => {
     const totalOverallRating =
       validOverallRatings.length > 0
         ? validOverallRatings.reduce((sum, rating) => sum + rating, 0) /
-        validOverallRatings.length
+          validOverallRatings.length
         : 0.0;
 
     const categoryIds = [...new Set(reviews.map((r) => r.category_id))];
@@ -1294,7 +1300,6 @@ export async function fetchReputationScore(userId) {
     const utxos = await lucid.utxosAt(enterpriseAddress);
     let reputationScore = 0;
 
-
     // Iterate through UTXOs and check for an inline datum (or datum field) that matches our reviewId.
     for (const utxo of utxos) {
       const inlineData = utxo.inlineDatum || utxo.datum;
@@ -1472,6 +1477,8 @@ export const getReputationScoreFromBlockchain = async (req, res) => {
 // };
 
 export const getReviewsForEndUser = async (req, res) => {
+  console.log("fn called");
+
   try {
     if (!req.body || !req.body.review_rating_fetch_rq) {
       return res.status(400).json({
@@ -1497,13 +1504,15 @@ export const getReviewsForEndUser = async (req, res) => {
       )
       .populate("user_id", "display_name");
 
-    if (!reviews || reviews.length === 0) {
-      return res.status(404).json({
-        review_rating_fetch_rs: {
-          status: responses.validation.reviewNotFound,
-        },
-      });
-    }
+    console.log("Reviews fetched:", reviews);
+
+    // if (!reviews || reviews.length === 0) {
+    //   return res.status(404).json({
+    //     review_rating_fetch_rs: {
+    //       status: responses.validation.reviewNotFound,
+    //     },
+    //   });
+    // }
 
     // Filter for overall reviews (assumed to be those without a category_id)
     const overallReviews = reviews.filter((r) => !r.category_id);

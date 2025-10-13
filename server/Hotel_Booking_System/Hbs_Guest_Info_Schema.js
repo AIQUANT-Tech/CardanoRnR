@@ -1,10 +1,15 @@
 import mongoose from 'mongoose';
+import { v4 as uuidv4 } from "uuid";
 
 const GuestInfoSchema = new mongoose.Schema({
+  // guest_id: {
+  //   type: String,
+  //   required: true,
+  //   unique: true
+  // },
   guest_id: {
     type: String,
-    required: true,
-    unique: true
+    default: uuidv4
   },
   first_name: {
     type: String,

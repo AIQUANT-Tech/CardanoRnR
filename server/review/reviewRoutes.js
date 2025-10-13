@@ -18,6 +18,10 @@ import {
 const router = express.Router();
 
 // Route to create a review
+
+router.get("/", (req, res) => {
+  res.send("Review API is running...");
+});
 router.post("/CreateReview", createReview);
 
 // Route to get all reviews

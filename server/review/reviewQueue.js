@@ -28,6 +28,8 @@ reviewQueue.process(async (job, done) => {
     lockTxHash,
   } = job.data;
   try {
+    console.log("Background job started for reviewId:", reviewId);
+
     // Convert the serialized hex strings back to Constr objects.
     const reviewDatum = Data.from(serializedReviewDatum);
     const reviewRedeemer = Data.from(serializedReviewRedeemer);
