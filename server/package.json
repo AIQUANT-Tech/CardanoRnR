@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "start": "nodemon app.js",
-    "test": "jest"
+    "test": "jest",
+    "generate-key": "node security/keygeneration.js",
+    "encrypt-uri": "node security/encrypt.js",
+    "decrypt-uri": "node security/decrypt.js"
   },
   "jest": {
     "transform": {
