@@ -275,22 +275,44 @@ export const bookingEngineData= async (req, res) => {
     // 1. SAVE GUEST DETAILS
     // ---------------------------------
 
+    // const savedGuests = [];
+
+    // for (const guest of hotelReservation.guestDetails || []) {
+    //   const guestData = {
+    //     first_name: guest.personName?.firstName || "",
+    //     last_name: guest.personName?.surName || "",
+    //     email: guest.email || "",
+    //     phone_number: guest.telePhone?.phoneNo || "",
+    //     address_city: guest.address?.city || "",
+    //     address_country: guest.address?.countryCode || "",
+    //     guest_id_external: guest.guestID,
+    //   };
+
+    //   const savedGuest = await GuestInfo.create(guestData);
+    //   savedGuests.push(savedGuest);
+    // }
+
     const savedGuests = [];
 
-    for (const guest of hotelReservation.guestDetails || []) {
-      const guestData = {
-        first_name: guest.personName?.firstName || "",
-        last_name: guest.personName?.surName || "",
-        email: guest.email || "",
-        phone_number: guest.telePhone?.phoneNo || "",
-        address_city: guest.address?.city || "",
-        address_country: guest.address?.countryCode || "",
-        guest_id_external: guest.guestID,
-      };
+for (const guest of hotelReservation.guestDetails || []) {
+  const guestData = {
+    first_name: guest.personName?.firstName || "",
+    last_name: guest.personName?.surName || "",
+    email: guest.email || "",
+    phone_number: guest.telePhone?.phoneNo || "",
+    address_city: guest.address?.city || "",
+    address_country: guest.address?.countryCode || "",
+    guest_id_external: guest.guestID,
+  };
 
-      const savedGuest = await GuestInfo.create(guestData);
-      savedGuests.push(savedGuest);
-    }
+  const savedGuest = await GuestInfo.findOneAndUpdate(
+    { email: guestData.email },
+    { $set: guestData },
+    { new: true, upsert: true }
+  );
+
+  savedGuests.push(savedGuest);
+}
 
     if (savedGuests.length === 0) {
       return res.status(400).json({ error: "No guest details found" });
@@ -336,7 +358,12 @@ export const bookingEngineData= async (req, res) => {
     };
 
     // SAVE BOOKING
-    const savedBooking = await BookingInfo.create(bookingData);
+    // const savedBooking = await BookingInfo.create(bookingData);
+    const savedBooking = await BookingInfo.findOneAndUpdate(
+  { booking_id: bookingData.booking_id },
+  { $set: bookingData },
+  { new: true, upsert: true }
+);
 
     // ---------------------------------
     // 3. FINAL RESPONSE
