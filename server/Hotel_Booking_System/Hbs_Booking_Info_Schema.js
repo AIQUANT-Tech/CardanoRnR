@@ -30,7 +30,7 @@ const BookingInfoSchema = new mongoose.Schema({
   booking_status: {
     type: String,
     required: true,
-    enum: ['confirmed', 'canceled', 'pending']
+    enum: ['confirmed', 'canceled', 'pending', 'Confirmed', 'Cancel', 'Commit']
   },
   total_amount: {
     type: mongoose.Types.Decimal128,
@@ -39,7 +39,7 @@ const BookingInfoSchema = new mongoose.Schema({
   payment_status: {
     type: String,
     required: true,
-    enum: ['paid', 'pending', 'failed']
+    enum: ['paid', 'pending', 'failed', 'PAID']
   },
   is_rnr_notified: {
     type: Boolean,
