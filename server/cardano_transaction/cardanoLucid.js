@@ -3,7 +3,7 @@ import { Lucid, Blockfrost, Constr, Data, fromHex, toHex } from "lucid-cardano";
 import dotenv from "dotenv";
 import cbor from "cbor";
 import { BlockFrostAPI } from "@blockfrost/blockfrost-js";
-import { log } from "util";
+// import { log } from "util";
 // import { assets } from "@blockfrost/blockfrost-js/lib/endpoints/api/assets";
 
 // Load environment variables
