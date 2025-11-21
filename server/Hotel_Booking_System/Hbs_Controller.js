@@ -303,6 +303,7 @@ for (const guest of hotelReservation.guestDetails || []) {
     phone_number: guest.telePhone?.phoneNo || "",
     address_city: guest.address?.city || "",
     address_country: guest.address?.countryCode || "",
+    guest_id: guest.guestID || uuidv4(),
     guest_id_external: guest.guestID,
   };
 
