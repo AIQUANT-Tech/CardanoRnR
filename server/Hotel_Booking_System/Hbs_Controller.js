@@ -295,6 +295,7 @@ export const bookingEngineData= async (req, res) => {
     const savedGuests = [];
 
 for (const guest of hotelReservation.guestDetails || []) {
+  console.log("Guest Data:", guest);
   const guestData = {
     first_name: guest.personName?.firstName || "",
     last_name: guest.personName?.surName || "",
