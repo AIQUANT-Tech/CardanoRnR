@@ -143,7 +143,7 @@ export const processUserMappingFeed = async () => {
       await userGuestMap.save();
 
       // FIX: correct endpoint
-      const flag = await fetch("http://localhost:8087/rnr/api/emails/send", {
+      const flag = await fetch("http://localhost:8087/api/emails/sendmail", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
