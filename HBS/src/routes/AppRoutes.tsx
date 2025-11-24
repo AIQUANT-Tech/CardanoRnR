@@ -2,10 +2,10 @@ import { Routes, Route } from "react-router-dom";
 import SeeBooking from "../pages/seebooking/seebooking";
 import Lrs from "../pages/LRS/lrs";
 import Rnr from "../pages/RNR/rnr";
-import HotelDetails from "../pages/HotelDetails/hotelDetails";
+// import HotelDetails from "../pages/HotelDetails/hotelDetails";
 import Home from "../pages/Home/home"
 import UsersRewardDetails from "../pages/UsersRewardDetails/usersRewardDetails";
-import TestHome from "../pages/Home/TestHome";
+// import TestHome from "../pages/Home/TestHome";
 import TestSeebooking from "../pages/seebooking/TestSeebooking";
 export default function AppRoutes() {
   return (
