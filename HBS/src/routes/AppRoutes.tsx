@@ -10,11 +10,11 @@ import TestSeebooking from "../pages/seebooking/TestSeebooking";
 export default function AppRoutes() {
   return (
     <Routes>
-      <Route path="/57918" element={<Home />} />
-      <Route path="/57918" element={<HotelDetails />} />
+      {/* <Route path="/57918" element={<Home />} />
+      <Route path="/57918" element={<HotelDetails />} /> */}
 
       <Route path="/seebooking" element={<SeeBooking />} />
-      <Route path="/" element={<TestHome />} />
+      <Route path="/" element={<Home />} />
       <Route path="/testseebooking" element={<TestSeebooking />} />
       {/* <Route path="/:hotelId" element={<HotelDetails />} /> */}
       <Route path="/user/Atithi5178/rewards" element={<UsersRewardDetails />} />

@@ -14,16 +14,12 @@ export default function Navbar() {
         <NavLink to="/57918">
           <div className="flex items-center group cursor-pointer">
             <div className="p-2 rounded-lg">
-              <img
-                src="/src/assets/atithi.png"
-                alt="Serenity Suites Logo"
-                className="w-11 h-11 object-contain rounded-xl"
-              />
+             
             </div>
 
             <div>
-              <h1 className="text-white text-xl font-bold tracking-wide">
-                ATITHI
+              <h1 className="text-white text-xl font-bold tracking-wide items-start justify-items-center">
+                Kimptom Aluna Tulum
               </h1>
               <p className="text-amber-300 text-xs">
                 STAY LIKE IT'S YOUR OWN HOME
@@ -33,20 +29,26 @@ export default function Navbar() {
         </NavLink>
 
         <div className="flex gap-6 items-center">
-          <NavLink to="/seebooking" className={linkClasses}>
+          <a
+            href="https://postprod1.ratetiger.com:9460/#/home?lang=EN"
+            className={linkClasses}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             See Booking
-          </NavLink>
-          <NavLink to="/user/Atithi5178/rewards" className={linkClasses}>
+          </a>
+
+          {/* <NavLink to="/user/Atithi5178/rewards" className={linkClasses}>
             Atithi Rewards
-          </NavLink>
+          </NavLink> */}
 
           <NavLink
-            to={`${RNR_URL}/user/Atithi5178`}
+            to={`${import.meta.env.VITE_RNR_HOTELREVIEW_URL}`}
             target="_blank"
             rel="noopener noreferrer"
             className={linkClasses}
           >
-            Atithi Reviews
+            Kimptom Aluna Tulum Reviews
           </NavLink>
           {/* http://localhost:3002/login */}
           {/* <NavLink to="/57918"> */}

@@ -22,7 +22,7 @@ export default function Footer() {
                   className="w-11 h-11 object-contain rounded-xl"
                 />
               </div>
-              <h3 className="text-xl font-bold">ATITHI</h3>
+              <h3 className="text-xl font-bold">Kimptom Aluna Tulum</h3>
             </div>
             <p className="text-gray-400 text-sm mb-4">
               Your gateway to luxury and comfort. Experience hospitality at its
