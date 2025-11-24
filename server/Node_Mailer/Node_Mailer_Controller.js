@@ -86,12 +86,15 @@ export const SendRnREmail = async (req, res) => {
     console.error('EMAIL sending error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to send review mail',
+      message: 'Failed why to send review mail',
       error: error.message
     })
     
   };
 }
+
+
+
 
 
 
