@@ -69,6 +69,7 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
+      console.log("Fetched Categories:", data);
       const fetchedCategories = data.review_category_fetch_rs.category_list.map(
         (category) => ({
           id: category.category_id,
@@ -79,6 +80,7 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
           review: "",
         })
       );
+      console.log("Fetched Categories 1:", fetchedCategories );
       setCategories(fetchedCategories);
     } catch (error) {
       console.error("Error fetching categories:", error);

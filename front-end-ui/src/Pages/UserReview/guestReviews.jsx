@@ -133,7 +133,7 @@ const GuestReviews = () => {
         </WriteReviewModal>
       </Box>
 
-      {reviewsWithReplies.slice(0, 4).map((review, index) => (
+      {reviewsWithReplies.map((review, index) => (
         <Card
           key={index}
           sx={{
@@ -216,15 +216,19 @@ const GuestReviews = () => {
                     )}
                   </Typography>
                 )}
-                {review && (
+                {review?.booking_details && (
                   <Box>
                     <Typography variant="body2" color="textSecondary">
                       Room Type:{" "}
-                      {review.booking_details.room_type.toUpperCase()} {" | "}
+                      {review.booking_details?.room_type?.toUpperCase() ??
+                        "N/A"}{" "}
+                      {" | "}
                       Stay On:{" "}
-                      {new Date(
-                        review.booking_details.check_out_date
-                      ).toLocaleDateString()}
+                      {review.booking_details?.check_out_date
+                        ? new Date(
+                            review.booking_details.check_out_date
+                          ).toLocaleDateString()
+                        : "N/A"}
                     </Typography>
                   </Box>
                 )}
