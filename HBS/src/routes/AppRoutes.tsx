@@ -13,7 +13,7 @@ export default function AppRoutes() {
       {/* <Route path="/57918" element={<Home />} />
       <Route path="/57918" element={<HotelDetails />} /> */}
 
-      <Route path="/seebooking" element={<SeeBooking />} />
+      {/* <Route path="/seebooking" element={<SeeBooking />} /> */}
       <Route path="/" element={<Home />} />
       <Route path="/testseebooking" element={<TestSeebooking />} />
       {/* <Route path="/:hotelId" element={<HotelDetails />} /> */}

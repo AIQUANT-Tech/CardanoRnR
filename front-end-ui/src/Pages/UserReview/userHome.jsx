@@ -192,7 +192,7 @@ const ReviewsPage = () => {
           </Grid>
         </Grid>
 
-        <Box mt={4} sx={{ marginLeft: "35%" }}>
+        <Box mt={4} sx={{ marginLeft: "0%", textAlign: "center" }}>
           <Typography variant="h6" fontWeight="bold" gutterBottom>
             Guest Categories Ratings
           </Typography>
