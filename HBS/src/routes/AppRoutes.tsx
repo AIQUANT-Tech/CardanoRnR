@@ -1,5 +1,5 @@
 import { Routes, Route } from "react-router-dom";
-import SeeBooking from "../pages/seebooking/seebooking";
+// import SeeBooking from "../pages/seebooking/seebooking";
 import Lrs from "../pages/LRS/lrs";
 import Rnr from "../pages/RNR/rnr";
 // import HotelDetails from "../pages/HotelDetails/hotelDetails";
