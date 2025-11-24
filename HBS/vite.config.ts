@@ -4,6 +4,12 @@ import tailwindcss from "@tailwindcss/vite";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
 
 export default defineConfig({
+   build: {
+    rollupOptions: {},
+  },
+  optimizeDeps: {
+    esbuildOptions: {},
+  },
   plugins: [
     react(),
     tailwindcss(), // 👈 You forgot this part
