@@ -2,7 +2,7 @@ import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { verifyReservation } from "../../services/hotelServices";
 import { Link } from "react-router-dom"; 
-import { Search, MapPin, Calendar, Users } from "lucide-react";
+// import { Search, MapPin, Calendar, Users } from "lucide-react";
 
 
 export default function HotelDetails() {
