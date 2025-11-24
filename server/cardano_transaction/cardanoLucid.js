@@ -160,8 +160,8 @@ export async function redeemFunds(datumToRedeem, redeemer) {
 
     console.log("Matching Payment UTXOs:", matchingPaymentUtxos[0].txHash);
 
-    const referenceScriptUtxo = utxos.find((utxo) => Boolean(utxo.scriptRef));
-    if (!referenceScriptUtxo) throw new Error("Reference script not found");
+    // const referenceScriptUtxo = utxos.find((utxo) => Boolean(utxo.scriptRef));
+    // if (!referenceScriptUtxo) throw new Error("Reference script not found");
 
     const utxoToRedeem = utxos.find((utxo) => utxo.datum === datumCbor);
     if (!utxoToRedeem) throw new Error("No valid UTxO with datum found!");
