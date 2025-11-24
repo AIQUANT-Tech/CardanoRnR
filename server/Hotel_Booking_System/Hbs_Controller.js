@@ -7,6 +7,8 @@ import axios from "axios";
 export const processGuestBookingInfo = async (req, res) => {
   try {
     const { guest_booking_info_rq } = req.body;
+    console.log(guest_booking_info_rq);
+    
 
     if (!guest_booking_info_rq || !guest_booking_info_rq.guest_list) {
       return res.status(400).json({ error: "Invalid request format" });
