@@ -440,7 +440,7 @@ const CustomerReviewManagement = () => {
                         {review.review}
                       </TableCell>
                       <TableCell align="center" sx={{ padding: "8px" }}>
-                        {review.booking_details.room_type}
+                        {review.booking_details?.room_type}
                       </TableCell>
                       <TableCell align="center" sx={{ padding: "8px" }}>
                         {review.category_name}
