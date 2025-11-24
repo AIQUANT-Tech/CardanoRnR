@@ -34,18 +34,18 @@ export const SendRnREmail = async (req, res) => {
     const mailoptions = {
       from: process.env.HOTEL_EMAIL_ID,
       to: reciepientEmail,
-      subject: '🌟 How Was Your Stay at Hotel X?',
-      text: `Hi ,\n\nWe hope you enjoyed your stay! Please share your experience:\nhttp://51.21.61.199/user/X}\n\nThank you!\nTeam Hotel X`,
+      subject: "🌟 How Was Your Stay at Hotel Kimpton?",
+      text: `Hi ,\n\nWe hope you enjoyed your stay! Please share your experience:\n${process.env.Hotel_Name_Url}\n\nThank you!\nTeam Hotel Kimpton`,
       html: `
         <div style="font-family: Arial, sans-serif; padding: 20px;">
           <p>Hi ,</p>
-          
-          <p>We hope you enjoyed your stay at <b>Hotel X</b>! 🏨</p>
-          
+
+          <p>We hope you enjoyed your stay at <b>Hotel Kimpton</b>! 🏨</p>
+
           <p>Please take 1 minute to share your experience:</p>
           
           <div style="margin: 25px 0;">
-            <a href="http://51.21.61.199/user/X" 
+            <a href="${process.env.Hotel_Name_Url}"
               style="
                 background: #007bff;
                 color: white;
@@ -54,7 +54,7 @@ export const SendRnREmail = async (req, res) => {
                 text-decoration: none;
                 display: inline-block;
               ">
-              Click to Review Hotel X
+              Click to Review Hotel Kimpton
             </a>
           </div>
 
@@ -65,10 +65,10 @@ export const SendRnREmail = async (req, res) => {
           
           <p style="color: #666; font-size: 14px;">
             Trouble clicking? Copy this link:<br>
-            http://51.21.61.199/user/X
+            ${process.env.Hotel_Name_Url}
           </p>
         </div>
-      `
+      `,
     };
 
     const info = await transporter.sendMail(mailoptions);

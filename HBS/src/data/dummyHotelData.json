@@ -1,0 +1,52 @@
+[
+  {
+    "id": "H1023",
+    "name": "Hotel Paradise",
+    "ownerId": "U101",
+    "address": {
+      "city": "Mumbai",
+      "state": "Maharashtra",
+      "country": "India"
+    },
+    "contact": {
+      "phone": "+91-9876543210",
+      "email": "info@paradise.in"
+    },
+    "rooms": [
+      {
+        "roomId": "R201",
+        "roomType": "Luxury Suite",
+        "pricePerNight": 8500,
+        "availableRooms": 4,
+        "totalRooms": 5
+      }
+    ],
+    "status": "ACTIVE",
+    "createdAt": "2025-10-10T09:00:00Z"
+  },
+  {
+    "id": "H1024",
+    "name": "Sea Breeze Resort",
+    "ownerId": "U102",
+    "address": {
+      "city": "Goa",
+      "state": "Goa",
+      "country": "India"
+    },
+    "contact": {
+      "phone": "+91-9998887776",
+      "email": "contact@seabreeze.in"
+    },
+    "rooms": [
+      {
+        "roomId": "R301",
+        "roomType": "Deluxe Room",
+        "pricePerNight": 6500,
+        "availableRooms": 8,
+        "totalRooms": 12
+      }
+    ],
+    "status": "ACTIVE",
+    "createdAt": "2025-10-10T10:00:00Z"
+  }
+]
