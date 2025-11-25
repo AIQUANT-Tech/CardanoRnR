@@ -1,4 +1,3 @@
-
 // import BookingInfo from "../Hotel_Booking_System/Hbs_Booking_Info_Schema.js";
 // import GuestInfo from "../Hotel_Booking_System/Hbs_Guest_Info_Schema.js";
 // import User from "../user/UserMast.js";
@@ -14,7 +13,7 @@
 //     const bookings = await BookingInfo.find();
 
 //     for (const booking of bookings) {
-      
+
 //       const existingMapping = await UserGuestMap.findOne({
 //         booking_id: booking.booking_id,
 //       });
@@ -90,11 +89,6 @@
 //   }
 // };
 
-
-
-
-
-
 import BookingInfo from "../Hotel_Booking_System/Hbs_Booking_Info_Schema.js";
 import GuestInfo from "../Hotel_Booking_System/Hbs_Guest_Info_Schema.js";
 import User from "../user/UserMast.js";
@@ -110,8 +104,6 @@ export const processUserMappingFeed = async () => {
     const bookings = await BookingInfo.find();
 
     for (const booking of bookings) {
-      // console.log(`\nProcessing booking: ${booking.booking_id}`);
-
       // Load Guest
       const guest = await GuestInfo.findById(booking.guest_id);
       if (!guest) {
