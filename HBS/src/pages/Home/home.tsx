@@ -1,5 +1,5 @@
 // import { useNavigate } from "react-router-dom";
-import { Search } from "lucide-react";
+// import { Search } from "lucide-react";
 
 export default function Home() {
   // const navigate = useNavigate();
