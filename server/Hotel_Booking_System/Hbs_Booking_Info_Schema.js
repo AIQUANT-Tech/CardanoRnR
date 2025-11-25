@@ -30,7 +30,7 @@ const BookingInfoSchema = new mongoose.Schema({
   booking_status: {
     type: String,
     required: true,
-    enum: ['confirmed', 'canceled', 'pending', 'Confirmed', 'Cancel', 'Commit']
+    enum: ['confirmed', 'canceled', 'pending', 'Confirmed', 'Cancel', 'Commit','Checkedout']
   },
   total_amount: {
     type: mongoose.Types.Decimal128,

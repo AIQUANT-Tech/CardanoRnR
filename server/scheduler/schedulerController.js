@@ -89,12 +89,14 @@ import crypto from "crypto";
 import fetch from "node-fetch"; // IMPORTANT FIX
 
 const generateUniqueId = () => crypto.randomUUID();
+const emailEndpoint = process.env.EMAIL_URL;
 
 export const processUserMappingFeed = async () => {
   try {
     const bookings = await BookingInfo.find();
 
     for (const booking of bookings) {
+      
       const existingMapping = await UserGuestMap.findOne({
         booking_id: booking.booking_id,
       });
@@ -143,20 +145,24 @@ export const processUserMappingFeed = async () => {
       await userGuestMap.save();
 
       // FIX: correct endpoint
-      const flag = await fetch("http://localhost:8087/api/emails/sendmail", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          reciepientEmail: guest.email,
-        }),
-      });
+      let flag = null;
+      if (booking.booking_status == 'Checkedout' && booking.is_rnr_notified == false) {
+        flag = await fetch(`${emailEndpoint}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            reciepientEmail: guest.email,
+          }),
+        });
 
-      if (flag.ok) {
-        console.log(`Sent review email to ${guest.email}`);
-      } else {
-        console.log(`Failed to send review email to ${guest.email}`);
+        if (flag && flag.ok) {
+          console.log(`Sent review email to ${guest.email}`);
+          booking.is_rnr_notified = true;
+          await booking.save();
+        } else {
+          console.log(`Failed to send review email to ${guest.email}`);
+        }
       }
-
       console.log(`Created UserGuestMap for booking ${booking.booking_id}`);
     }
 
