@@ -1,5 +1,5 @@
-import express from 'express';
-import { processUserMappingFeed } from '../scheduler/schedulerController.js';
+import express from "express";
+import { processUserMappingFeed } from "./schedulerController.js";
 
 const router = express.Router();
 
