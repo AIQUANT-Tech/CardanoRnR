@@ -1,8 +1,8 @@
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
 
 export default function Home() {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   return (
     <main className="flex-grow">
