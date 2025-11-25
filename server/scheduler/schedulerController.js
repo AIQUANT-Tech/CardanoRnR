@@ -104,8 +104,6 @@ export const processUserMappingFeed = async () => {
     const bookings = await BookingInfo.find();
 
     for (const booking of bookings) {
-      // console.log(`\nProcessing booking: ${booking.booking_id}`);
-
       // Load Guest
       const guest = await GuestInfo.findById(booking.guest_id);
       if (!guest) {
