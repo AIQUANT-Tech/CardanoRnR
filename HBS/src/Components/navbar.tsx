@@ -17,7 +17,7 @@ export default function Navbar() {
 
             <div className="items-start justify-items-start ml-2">
               <h1 className="text-white text-xl font-bold tracking-wide items-start justify-items-center">
-                Kimptom Aluna Tulum
+                Kimpton Aluna Tulum
               </h1>
               <p className="text-amber-300 text-xs">
                 STAY LIKE IT'S YOUR OWN HOME
