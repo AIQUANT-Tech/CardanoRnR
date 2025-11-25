@@ -7,8 +7,6 @@
 //   await processUserMappingFeed();
 // });
 
-
-
 import cron from "node-cron";
 import { processUserMappingFeed } from "./schedulerController.js";
 
