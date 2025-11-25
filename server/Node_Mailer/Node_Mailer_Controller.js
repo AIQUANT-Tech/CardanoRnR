@@ -16,144 +16,44 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-export const SendRnREmail = async (req, res) => {
-  try {
-    const { reciepientEmail } = req.body;
-    console.log("Reciepient Email:", reciepientEmail);
-
-    if (!reciepientEmail) {
-      return res.status(400).json({
-        success: false,
-        message: "Receipent EMAIL is required",
-      });
-    }
-
-    const mailoptions = {
-      from: process.env.HOTEL_EMAIL_ID,
-
-      to: reciepientEmail,
-
-      subject: "✨ Thank You for Booking with Us – We'd Love Your Feedback!",
-
-      text: `Hello,
- 
-Thank you for booking your stay with Hotel Kimpton Aluna!
-
-We're excited to welcome you soon.
- 
-Before your arrival, we’d love to know about your booking experience.
-
-Your quick feedback helps us improve our hotel engine and website for future guests.
- 
+const mailoptions = {
+  from: process.env.HOTEL_EMAIL_ID,
+  to: reciepientEmail,
+  subject: "🌟 We'd Love Your Feedback – How Was Your Stay at Hotel Kimpton Aluna ?",
+  text: `Hello,
+Thank you for staying with us at Hotel Kimpton Aluna. We truly hope your experience was relaxing and memorable. We would be grateful if you could spare just 60 seconds to share your feedback. Your review helps us improve and continue delivering exceptional stays.
 Review Link: ${process.env.Hotel_Name_Url}
- 
 Warm regards,
-
-Team Hotel Kimpton Aluna
-
-`,
-
-      html: `
-<div style="font-family: 'Segoe UI', Arial, sans-serif; padding: 24px; background: #f7f7f7; color: #333;">
-<div style="max-width: 600px; margin: auto; background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0px 3px 10px rgba(0,0,0,0.1);">
- 
-      <h2 style="color: #222; font-weight: 600; margin-bottom: 12px;">
-
-        ✨ Thank You for Booking With Us!
-</h2>
- 
-      <p style="font-size: 15px; line-height: 1.6; margin-bottom: 20px;">
-
-        Hello,
-<br><br>
-
-        Thank you for choosing <b>Hotel Kimpton Aluna</b> for your upcoming stay.
-
-        We're excited to host you!
-</p>
- 
-      <p style="font-size: 15px; line-height: 1.6; margin-bottom: 15px;">
-
-        Before you arrive, we'd love to know how your <b>booking experience</b> was on our hotel website and booking engine.
-</p>
- 
-      <p style="font-size: 15px; line-height: 1.6; margin-bottom: 15px;">
-
-        Your feedback helps us improve our platform and serve guests better.
-</p>
- 
-      <div style="text-align: center; margin: 30px 0;">
-<a href="${process.env.Hotel_Name_Url}"
-
-          style="
-
-            background: #ff9800;
-
-            color: #fff;
-
-            padding: 14px 28px;
-
-            border-radius: 30px;
-
-            font-size: 16px;
-
-            font-weight: bold;
-
-            text-decoration: none;
-
-            display: inline-block;
-
-            box-shadow: 0px 4px 12px rgba(0,0,0,0.15);
-
-          ">
-
-          ⭐ Share Your Booking Experience
-</a>
-</div>
- 
-      <p style="font-size: 14px; line-height: 1.6; color: #555;">
-
-        It takes less than a minute, and your feedback makes a big difference!
-</p>
- 
-      <hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0;" />
- 
-      <p style="font-size: 13px; color: #888; line-height: 1.5;">
-
-        If the button above doesn't work, copy and paste this link into your browser:
-<br>
-<a href="${process.env.Hotel_Name_Url}" style="color: #007bff;">
-
-          ${process.env.Hotel_Name_Url}
-</a>
-</p>
- 
-      <p style="font-size: 13px; margin-top: 25px; color: #aaa;">
-
-        Warm regards,<br/>
-<b>Team Hotel Kimpton Aluna</b>
-</p>
-</div>
-</div>
-
-  `,
-    };
-
-    const info = await transporter.sendMail(mailoptions);
-
-    res.status(200).json({
-      sucess: true,
-      message: "Review email sent succesfully",
-      messageId: info.messageId,
-    });
-  } catch (error) {
-    console.error("EMAIL sending error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed why to send review mail",
-      error: error.message,
-    });
-  }
+Team Hotel Kimpton Aluna`,
+  html: `<div style="font-family: 'Segoe UI', Arial, sans-serif; padding: 24px; background: #f7f7f7; color: #333;">
+  <div style="max-width: 600px; margin: auto; background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0px 3px 10px rgba(0,0,0,0.1);">
+    <h2 style="color: #222; font-weight: 600; margin-bottom: 12px;"> 🌟 Thank You for Staying With Us! </h2>
+    <p style="font-size: 15px; line-height: 1.6; margin-bottom: 20px;">
+      Hello, <br><br>
+      We hope your stay at <b>Hotel Kimpton Aluna</b> was memorable and comfortable. Your feedback means a lot to us and helps us continue improving our guest experience.
+    </p>
+    <p style="font-size: 15px; line-height: 1.6; margin-bottom: 15px;">
+      Could you spare <b>just 1 minute</b> to share your experience?
+    </p>
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${process.env.Hotel_Name_Url}" style="background: #ff9800; color: #fff; padding: 14px 28px; border-radius: 30px; font-size: 16px; font-weight: bold; text-decoration: none; display: inline-block; box-shadow: 0px 4px 12px rgba(0,0,0,0.15);">
+        ⭐ Leave Your Review
+      </a>
+    </div>
+    <p style="font-size: 14px; line-height: 1.6; color: #555;">
+      Your review helps us enhance our services and ensure every guest feels at home. <br> (It takes less than 60 seconds ⏱️)
+    </p>
+    <hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0;" />
+    <p style="font-size: 13px; color: #888; line-height: 1.5;">
+      If the button above doesn't work, simply copy and paste this link into your browser: <br>
+      <a href="${process.env.Hotel_Name_Url}" style="color: #007bff;">${process.env.Hotel_Name_Url}</a>
+    </p>
+    <p style="font-size: 13px; margin-top: 25px; color: #aaa;">
+      Warm regards,<br/>
+      <b>Team Hotel Kimpton Aluna</b>
+    </p>
+  </div>
+</div>`,
 };
 
 // import nodemailer from 'nodemailer';
