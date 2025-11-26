@@ -606,7 +606,7 @@ export async function fetchReputationScore(userId) {
       if (!datum.fields || datum.fields.length < 7) continue;
 
       // FIX HERE:
-      const onChainReviewId = datum.fields[0]; // already a string
+      const onChainReviewId = datum.fields[0];  // already a string
 
       console.log("OnChain ReviewId:", onChainReviewId);
 
@@ -619,6 +619,7 @@ export async function fetchReputationScore(userId) {
     }
 
     return reputationScore;
+
   } catch (error) {
     console.error("Error in fetchReputationScore:", error);
     throw error;
