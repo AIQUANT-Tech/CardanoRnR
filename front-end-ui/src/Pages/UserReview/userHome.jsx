@@ -4,6 +4,7 @@ import StarIcon from "@mui/icons-material/Star";
 import GuestReviews from "./guestReviews";
 import { useParams } from "react-router-dom";
 import API_BASE_URL from "../../config.js";
+import axios from "axios";
 
 const ReviewsPage = () => {
   const [data, setData] = useState(null);
@@ -11,33 +12,50 @@ const ReviewsPage = () => {
   const [showAllCategories, setShowAllCategories] = useState(false);
   const { companyName } = useParams();
 
+  console.log("I am from company:", companyName);
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const response = await fetch(
+        // const response = await fetch(
+        //   `${API_BASE_URL}api/review/reviews/user/FetchReviews`,
+        //   {
+        //     method: "POST",
+        //     headers: { "Content-Type": "application/json" },
+        //     body: JSON.stringify({
+        //       review_rating_fetch_rq: {
+        //         header: {
+        //           user_name: "endUser",
+        //           product: "rnr",
+        //           request_type: "FETCH_REVIEW_RATING",
+        //         },
+        //       },
+        //     }),
+        //   }
+        // );
+        const { data: response } = await axios.post(
           `${API_BASE_URL}api/review/reviews/user/FetchReviews`,
           {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              review_rating_fetch_rq: {
-                header: {
-                  user_name: "endUser",
-                  product: "rnr",
-                  request_type: "FETCH_REVIEW_RATING",
-                },
+            review_rating_fetch_rq: {
+              header: {
+                user_name: "endUser",
+                product: "rnr",
+                request_type: "FETCH_REVIEW_RATING",
               },
-            }),
+            },
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+            },
           }
         );
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch data.");
-        }
+        console.log("Response:", response);
 
-        const result = await response.json();
-        setData(result.review_rating_fetch_rs);
+        setData(response.review_rating_fetch_rs);
       } catch (error) {
         console.error(error);
       } finally {
@@ -192,7 +210,7 @@ const ReviewsPage = () => {
           </Grid>
         </Grid>
 
-        <Box mt={4} sx={{ marginLeft: "0%", textAlign: "center" }}>
+        <Box mt={4} sx={{ marginLeft: "35%" }}>
           <Typography variant="h6" fontWeight="bold" gutterBottom>
             Guest Categories Ratings
           </Typography>
