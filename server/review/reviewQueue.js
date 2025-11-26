@@ -7,7 +7,18 @@ import { waitForUTxOWithTimeout } from "./reviewController.js";
 import { Data } from "lucid-cardano";
 import Review from "./Reviews.js";
 import dotenv from "dotenv";
+import mongoose from "mongoose";
 dotenv.config();
+
+
+mongoose
+  .connect(process.env.DB_CNN, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log("Worker connected to MongoDB"))
+  .catch((err) => console.error("Worker MongoDB connection error:", err));
+
 
 const reviewQueue = new Queue("reviewQueue", {
   redis: {
