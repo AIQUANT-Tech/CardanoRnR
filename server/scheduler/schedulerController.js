@@ -63,7 +63,7 @@
 
 //       // FIX: correct endpoint
 //       let flag = null;
-//       if (booking.booking_status == 'Checkedout' && booking.is_rnr_notified == false) {
+//       if (booking.booking_status == 'Checkedout' && booking.Kimpton  == false) {
 //         flag = await fetch(`${emailEndpoint}`, {
 //           method: "POST",
 //           headers: { "Content-Type": "application/json" },
@@ -144,10 +144,9 @@ export const processUserMappingFeed = async () => {
       const existingMapping = await UserGuestMap.findOne({
         booking_id: booking.booking_id,
       });
-
       // If mapping exists → skip only mapping logic
       if (existingMapping) {
-        console.log("ℹ Mapping already exists. Skipping mapping creation.");
+        console.log(" Mapping already exists. Skipping mapping creation.");
         continue;
       }
 
