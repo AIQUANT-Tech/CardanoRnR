@@ -143,7 +143,7 @@ export const createReview = async (req, res) => {
 
     // Build the on-chain review datum and redeemer.
     const reviewDatum = new Constr(0, [
-      new Uint8Array(Buffer.from(reviewId, "hex")),
+      reviewId,
       new Constr(1, []),
       BigInt(Math.floor(overall_rating)),
       timestamp,
