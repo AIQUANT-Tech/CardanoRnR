@@ -72,7 +72,183 @@ export async function waitForUTxOWithTimeout(
   );
 }
 
+// export const createReview = async (req, res) => {
+//   try {
+//     const { new_review_rating_create_rq } = req.body;
+//     if (!new_review_rating_create_rq) {
+//       return res.status(400).json({ error: "Invalid request format" });
+//     }
 
+//     const {
+//       header: { request_type, user_name },
+//       user_email_id,
+//       overall_rating,
+//       overall_review,
+//       category_wise_review_rating,
+//     } = new_review_rating_create_rq;
+
+//     if (request_type !== "CREATE_NEW_REVIEW_RATING") {
+//       return res.status(400).json({ error: "Invalid request type" });
+//     }
+//     if (
+//       !user_email_id ||
+//       overall_rating == null ||
+//       !overall_review ||
+//       !Array.isArray(category_wise_review_rating) ||
+//       category_wise_review_rating.length === 0
+//     ) {
+//       return res.status(400).json({ error: "All fields are required" });
+//     }
+
+//     // Retrieve user by email
+//     const user = await User.findOne({ email: user_email_id, status: true });
+//     if (!user) {
+//       return res.status(404).json({ error: "User not found" });
+//     }
+
+//     // Validate category-wise reviews: extract category IDs and fetch valid categories.
+//     const categoryIds = category_wise_review_rating.map(
+//       (catReview) => catReview.category_id
+//     );
+//     const validCategories = await ReviewCategory.find({
+//       category_id: { $in: categoryIds },
+//     });
+//     if (validCategories.length !== categoryIds.length) {
+//       return res
+//         .status(404)
+//         .json({ error: "One or more categories not found" });
+//     }
+
+//     // Calculate dynamic fields for overall review.
+//     const ratingCount = BigInt(category_wise_review_rating.length);
+//     const totalScore = category_wise_review_rating.reduce(
+//       (acc, catReview) => acc + BigInt(catReview.rating),
+//       0n
+//     );
+//     // Compute reputationScore as average rating (rounded down)
+//     const reputationScore = ratingCount > 0n ? totalScore / ratingCount : 0n;
+//     const timestamp = BigInt(Date.now());
+
+//     // Use user's _id as reviewId (converted to hex)
+//     const reviewId = Buffer.from(user._id.toString()).toString("hex");
+
+//     // Build the on-chain review datum and redeemer.
+//     const reviewDatum = new Constr(0, [
+//       reviewId,
+//       new Constr(1, []),
+//       BigInt(Math.floor(overall_rating)),
+//       timestamp,
+//       totalScore,
+//       ratingCount,
+//       reputationScore,
+//     ]);
+//     const reviewRedeemer = new Constr(0, [reviewId]);
+
+//     // Lock funds on-chain using the datum.
+//     console.log("Locking review data on-chain...");
+//     const lockTxHash = await lockFunds(reviewDatum);
+//     if (!lockTxHash) {
+//       return res
+//         .status(500)
+//         .json({ error: "Lock review funds failed on blockchain" });
+//     }
+//     console.log("Review data locked, transaction hash:", lockTxHash);
+
+//     // Create the overall review record (for overall review, category_id is null).
+//     const overallReviewDoc = new Review({
+//       user_id: user._id,
+//       category_id: null,
+//       overall_review,
+//       overall_rating,
+//       blockchain_tx: lockTxHash,
+//       status: false, // pending blockchain processing
+//       created_at: new Date(),
+//     });
+//     const savedOverall = await overallReviewDoc.save();
+
+//     // Prepare and insert category-wise review documents.
+//     const reviewsToInsert = category_wise_review_rating.map((catReview) => {
+//       // Find the matching valid category (compare as strings)
+//       const validCategory = validCategories.find(
+//         (cat) => cat.category_id === catReview.category_id.toString()
+//       );
+//       if (!validCategory) {
+//         throw new Error(`Category with ID ${catReview.category_id} not found.`);
+//       }
+//       return {
+//         user_id: user._id,
+//         category_id: validCategory._id,
+//         review: catReview.review,
+//         rating: catReview.rating,
+//         overall_review,
+//         overall_rating,
+//         blockchain_tx: "", // Not processed on-chain for category reviews.
+//         status: true, // Immediately mark these as stored.
+//         created_at: new Date(),
+//       };
+//     });
+//     const savedCategoryReviews = await Review.insertMany(reviewsToInsert);
+
+//     // Spawn asynchronous background task to wait for UTxO and then redeem funds on-chain.
+//     // setImmediate(async () => {
+//     //   try {
+//     //     console.log(
+//     //       "Background task: Waiting for UTxO with txHash:",
+//     //       lockTxHash
+//     //     );
+//     //     await waitForUTxOWithTimeout(
+//     //       scriptAddress,
+//     //       reviewDatum,
+//     //       lockTxHash,
+//     //       600000,
+//     //       10000
+//     //     );
+//     //     console.log(
+//     //       "Background task: UTxO found. Redeeming review data on-chain..."
+//     //     );
+//     //     const { txHash: redeemTxHash, reputationScore } = await redeemFunds(
+//     //       reviewDatum,
+//     //       reviewRedeemer
+//     //     );
+//     //     console.log(
+//     //       "Background task: Review data redeemed, tx hash:",
+//     //       redeemTxHash
+//     //     );
+//     //     console.log(
+//     //       "Background task: Updated Reputation Score:",
+//     //       reputationScore
+//     //     );
+
+//     //     // Update overall review record with the redeem tx hash and mark status as true.
+//     //     overallReviewDoc.blockchain_tx = redeemTxHash;
+//     //     overallReviewDoc.status = true;
+//     //     await overallReviewDoc.save();
+//     //   } catch (e) {
+//     //     console.error("Background task error:", e.message);
+//     //     overallReviewDoc.error = e.message;
+//     //     await overallReviewDoc.save();
+//     //   }
+//     // });
+
+//     reviewQueue.add({
+//       reviewId: savedOverall._id,
+//       reviewDatum,
+//       reviewRedeemer,
+//       lockTxHash,
+//     });
+
+//     return res.status(201).json({
+//       status: "pending",
+//       message:
+//         "Review submitted. Blockchain locking is pending; redemption will complete later.",
+//       overall: savedOverall,
+//       category_reviews: savedCategoryReviews,
+//     });
+//   } catch (error) {
+//     console.error("Error creating review:", error.message);
+//     return res.status(500).json({ error: "Internal server error" });
+//   }
+// };
 
 export const createReview = async (req, res) => {
   try {
@@ -143,7 +319,7 @@ export const createReview = async (req, res) => {
 
     // Build the on-chain review datum and redeemer.
     const reviewDatum = new Constr(0, [
-      new Uint8Array(Buffer.from(reviewId, "hex")),
+      reviewId,
       new Constr(1, []),
       BigInt(Math.floor(overall_rating)),
       timestamp,
@@ -199,6 +375,11 @@ export const createReview = async (req, res) => {
     // Serialize the on-chain datum and redeemer as hex strings using Data.to().
     const serializedReviewDatum = Data.to(reviewDatum);
     const serializedReviewRedeemer = Data.to(reviewRedeemer);
+
+    console.log("Saved Overall Review ID:", savedOverall._id.toString());
+    console.log("Serialized Datum:", serializedReviewDatum);
+    console.log("Serialized Redeemer:", serializedReviewRedeemer);
+    console.log("Lock Tx Hash:", lockTxHash);
 
     // Enqueue a background job to process the blockchain redemption.
     reviewQueue.add({
@@ -271,6 +452,86 @@ export const getReviewById = async (req, res) => {
     });
   }
 };
+
+// Get all reviews - Business user
+// export const getReviewsForBusinessUser = async (req, res) => {
+//   try {
+//     const { review_rating_info_rq } = req.body;
+
+//     // Validate the incoming request body
+//     if (!review_rating_info_rq) {
+//       return res.status(400).json({
+//         review_rating_info_rs: {
+//           review_rating_info_by_user: [],
+//           status: responses.validation.invalidRequest,
+//         },
+//       });
+//     }
+
+//     const {
+//       header: { user_name, product, request_type },
+//     } = review_rating_info_rq;
+
+//     // Validate request_type and product
+//     if (request_type !== "REVIEW_RATING_INFO" || product !== "rnr") {
+//       return res.status(400).json({
+//         review_rating_info_rs: {
+//           review_rating_info_by_user: [],
+//           status: responses.validation.invalidRequest,
+//         },
+//       });
+//     }
+
+//     // Query all reviews and populate relevant details
+//     const reviews = await Review.find()
+//       .populate("user_id", "display_name")
+//       .populate("category_id", "category_name")
+//       .select(
+//         "_id user_id category_id review rating overall_review overall_rating is_responded created_at"
+//       );
+
+//     // Check if no reviews are found
+//     if (!reviews || reviews.length === 0) {
+//       return res.status(404).json({
+//         review_rating_info_rs: {
+//           review_rating_info_by_user: [],
+//           status: responses.validation.NoReview,
+//         },
+//       });
+//     }
+
+//     console.log("Reviews: ", reviews);
+
+//     // Format the reviews as per the API specification
+//     const reviewRatingInfoByUser = reviews.map((review) => ({
+//       review_id: review._id?.toString(),
+//       user_id: review.user_id?._id?.toString() || null,
+//       user_display_name: review.user_id?.display_name || "Unknown User",
+//       category_id: review.category_id?._id?.toString() || null,
+//       review_responded: !!review.is_responded,
+//       review: review.review || review.overall_review,
+//       rating: review.rating?.toString() || review.overall_rating?.toString(),
+//       created_at: review.created_at,
+//     }));
+
+//     // Return the response
+//     return res.status(200).json({
+//       review_rating_info_rs: {
+//         review_rating_info_by_user: reviewRatingInfoByUser,
+//         status: responses.success.success,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Error fetching reviews for business user:", error.message);
+//     return res.status(500).json({
+//       review_rating_info_rs: {
+//         review_rating_info_by_user: [],
+//         status: responses.error.failedFetchReview,
+//       },
+//       error: error.message,
+//     });
+//   }
+// };
 
 export const getReviewsForBusinessUser = async (req, res) => {
   try {
@@ -435,6 +696,279 @@ export const getReviewsForBusinessUser = async (req, res) => {
   }
 };
 
+//Get all reviews- end user
+// export const getReviewsForEndUser = async (req, res) => {
+//   try {
+//     const { review_rating_fetch_rq } = req.body;
+
+//     if (!review_rating_fetch_rq) {
+//       return res.status(400).json({
+//         review_rating_fetch_rs: {
+//           status: responses.validation.invalidRequest,
+//         },
+//       });
+//     }
+
+//     const {
+//       header: { request_type },
+//     } = review_rating_fetch_rq;
+
+//     if (request_type !== "FETCH_REVIEW_RATING") {
+//       return res.status(400).json({
+//         review_rating_fetch_rs: {
+//           status: responses.validation.invalidRequest,
+//         },
+//       });
+//     }
+
+//     const reviews = await Review.find({ status: "true" })
+//       .select(
+//         "_id user_id overall_review overall_rating review rating category_id created_at"
+//       )
+//       .populate("user_id", "display_name");
+
+//     if (!reviews || reviews.length === 0) {
+//       return res.status(404).json({
+//         review_rating_fetch_rs: {
+//           status: responses.validation.reviewNotFound,
+//         },
+//       });
+//     }
+
+//     const validOverallRatings = reviews
+//       .map((r) => r.overall_rating)
+//       .filter((rating) => typeof rating === "number" && !isNaN(rating));
+
+//     const totalOverallRating =
+//       validOverallRatings.length > 0
+//         ? validOverallRatings.reduce(
+//             (sum, overall_rating) => sum + overall_rating,
+//             0
+//           ) / validOverallRatings.length
+//         : 0.0;
+
+//     const reputationScore =
+//       validOverallRatings.length > 0
+//         ? validOverallRatings.reduce((sum, rating) => sum + rating, 0) /
+//           validOverallRatings.length
+//         : 0.0;
+
+//     const reviewRatingDetailsOverall = reviews
+//       .filter((r) => !r.category_id)
+//       .map((r) => ({
+//         review_id: r._id,
+//         user_name: r.user_id?.display_name || "Anonymous",
+//         user_id: r.user_id?._id,
+//         created_at: r.created_at,
+//         review: r.overall_review,
+//         rating: r.overall_rating,
+//       }));
+
+//     const categoryIds = [...new Set(reviews.map((r) => r.category_id))];
+
+//     const categories = await ReviewCategory.find({
+//       _id: { $in: categoryIds },
+//     }).select("category_id category_name category_description");
+
+//     const categoryDetailsMap = categories.reduce((map, category) => {
+//       map[category._id.toString()] = {
+//         category_name: category.category_name,
+//         category_desc: category.category_description,
+//       };
+//       return map;
+//     }, {});
+
+//     const categoryWiseReviewRating = reviews.reduce((categories, review) => {
+//       const category = categoryDetailsMap[review.category_id];
+//       if (!category) return categories;
+
+//       const categoryId = review.category_id.toString();
+//       if (!categories[categoryId]) {
+//         categories[categoryId] = {
+//           category_name: category.category_name,
+//           category_desc: category.category_desc,
+//           review_rating_details_by_category: [],
+//         };
+//       }
+
+//       categories[categoryId].review_rating_details_by_category.push({
+//         review: review.review,
+//         rating: review.rating,
+//       });
+
+//       return categories;
+//     }, {});
+
+//     const categoryWiseReviewList = Object.values(categoryWiseReviewRating);
+
+//     return res.status(200).json({
+//       review_rating_fetch_rs: {
+//         overall_rating: totalOverallRating,
+//         overall_review: reviews[0]?.overall_review || "No overall review",
+//         created_at: reviews[0]?.created_at,
+//         user_id: reviews[0]?.user_id?._id,
+//         reputation_score: reputationScore,
+//         review_rating_details_overall: reviewRatingDetailsOverall,
+//         category_wise_review_rating: categoryWiseReviewList,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Error fetching reviews:", error.message);
+//     return res.status(500).json({
+//       review_rating_fetch_rs: { status: responses.error.failedFetchReview },
+//       error: error.message,
+//     });
+//   }
+// };
+
+// export const getReviewsForBusinessUser = async (req, res) => {
+//   try {
+//     const { review_rating_info_rq } = req.body;
+
+//     // Validate the incoming request body
+//     if (!review_rating_info_rq) {
+//       return res.status(400).json({
+//         review_rating_info_rs: {
+//           review_rating_info_by_user: [],
+//           status: responses.validation.invalidRequest,
+//         },
+//       });
+//     }
+
+//     const {
+//       header: { user_name, product, request_type },
+//     } = review_rating_info_rq;
+
+//     // Validate request_type and product
+//     if (request_type !== "REVIEW_RATING_INFO" || product !== "rnr") {
+//       return res.status(400).json({
+//         review_rating_info_rs: {
+//           review_rating_info_by_user: [],
+//           status: responses.validation.invalidRequest,
+//         },
+//       });
+//     }
+
+//     // 1. Fetch all reviews along with the necessary user and category data
+//     const reviews = await Review.find()
+//       .populate("user_id", "display_name")
+//       .populate("category_id", "category_name")
+//       .select(
+//         "_id user_id category_id review rating overall_review overall_rating is_responded"
+//       )
+//       .lean();
+
+//     if (!reviews || reviews.length === 0) {
+//       return res.status(404).json({
+//         review_rating_info_rs: {
+//           review_rating_info_by_user: [],
+//           status: responses.validation.NoReview,
+//         },
+//       });
+//     }
+
+//     // 2. Extract unique user IDs from reviews
+//     const userIds = [
+//       ...new Set(
+//         reviews.map((review) => review.user_id?._id?.toString()).filter(Boolean)
+//       ),
+//     ];
+
+//     // 3. Batch fetch UserGuestMap documents for these user IDs
+//     const userGuestMaps = await UserGuestMap.find({
+//       user_id: { $in: userIds },
+//     }).lean();
+
+//     // Create a lookup map: userId => mapping
+//     const guestMappingByUserId = userGuestMaps.reduce((acc, mapping) => {
+//       acc[mapping.user_id.toString()] = mapping;
+//       return acc;
+//     }, {});
+
+//     // 4. Extract unique guest IDs from the mappings
+//     const guestIds = [
+//       ...new Set(
+//         userGuestMaps
+//           .map((mapping) => mapping.guest_id?.toString())
+//           .filter(Boolean)
+//       ),
+//     ];
+
+//     // 5. Batch fetch BookingInfo for these guest IDs
+//     const bookings = await BookingInfo.find({ guest_id: { $in: guestIds } })
+//       .select("room_type check_in_date check_out_date guest_id")
+//       .lean();
+
+//     // Create a lookup map: guestId => booking details
+//     const bookingByGuestId = bookings.reduce((acc, booking) => {
+//       acc[booking.guest_id.toString()] = booking;
+//       return acc;
+//     }, {});
+
+//     // Helper function to compute time of stay in days
+//     const computeTimeOfStay = (checkInDate, checkOutDate) => {
+//       if (!checkInDate || !checkOutDate) return "N/A";
+//       const checkIn = new Date(checkInDate);
+//       const checkOut = new Date(checkOutDate);
+//       const diffInMs = checkOut - checkIn;
+//       const diffInDays = Math.ceil(diffInMs / (1000 * 60 * 60 * 24));
+//       return `${diffInDays} ${diffInDays === 1 ? "day" : "days"}`;
+//     };
+
+//     // 6. Merge the booking details into each review
+//     const reviewRatingInfoByUser = reviews.map((review) => {
+//       const userId = review.user_id?._id?.toString();
+//       const guestMapping = guestMappingByUserId[userId];
+//       let bookingDetails = null;
+//       let timeOfStay = "N/A";
+
+//       if (guestMapping && guestMapping.guest_id) {
+//         bookingDetails = bookingByGuestId[guestMapping.guest_id.toString()];
+//         if (
+//           bookingDetails &&
+//           bookingDetails.check_in_date &&
+//           bookingDetails.check_out_date
+//         ) {
+//           timeOfStay = computeTimeOfStay(
+//             bookingDetails.check_in_date,
+//             bookingDetails.check_out_date
+//           );
+//         }
+//       }
+
+//       return {
+//         review_id: review._id?.toString(),
+//         user_id: userId || null,
+//         user_display_name: review.user_id?.display_name || "Unknown User",
+//         category_id: review.category_id?._id?.toString() || null,
+//         category_name: review.category_id?.category_name || "Overall Rating",
+//         review_responded: !!review.is_responded,
+//         review: review.review || review.overall_review,
+//         rating:
+//           review.rating?.toString() ||
+//           (review.overall_rating && review.overall_rating.toString()),
+//         booking_details: bookingDetails,
+//         time_of_stay: timeOfStay,
+//       };
+//     });
+
+//     return res.status(200).json({
+//       review_rating_info_rs: {
+//         review_rating_info_by_user: reviewRatingInfoByUser,
+//         status: responses.success.success,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Error fetching reviews for business user:", error.message);
+//     return res.status(500).json({
+//       review_rating_info_rs: {
+//         review_rating_info_by_user: [],
+//         status: responses.error.failedFetchReview,
+//       },
+//       error: error.message,
+//     });
+//   }
+// };
 
 export const getUserReviews = async (req, res) => {
   try {
@@ -579,12 +1113,182 @@ export const calculateReviewStats = async (req, res) => {
   }
 };
 
+// export const getReputationScoreFromBlockchain = async (req, res) => {
+//   try {
+//     const { userId } = req.body;
+//     if (!userId) {
+//       return res.status(400).json({ error: "userId is required" });
+//     }
+//     console.log(userId);
+
+//     // Recreate reviewId from the user id (same logic as in createReview)
+//     const reviewId = Buffer.from(userId.toString()).toString("hex");
+//     console.log(reviewId);
+
+//     // Assume the redeemed UTXO is at the wallet address
+//     const walletAddr = await lucid.wallet.address();
+//     const utxos = await lucid.utxosAt(walletAddr);
+//     console.log("My utxo is: ", utxos);
+
+//     let reputationScore = 0;
+//     // Look through the UTXOs for an inline datum that matches our reviewId.
+//     for (const utxo of utxos) {
+//       const inlineData = utxo.inlineDatum || utxo.datum;
+//       if (inlineData) {
+//         const datum = Data.from(inlineData);
+//         console.log("Decoded datum:", datum);
+
+//         // Check if the datum has at least 7 fields and the first field matches reviewId
+//         if (
+//           datum.fields &&
+//           datum.fields.length >= 7 &&
+//           datum.fields[0] === reviewId
+//         ) {
+//           reputationScore = Number(datum.fields[6]);
+//           break;
+//         }
+//       }
+//     }
+//     return res.status(200).json({ reputationScore });
+//   } catch (error) {
+//     console.error(
+//       "Error fetching reputation score from blockchain:",
+//       error.message
+//     );
+//     return res.status(500).json({ error: error.message });
+//   }
+// };
+
+// export const getReviewsForEndUser = async (req, res) => {
+//   try {
+//     const { review_rating_fetch_rq } = req.body;
+
+//     if (!review_rating_fetch_rq) {
+//       return res.status(400).json({
+//         review_rating_fetch_rs: {
+//           status: responses.validation.invalidRequest,
+//         },
+//       });
+//     }
+
+//     const {
+//       header: { request_type },
+//     } = review_rating_fetch_rq;
+
+//     if (request_type !== "FETCH_REVIEW_RATING") {
+//       return res.status(400).json({
+//         review_rating_fetch_rs: {
+//           status: responses.validation.invalidRequest,
+//         },
+//       });
+//     }
+
+//     // Get reviews that have been successfully processed (status true)
+//     const reviews = await Review.find({ status: "true" })
+//       .select(
+//         "_id user_id overall_review overall_rating review rating category_id created_at blockchain_tx"
+//       )
+//       .populate("user_id", "display_name");
+
+//     if (!reviews || reviews.length === 0) {
+//       return res.status(404).json({
+//         review_rating_fetch_rs: {
+//           status: responses.validation.reviewNotFound,
+//         },
+//       });
+//     }
+
+//     // Filter for overall reviews (assumed to be those without category_id)
+//     const overallReviews = reviews.filter((r) => !r.category_id);
+
+//     // Instead of averaging overall_rating, fetch the reputation score from blockchain
+//     // Here we assume one overall review per user; you could also map each review as needed.
+//     let blockchainReputationScore = 0;
+//     if (overallReviews.length > 0) {
+//       // Use the first overall review to fetch its blockchain reputation score
+//       blockchainReputationScore = await getReputationScoreFromBlockchain(
+//         overallReviews[0].user_id._id
+//       );
+//     }
+
+//     // Build overall review details; optionally include the blockchain reputation score here.
+//     const reviewRatingDetailsOverall = overallReviews.map((r) => ({
+//       review_id: r._id,
+//       user_name: r.user_id?.display_name || "Anonymous",
+//       user_id: r.user_id?._id,
+//       created_at: r.created_at,
+//       review: r.overall_review,
+//       rating: r.overall_rating,
+//       // Optionally, if you wish each overall review to include the blockchain reputation:
+//       reputation_score: blockchainReputationScore,
+//     }));
+
+//     // Category-wise review details (unchanged)
+//     const categoryIds = [...new Set(reviews.map((r) => r.category_id))];
+
+//     const categories = await ReviewCategory.find({
+//       _id: { $in: categoryIds },
+//     }).select("category_id category_name category_description");
+
+//     const categoryDetailsMap = categories.reduce((map, category) => {
+//       map[category._id.toString()] = {
+//         category_name: category.category_name,
+//         category_desc: category.category_description,
+//       };
+//       return map;
+//     }, {});
+
+//     const categoryWiseReviewRating = reviews.reduce((categories, review) => {
+//       const category = categoryDetailsMap[review.category_id];
+//       if (!category) return categories;
+
+//       const categoryId = review.category_id.toString();
+//       if (!categories[categoryId]) {
+//         categories[categoryId] = {
+//           category_name: category.category_name,
+//           category_desc: category.category_desc,
+//           review_rating_details_by_category: [],
+//         };
+//       }
+
+//       categories[categoryId].review_rating_details_by_category.push({
+//         review: review.review,
+//         rating: review.rating,
+//       });
+
+//       return categories;
+//     }, {});
+
+//     const categoryWiseReviewList = Object.values(categoryWiseReviewRating);
+
+//     return res.status(200).json({
+//       review_rating_fetch_rs: {
+//         overall_rating: overallReviews[0]?.overall_rating || 0,
+//         overall_review:
+//           overallReviews[0]?.overall_review || "No overall review",
+//         created_at: overallReviews[0]?.created_at,
+//         user_id: overallReviews[0]?.user_id?._id,
+//         reputation_score: blockchainReputationScore,
+//         review_rating_details_overall: reviewRatingDetailsOverall,
+//         category_wise_review_rating: categoryWiseReviewList,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Error fetching reviews:", error.message);
+//     return res.status(500).json({
+//       review_rating_fetch_rs: { status: responses.error.failedFetchReview },
+//       error: error.message,
+//     });
+//   }
+// };
 
 export async function fetchReputationScore(userId) {
   try {
+    // Recreate reviewId from the user id (using the same logic as in createReview)
     const reviewId = Buffer.from(userId.toString()).toString("hex");
     console.log("ReviewId:", reviewId);
 
+    // Assume the redeemed UTXO is at the wallet address
     const businessAddress = await lucid.wallet.address();
     const pkh =
       lucid.utils.getAddressDetails(businessAddress).paymentCredential.hash;
@@ -592,41 +1296,38 @@ export async function fetchReputationScore(userId) {
     const enterpriseAddress = lucid.utils.credentialToAddress(
       lucid.utils.keyHashToCredential(pkh)
     );
-
     const utxos = await lucid.utxosAt(enterpriseAddress);
-
     let reputationScore = 0;
 
+    // Iterate through UTXOs and check for an inline datum (or datum field) that matches our reviewId.
     for (const utxo of utxos) {
       const inlineData = utxo.inlineDatum || utxo.datum;
-      if (!inlineData) continue;
+      console.log("Debug: ", inlineData);
 
-      const datum = Data.from(inlineData);
+      if (inlineData) {
+        const datum = Data.from(inlineData);
+        // console.log("Datum: ", datum);
 
-      if (!datum.fields || datum.fields.length < 7) continue;
+        // console.log("Decoded datum:", datum);
+        // Check if the datum has at least 7 fields and the first field matches our reviewId.
+        if (
+          datum.fields &&
+          datum.fields.length >= 7 &&
+          datum.fields[0] === reviewId
+        ) {
+          reputationScore = Number(datum.fields[6]);
+          console.log("repu:" + reputationScore);
 
-      // FIX HERE:
-      const onChainReviewId = datum.fields[0];  // already a string
-
-      console.log("OnChain ReviewId:", onChainReviewId);
-
-      if (onChainReviewId === reviewId) {
-        // numeric fields also come as strings, so convert them:
-        reputationScore = Number(datum.fields[6]);
-        console.log("Fetched Reputation Score:", reputationScore);
-        break;
+          break;
+        }
       }
     }
-
     return reputationScore;
-
   } catch (error) {
-    console.error("Error in fetchReputationScore:", error);
+    console.error("Error in fetchReputationScore:", error.message);
     throw error;
   }
 }
-
-
 
 // --------------------------------------------------------------------
 // Express route handler to fetch the reputation score from the blockchain via a POST request.
@@ -651,6 +1352,128 @@ export const getReputationScoreFromBlockchain = async (req, res) => {
   }
 };
 
+// --------------------------------------------------------------------
+// getReviewsForEndUser: Returns reviews along with the blockchain reputation score.
+// export const getReviewsForEndUser = async (req, res) => {
+//   try {
+//     if (!req.body || !req.body.review_rating_fetch_rq) {
+//       return res.status(400).json({
+//         review_rating_fetch_rs: {
+//           status: responses.validation.invalidRequest,
+//         },
+//       });
+//     }
+//     const { review_rating_fetch_rq } = req.body;
+//     const { request_type } = review_rating_fetch_rq.header || {};
+//     if (request_type !== "FETCH_REVIEW_RATING") {
+//       return res.status(400).json({
+//         review_rating_fetch_rs: {
+//           status: responses.validation.invalidRequest,
+//         },
+//       });
+//     }
+
+//     // Fetch reviews that have been successfully processed (status true)
+//     const reviews = await Review.find({ status: "true" })
+//       .select(
+//         "_id user_id overall_review overall_rating review rating category_id created_at blockchain_tx"
+//       )
+//       .populate("user_id", "display_name");
+
+//     if (!reviews || reviews.length === 0) {
+//       return res.status(404).json({
+//         review_rating_fetch_rs: {
+//           status: responses.validation.reviewNotFound,
+//         },
+//       });
+//     }
+
+//     // Filter for overall reviews (assumed to be those without a category_id)
+//     const overallReviews = reviews.filter((r) => !r.category_id);
+
+//     // Use the first overall review's userId to fetch the blockchain reputation score.
+//     let blockchainReputationScore = 0;
+
+//     overallReviews.sort(
+//       (a, b) => new Date(b.created_at) - new Date(a.created_at)
+//     );
+
+//     const lastUserId =
+//       overallReviews.length > 0 ? overallReviews[0].user_id._id : null;
+
+//     if (overallReviews.length > 0) {
+//       blockchainReputationScore = await fetchReputationScore(lastUserId);
+//     }
+
+//     console.log("My Blockchain Reputation Score: ", blockchainReputationScore);
+
+//     const booking = BookingInfo.find
+
+//     // Build overall review details including the blockchain reputation score.
+//     const reviewRatingDetailsOverall = overallReviews.map((r) => ({
+//       review_id: r._id,
+//       user_name: r.user_id?.display_name || "Anonymous",
+//       user_id: r.user_id?._id,
+//       created_at: r.created_at,
+//       review: r.overall_review,
+//       rating: r.overall_rating,
+//       reputation_score: blockchainReputationScore,
+//     }));
+
+//     // Category-wise review details (unchanged)
+//     const categoryIds = [...new Set(reviews.map((r) => r.category_id))];
+//     const categories = await ReviewCategory.find({
+//       _id: { $in: categoryIds },
+//     }).select("category_id category_name category_description");
+
+//     const categoryDetailsMap = categories.reduce((map, category) => {
+//       map[category._id.toString()] = {
+//         category_name: category.category_name,
+//         category_desc: category.category_description,
+//       };
+//       return map;
+//     }, {});
+
+//     const categoryWiseReviewRating = reviews.reduce((categories, review) => {
+//       const category = categoryDetailsMap[review.category_id];
+//       if (!category) return categories;
+//       const categoryId = review.category_id.toString();
+//       if (!categories[categoryId]) {
+//         categories[categoryId] = {
+//           category_name: category.category_name,
+//           category_desc: category.category_desc,
+//           review_rating_details_by_category: [],
+//         };
+//       }
+//       categories[categoryId].review_rating_details_by_category.push({
+//         review: review.review,
+//         rating: review.rating,
+//       });
+//       return categories;
+//     }, {});
+
+//     const categoryWiseReviewList = Object.values(categoryWiseReviewRating);
+
+//     return res.status(200).json({
+//       review_rating_fetch_rs: {
+//         overall_rating: overallReviews[0]?.overall_rating || 0,
+//         overall_review:
+//           overallReviews[0]?.overall_review || "No overall review",
+//         created_at: overallReviews[0]?.created_at,
+//         user_id: overallReviews[0]?.user_id?._id,
+//         reputation_score: blockchainReputationScore,
+//         review_rating_details_overall: reviewRatingDetailsOverall,
+//         category_wise_review_rating: categoryWiseReviewList,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Error fetching reviews:", error.message);
+//     return res.status(500).json({
+//       review_rating_fetch_rs: { status: responses.error.failedFetchReview },
+//       error: error.message,
+//     });
+//   }
+// };
 
 export const getReviewsForEndUser = async (req, res) => {
   console.log("fn called");
@@ -707,7 +1530,7 @@ export const getReviewsForEndUser = async (req, res) => {
       blockchainReputationScore = await fetchReputationScore(lastUserId);
     }
 
-    console.log("ReputationScore 1: ", blockchainReputationScore);
+    console.log("ReputationScore: ", blockchainReputationScore);
 
     // For each overall review, fetch its own blockchain reputation score and booking details
     const reviewRatingDetailsOverall = await Promise.all(
@@ -796,4 +1619,3 @@ export const getReviewsForEndUser = async (req, res) => {
     });
   }
 };
- 
