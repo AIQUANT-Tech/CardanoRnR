@@ -7,6 +7,7 @@ export default function Navbar() {
   // const LRS_URL = import.meta.env.VITE_LRS_URL;
   const RNR_URL = import.meta.env.VITE_RNR_URL;
   // const [open, setOpen] = useState(false);
+  console.log("RNR_URL:", RNR_URL);
 
   return (
     <nav className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 shadow-xl">
