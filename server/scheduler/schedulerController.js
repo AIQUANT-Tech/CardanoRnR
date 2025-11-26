@@ -1,4 +1,3 @@
-
 // import BookingInfo from "../Hotel_Booking_System/Hbs_Booking_Info_Schema.js";
 // import GuestInfo from "../Hotel_Booking_System/Hbs_Guest_Info_Schema.js";
 // import User from "../user/UserMast.js";
@@ -14,7 +13,7 @@
 //     const bookings = await BookingInfo.find();
 
 //     for (const booking of bookings) {
-      
+
 //       const existingMapping = await UserGuestMap.findOne({
 //         booking_id: booking.booking_id,
 //       });
@@ -64,7 +63,7 @@
 
 //       // FIX: correct endpoint
 //       let flag = null;
-//       if (booking.booking_status == 'Checkedout' && booking.is_rnr_notified == false) {
+//       if (booking.booking_status == 'Checkedout' && booking.Kimpton  == false) {
 //         flag = await fetch(`${emailEndpoint}`, {
 //           method: "POST",
 //           headers: { "Content-Type": "application/json" },
@@ -89,11 +88,6 @@
 //     console.error("Error processing user mapping feed:", error.message);
 //   }
 // };
-
-
-
-
-
 
 import BookingInfo from "../Hotel_Booking_System/Hbs_Booking_Info_Schema.js";
 import GuestInfo from "../Hotel_Booking_System/Hbs_Guest_Info_Schema.js";
@@ -152,10 +146,9 @@ export const processUserMappingFeed = async () => {
       const existingMapping = await UserGuestMap.findOne({
         booking_id: booking.booking_id,
       });
-
       // If mapping exists → skip only mapping logic
       if (existingMapping) {
-        console.log("ℹ Mapping already exists. Skipping mapping creation.");
+        console.log(" Mapping already exists. Skipping mapping creation.");
         continue;
       }
 
