@@ -1,5 +1,5 @@
 import express from "express";
-import { processUserMappingFeed } from "./schedulerController.js";
+import { processUserMappingFeed, updateBookingStatusController } from "./schedulerController.js";
 
 const router = express.Router();
 /**
@@ -17,5 +17,6 @@ const router = express.Router();
 
 
 router.post("/run", processUserMappingFeed);
+router.post("/updateBookingStatus", updateBookingStatusController);
 
 export default router;
