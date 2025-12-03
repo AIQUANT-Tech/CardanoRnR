@@ -25,6 +25,15 @@ import Pagination from "../../Components/Custom-Pagination";
 import axios from "axios";
 import "../../Components/styles.css";
 import API_BASE_URL from "../../config.js";
+import {
+  Tooltip,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+} from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+
 
 const CustomerReviewManagement = () => {
   const [reviews, setReviews] = useState([]);
@@ -40,6 +49,9 @@ const CustomerReviewManagement = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const itemsPerPage = 4;
   const debounceTimeout = 200;
+
+  const [openReviewDialog, setOpenReviewDialog] = useState(false);
+  const [selectedReviewText, setSelectedReviewText] = useState("");
 
   // Debounced search
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
@@ -147,7 +159,8 @@ const CustomerReviewManagement = () => {
         {/* Header */}
         <Box
           position="fixed"
-          width="80%"
+          width={isMobile ? "100%" : "calc(100% - 20%)"}
+          ml={isMobile ? 0 : "20%"}
           zIndex={1000}
           bgcolor="white"
           sx={{ height: "64px" }}
@@ -432,13 +445,58 @@ const CustomerReviewManagement = () => {
                           padding: "8px",
                           textAlign: "left",
                           height: "75px",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
+                          position: "relative",
+                          cursor: "pointer",
+                          "&:hover": {
+                            backgroundColor: "#FFF3F3", // light highlight
+                          },
                         }}
                       >
-                        {review.review}
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 2, // spacing between text & arrow
+                            overflow: "hidden",
+                          }}
+                        >
+                          <Tooltip
+                            title={review.review}
+                            placement="top-start"
+                            arrow
+                          >
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                                flexGrow: 1, // take remaining space
+                              }}
+                            >
+                              {review.review}
+                            </Typography>
+                          </Tooltip>
+
+                          <IconButton
+                            size="small"
+                            sx={{
+                              flexShrink: 0,
+                              bgcolor: "#F4D4D4",
+                              "&:hover": {
+                                bgcolor: "#E6B6B6",
+                              },
+                            }}
+                            onClick={() => {
+                              setSelectedReviewText(review.review);
+                              setOpenReviewDialog(true);
+                            }}
+                          >
+                            <ExpandMoreIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
                       </TableCell>
+
                       <TableCell align="center" sx={{ padding: "8px" }}>
                         {review.booking_details?.room_type}
                       </TableCell>
@@ -501,6 +559,19 @@ const CustomerReviewManagement = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
+      <Dialog
+        open={openReviewDialog}
+        onClose={() => setOpenReviewDialog(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Full Review</DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" sx={{ whiteSpace: "pre-wrap" }}>
+            {selectedReviewText}
+          </Typography>
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 };
