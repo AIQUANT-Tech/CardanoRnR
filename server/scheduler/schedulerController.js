@@ -174,9 +174,9 @@ export const processUserMappingFeed = async () => {
       // 2B. Create Mapping
       const newMapping = new UserGuestMap({
         user_guest_map_id: generateUniqueId(),
-        user_id: user.user_id,
-        guest_id: guest.guest_id,
-        booking_id: booking.booking_id,
+        user_id: user._id,
+        guest_id: guest._id,
+        booking_id: booking._id,
         Status: true,
       });
 
@@ -189,3 +189,52 @@ export const processUserMappingFeed = async () => {
     console.error("❌ Error processing user mapping feed:", error.message);
   }
 };
+
+export const updateBookingStatusController = async (req, res) => {
+  try {
+    const result = await updateBookingStatus();
+    return res.status(200).json({
+      success: true,
+      message: "Booking status update scheduler executed",
+      data: result
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Error executing scheduler",
+      error: error.message
+    });
+  }
+};
+
+
+export const updateBookingStatus = async () => {
+  try {
+    // Normalize today's date (00:00:00)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const bookings = await BookingInfo.find();
+
+    let updatedCount = 0;
+
+    for (const booking of bookings) {
+      const checkoutDate = new Date(booking.check_out_date);
+      checkoutDate.setHours(0, 0, 0, 0);
+
+      // If checkout date is today → mark Checkedout
+      if (checkoutDate.getTime() === today.getTime() && booking.booking_status !== "Checkedout") {
+        booking.booking_status = "Checkedout";
+        await booking.save();
+        updatedCount++;
+        console.log(`Booking ${booking.booking_id} marked as Checkedout.`);
+      }
+    }
+
+    return { updatedCount };  // <-- IMPORTANT
+  } catch (error) {
+    console.error("Error updating booking status:", error.message);
+    throw error; // <-- ALSO IMPORTANT for API error handling
+  }
+};
+
