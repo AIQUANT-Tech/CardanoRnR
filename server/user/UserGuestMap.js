@@ -19,6 +19,7 @@ const userGuestMapSchema = new mongoose.Schema({
     booking_id :{
         type : String,
         required : true,
+        unique : true,
         ref : 'BookingInfo'
     },
     Status : {
