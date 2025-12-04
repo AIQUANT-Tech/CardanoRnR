@@ -31,19 +31,73 @@ const reviewQueue = new Queue("reviewQueue", {
   },
 });
 
+// reviewQueue.process(async (job, done) => {
+//   const {
+//     reviewId,
+//     serializedReviewDatum,
+//     serializedReviewRedeemer,
+//     lockTxHash,
+//   } = job.data;
+//   try {
+//     // Convert the serialized hex strings back to Constr objects.
+//     const reviewDatum = Data.from(serializedReviewDatum);
+//     const reviewRedeemer = Data.from(serializedReviewRedeemer);
+
+//     console.log("Background job: Waiting for UTxO with txHash:", lockTxHash);
+//     await waitForUTxOWithTimeout(
+//       scriptAddress,
+//       reviewDatum,
+//       lockTxHash,
+//       600000,
+//       10000
+//     );
+//     console.log(
+//       "Background job: UTxO found. Redeeming review data on-chain..."
+//     );
+
+//     const { txHash: redeemTxHash, reputationScore } = await redeemFunds(
+//       reviewDatum,
+//       reviewRedeemer
+//     );
+//     // console.log("Background job: Review data redeemed, tx hash:", redeemTxHash);
+//     console.log("Background job: Updated Reputation Score:", reputationScore);
+
+//     // Update the review document. Convert redeemTxHash (and reputationScore if needed) to strings.
+//     await Review.findByIdAndUpdate(reviewId, {
+//       blockchain_tx: redeemTxHash.toString(),
+//       status: true,
+//       // Optionally, update reputationScore field if defined:
+//       // reputationScore: reputationScore.toString(),
+//     });
+//     done();
+//   } catch (error) {
+//     console.error("Background job error:", error.message);
+//     await Review.findByIdAndUpdate(reviewId, {
+//       error: error.message,
+//       status: false,
+//     });
+//     done(new Error(error));
+//   }
+// });
+
 reviewQueue.process(async (job, done) => {
   const {
-    reviewId,
+    lockTxHash,
+    userId,
+    overall_rating,
+    overall_review,
+    category_wise_review_rating,
+    categoryIds,
     serializedReviewDatum,
     serializedReviewRedeemer,
-    lockTxHash,
   } = job.data;
+
   try {
-    // Convert the serialized hex strings back to Constr objects.
     const reviewDatum = Data.from(serializedReviewDatum);
     const reviewRedeemer = Data.from(serializedReviewRedeemer);
 
-    console.log("Background job: Waiting for UTxO with txHash:", lockTxHash);
+    console.log("Waiting for UTxO:", lockTxHash);
+
     await waitForUTxOWithTimeout(
       scriptAddress,
       reviewDatum,
@@ -51,34 +105,55 @@ reviewQueue.process(async (job, done) => {
       600000,
       10000
     );
-    console.log(
-      "Background job: UTxO found. Redeeming review data on-chain..."
-    );
+
+    console.log("Redeeming review data...");
 
     const { txHash: redeemTxHash, reputationScore } = await redeemFunds(
       reviewDatum,
       reviewRedeemer
     );
-    // console.log("Background job: Review data redeemed, tx hash:", redeemTxHash);
-    console.log("Background job: Updated Reputation Score:", reputationScore);
 
-    // Update the review document. Convert redeemTxHash (and reputationScore if needed) to strings.
-    await Review.findByIdAndUpdate(reviewId, {
-      blockchain_tx: redeemTxHash.toString(),
+    console.log("Redeemed with tx:", redeemTxHash);
+    console.log("Reputation Score:", reputationScore);
+
+    // ---- SAVE FINAL REVIEW IN MONGODB ----
+
+    // Save main overall review
+    const savedOverall = await Review.create({
+      user_id: userId,
+      category_id: null,
+      overall_review,
+      overall_rating,
+      blockchain_tx: redeemTxHash,
+      reputation_score: reputationScore?.toString() || null,
       status: true,
-      // Optionally, update reputationScore field if defined:
-      // reputationScore: reputationScore.toString(),
+      created_at: new Date(),
     });
+
+    // Save category-wise reviews
+    const categoryReviews = category_wise_review_rating.map((catRev, idx) => ({
+      user_id: userId,
+      category_id: categoryIds[idx],
+      review: catRev.review,
+      rating: catRev.rating,
+      overall_review,
+      overall_rating,
+      blockchain_tx: redeemTxHash, // store same redeem tx
+      status: true,
+      created_at: new Date(),
+    }));
+
+    await Review.insertMany(categoryReviews);
+
+    console.log("All reviews successfully stored in DB.");
+
     done();
   } catch (error) {
-    console.error("Background job error:", error.message);
-    await Review.findByIdAndUpdate(reviewId, {
-      error: error.message,
-      status: false,
-    });
-    done(new Error(error));
+    console.error("Worker error:", error.message);
+    done(new Error(error.message));
   }
 });
+
 console.log("Bull worker is running and waiting for jobs...");
 
 export default reviewQueue;
