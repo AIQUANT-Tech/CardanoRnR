@@ -131,17 +131,24 @@ reviewQueue.process(async (job, done) => {
     });
 
     // Save category-wise reviews
-    const categoryReviews = category_wise_review_rating.map((catRev, idx) => ({
-      user_id: userId,
-      category_id: categoryIds[idx],
-      review: catRev.review,
-      rating: catRev.rating,
-      overall_review,
-      overall_rating,
-      blockchain_tx: redeemTxHash, // store same redeem tx
-      status: true,
-      created_at: new Date(),
-    }));
+    const categoryReviews = category_wise_review_rating.map((catRev) => {
+      const categoryDoc = validCategories.find(
+        (cat) => cat.category_id === catRev.category_id
+      );
+
+      return {
+        user_id: userId,
+        category_id: categoryDoc._id, 
+        review: catRev.review,
+        rating: catRev.rating,
+        overall_review,
+        overall_rating,
+        blockchain_tx: redeemTxHash,
+        status: true,
+        created_at: new Date(),
+      };
+    });
+
 
     await Review.insertMany(categoryReviews);
 

@@ -494,10 +494,11 @@ export const createReview = async (req, res) => {
       overall_rating,
       overall_review,
       category_wise_review_rating,
-      categoryIds,
+      validCategories, // 👈 pass mongo docs
       serializedReviewDatum,
       serializedReviewRedeemer,
     });
+
 
     return res.status(202).json({
       status: "processing",
