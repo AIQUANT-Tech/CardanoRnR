@@ -250,6 +250,159 @@ export async function waitForUTxOWithTimeout(
 //   }
 // };
 
+// export const createReview = async (req, res) => {
+//   try {
+//     const { new_review_rating_create_rq } = req.body;
+//     if (!new_review_rating_create_rq) {
+//       return res.status(400).json({ error: "Invalid request format" });
+//     }
+
+//     const {
+//       header: { request_type, user_name },
+//       user_email_id,
+//       overall_rating,
+//       overall_review,
+//       category_wise_review_rating,
+//     } = new_review_rating_create_rq;
+
+//     if (request_type !== "CREATE_NEW_REVIEW_RATING") {
+//       return res.status(400).json({ error: "Invalid request type" });
+//     }
+//     if (
+//       !user_email_id ||
+//       overall_rating == null ||
+//       !overall_review ||
+//       !Array.isArray(category_wise_review_rating) ||
+//       category_wise_review_rating.length === 0
+//     ) {
+//       return res.status(400).json({ error: "All fields are required" });
+//     }
+
+//     // Retrieve user by email.
+//     const user = await User.findOne({ email: user_email_id, status: true });
+//     if (!user) {
+//       return res.status(404).json({ error: "User not found" });
+//     }
+
+//     // Validate category-wise reviews.
+//     const categoryIds = category_wise_review_rating.map(
+//       (catReview) => catReview.category_id
+//     );
+//     const validCategories = await ReviewCategory.find({
+//       category_id: { $in: categoryIds },
+//     });
+//     if (validCategories.length !== categoryIds.length) {
+//       return res
+//         .status(404)
+//         .json({ error: "One or more categories not found" });
+//     }
+
+//     // Calculate dynamic fields.
+//     const overallRatingCount = await Review.find({ category_id: null });
+//     // console.log(overallRatingCount);
+
+//     const ratingCount = BigInt(overallRatingCount.length);
+//     // console.log(ratingCount);
+
+//     const totalScore = overallRatingCount.reduce(
+//       (acc, catReview) => acc + BigInt(catReview.overall_rating),
+//       0n
+//     );
+//     console.log("Controller Rating Count: ", ratingCount);
+//     console.log("Controller total score : ", totalScore);
+
+//     const reputationScore = ratingCount > 0n ? totalScore / ratingCount : 0n;
+//     const timestamp = BigInt(Date.now());
+
+//     // Use user's _id as reviewId (converted to hex)
+//     const reviewId = Buffer.from(user._id.toString()).toString("hex");
+
+//     // Build the on-chain review datum and redeemer.
+//     const reviewDatum = new Constr(0, [
+//       reviewId,
+//       new Constr(1, []),
+//       BigInt(Math.floor(overall_rating)),
+//       timestamp,
+//       totalScore,
+//       ratingCount,
+//       reputationScore,
+//     ]);
+//     const reviewRedeemer = new Constr(0, [reviewId]);
+
+//     console.log("Locking review data on-chain...");
+//     const lockTxHash = await lockFunds(reviewDatum);
+//     if (!lockTxHash) {
+//       return res
+//         .status(500)
+//         .json({ error: "Lock review funds failed on blockchain" });
+//     }
+//     console.log("Review data locked, transaction hash:", lockTxHash);
+
+//     // Create the overall review record (for overall review, category_id is null).
+//     const overallReviewDoc = new Review({
+//       user_id: user._id,
+//       category_id: null,
+//       overall_review,
+//       overall_rating,
+//       blockchain_tx: lockTxHash,
+//       status: false, // pending blockchain processing
+//       created_at: new Date(),
+//     });
+//     const savedOverall = await overallReviewDoc.save();
+
+//     // Prepare and insert category-wise review documents.
+//     const reviewsToInsert = category_wise_review_rating.map((catReview) => {
+//       const validCategory = validCategories.find(
+//         (cat) => cat.category_id === catReview.category_id.toString()
+//       );
+//       if (!validCategory) {
+//         throw new Error(`Category with ID ${catReview.category_id} not found.`);
+//       }
+//       return {
+//         user_id: user._id,
+//         category_id: validCategory._id,
+//         review: catReview.review,
+//         rating: catReview.rating,
+//         overall_review,
+//         overall_rating,
+//         blockchain_tx: "", // Not processed on-chain for category reviews.
+//         status: true, // Immediately mark these as stored.
+//         created_at: new Date(),
+//       };
+//     });
+//     const savedCategoryReviews = await Review.insertMany(reviewsToInsert);
+
+//     // Serialize the on-chain datum and redeemer as hex strings using Data.to().
+//     const serializedReviewDatum = Data.to(reviewDatum);
+//     const serializedReviewRedeemer = Data.to(reviewRedeemer);
+
+//     console.log("Saved Overall Review ID:", savedOverall._id.toString());
+//     console.log("Serialized Datum:", serializedReviewDatum);
+//     console.log("Serialized Redeemer:", serializedReviewRedeemer);
+//     console.log("Lock Tx Hash:", lockTxHash);
+
+//     // Enqueue a background job to process the blockchain redemption.
+//     reviewQueue.add({
+//       reviewId: savedOverall._id.toString(),
+//       serializedReviewDatum,
+//       serializedReviewRedeemer,
+//       lockTxHash,
+//     });
+
+//     return res.status(201).json({
+//       status: "pending",
+//       message:
+//         "Review submitted. Blockchain locking is pending; redemption will complete later.",
+//       overall: savedOverall,
+//       category_reviews: savedCategoryReviews,
+//     });
+//   } catch (error) {
+//     console.error("Error creating review:", error.message);
+//     return res.status(500).json({ error: "Internal server error" });
+//   }
+// };
+// -------------------------------------------------------------------------------------------------------------------
+
 export const createReview = async (req, res) => {
   try {
     const { new_review_rating_create_rq } = req.body;
@@ -268,6 +421,7 @@ export const createReview = async (req, res) => {
     if (request_type !== "CREATE_NEW_REVIEW_RATING") {
       return res.status(400).json({ error: "Invalid request type" });
     }
+
     if (
       !user_email_id ||
       overall_rating == null ||
@@ -278,13 +432,13 @@ export const createReview = async (req, res) => {
       return res.status(400).json({ error: "All fields are required" });
     }
 
-    // Retrieve user by email.
+    // Retrieve user by email
     const user = await User.findOne({ email: user_email_id, status: true });
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Validate category-wise reviews.
+    // Validate categories
     const categoryIds = category_wise_review_rating.map(
       (catReview) => catReview.category_id
     );
@@ -292,32 +446,23 @@ export const createReview = async (req, res) => {
       category_id: { $in: categoryIds },
     });
     if (validCategories.length !== categoryIds.length) {
-      return res
-        .status(404)
-        .json({ error: "One or more categories not found" });
+      return res.status(404).json({ error: "Invalid category IDs" });
     }
 
-    // Calculate dynamic fields.
-    const overallRatingCount = await Review.find({ category_id: null });
-    // console.log(overallRatingCount);
-
-    const ratingCount = BigInt(overallRatingCount.length);
-    // console.log(ratingCount);
-
-    const totalScore = overallRatingCount.reduce(
-      (acc, catReview) => acc + BigInt(catReview.overall_rating),
+    // Calculate dynamic values
+    const allOverall = await Review.find({ category_id: null });
+    const ratingCount = BigInt(allOverall.length);
+    const totalScore = allOverall.reduce(
+      (acc, review) => acc + BigInt(review.overall_rating),
       0n
     );
-    console.log("Controller Rating Count: ", ratingCount);
-    console.log("Controller total score : ", totalScore);
 
     const reputationScore = ratingCount > 0n ? totalScore / ratingCount : 0n;
-    const timestamp = BigInt(Date.now());
 
-    // Use user's _id as reviewId (converted to hex)
+    const timestamp = BigInt(Date.now());
     const reviewId = Buffer.from(user._id.toString()).toString("hex");
 
-    // Build the on-chain review datum and redeemer.
+    // On-chain datum and redeemer
     const reviewDatum = new Constr(0, [
       reviewId,
       new Constr(1, []),
@@ -331,70 +476,34 @@ export const createReview = async (req, res) => {
 
     console.log("Locking review data on-chain...");
     const lockTxHash = await lockFunds(reviewDatum);
+
     if (!lockTxHash) {
       return res
         .status(500)
         .json({ error: "Lock review funds failed on blockchain" });
     }
-    console.log("Review data locked, transaction hash:", lockTxHash);
 
-    // Create the overall review record (for overall review, category_id is null).
-    const overallReviewDoc = new Review({
-      user_id: user._id,
-      category_id: null,
-      overall_review,
-      overall_rating,
-      blockchain_tx: lockTxHash,
-      status: false, // pending blockchain processing
-      created_at: new Date(),
-    });
-    const savedOverall = await overallReviewDoc.save();
-
-    // Prepare and insert category-wise review documents.
-    const reviewsToInsert = category_wise_review_rating.map((catReview) => {
-      const validCategory = validCategories.find(
-        (cat) => cat.category_id === catReview.category_id.toString()
-      );
-      if (!validCategory) {
-        throw new Error(`Category with ID ${catReview.category_id} not found.`);
-      }
-      return {
-        user_id: user._id,
-        category_id: validCategory._id,
-        review: catReview.review,
-        rating: catReview.rating,
-        overall_review,
-        overall_rating,
-        blockchain_tx: "", // Not processed on-chain for category reviews.
-        status: true, // Immediately mark these as stored.
-        created_at: new Date(),
-      };
-    });
-    const savedCategoryReviews = await Review.insertMany(reviewsToInsert);
-
-    // Serialize the on-chain datum and redeemer as hex strings using Data.to().
+    // Serialize datum/redeemer
     const serializedReviewDatum = Data.to(reviewDatum);
     const serializedReviewRedeemer = Data.to(reviewRedeemer);
 
-    console.log("Saved Overall Review ID:", savedOverall._id.toString());
-    console.log("Serialized Datum:", serializedReviewDatum);
-    console.log("Serialized Redeemer:", serializedReviewRedeemer);
-    console.log("Lock Tx Hash:", lockTxHash);
-
-    // Enqueue a background job to process the blockchain redemption.
+    // Send to queue -> worker will *save final data to DB*
     reviewQueue.add({
-      reviewId: savedOverall._id.toString(),
+      lockTxHash,
+      userId: user._id.toString(),
+      overall_rating,
+      overall_review,
+      category_wise_review_rating,
+      categoryIds,
       serializedReviewDatum,
       serializedReviewRedeemer,
-      lockTxHash,
     });
 
-    return res.status(201).json({
-      status: "pending",
+    return res.status(202).json({
+      status: "processing",
       message:
-        "Review submitted. Blockchain locking is pending; redemption will complete later.",
-      overall: savedOverall,
-      category_reviews: savedCategoryReviews,
+        "Review submitted. Blockchain processing started. Will store review after redemption completes.",
+      lockTxHash,
     });
   } catch (error) {
     console.error("Error creating review:", error.message);
@@ -730,20 +839,25 @@ export const getReviewsForBusinessUser = async (req, res) => {
       });
     }
 
-    // ----------------------------------------------
-    // 1. Fetch Reviews
-    // ----------------------------------------------
-    const reviews = await Review.find()
+
+    // Fetch only reviews with a valid blockchain_tx (NOT empty string)
+    const reviews = await Review.find({
+      status: true,
+      blockchain_tx: { $ne: "" }, 
+    })
+
       .populate("user_id", "display_name")
       .populate("category_id", "category_name")
       .select(
-        "_id user_id category_id review rating overall_review overall_rating is_responded created_at"
+        "_id user_id category_id review rating overall_review overall_rating is_responded created_at blockchain_tx"
       )
       .lean();
 
-    console.log("📌 Reviews count:", reviews.length);
 
-    if (!reviews.length) {
+    console.log("Reviews fetched:", reviews);
+
+    if (!reviews || reviews.length === 0) {
+
       return res.status(404).json({
         review_rating_info_rs: {
           review_rating_info_by_user: [],
@@ -1683,13 +1797,17 @@ export const getReviewsForEndUser = async (req, res) => {
     }
 
     // Fetch reviews that have been successfully processed (status "true")
-    const reviews = await Review.find({ status: "true" })
+    const reviews = await Review.find({
+      status: true,
+      blockchain_tx: { $ne: "" }, // NOT empty string
+    })
       .select(
         "_id user_id overall_review overall_rating review rating category_id created_at blockchain_tx"
       )
       .populate("user_id", "display_name");
 
     console.log("Reviews fetched:", reviews);
+
 
     // if (!reviews || reviews.length === 0) {
     //   return res.status(404).json({
