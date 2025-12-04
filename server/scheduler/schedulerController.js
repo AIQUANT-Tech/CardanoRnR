@@ -193,15 +193,17 @@ const emailEndpoint = process.env.EMAIL_URL;
 export const processUserMappingFeed = async () => {
   try {
     const bookings = await BookingInfo.find();
-
+    console.log("bookings",bookings);
+    let counter = 1;
     for (const booking of bookings) {
-      // Fetch Guest
+      console.log("counter",counter);
+      counter++;
+      console.log("booking",booking.guest_id);
       const guest = await GuestInfo.findById(booking.guest_id);
+      console.log("guest",guest);
       if (!guest) continue;
 
-      // -----------------------------
-      // 1. SEND EMAIL IF CHECKED OUT
-      // -----------------------------
+      // 1. EMAIL LOGIC
       if (
         booking.booking_status?.toLowerCase() === "checkedout" &&
         !booking.is_rnr_notified
@@ -220,37 +222,35 @@ export const processUserMappingFeed = async () => {
         } catch (err) {}
       }
 
-      // -----------------------------------------------------
-      // 2. CHECK IF MAPPING ALREADY EXISTS FOR THIS BOOKING
-      // -----------------------------------------------------
-      const existingMapping = await UserGuestMap.findOne({
-        booking_id: booking._id, // FIX: use ObjectId
-      });
-
-      if (existingMapping) {
-        console.log("Mapping exists → skipping mapping creation");
-        continue;
-      }
-
-      // -----------------------------------------------------
-      // 3. FIND OR CREATE USER (EMAIL UNIQUE)
-      // -----------------------------------------------------
-      let user = await User.findOne({ email: guest.email.toLowerCase() });
-
+      // 2. FIND USER
+      const email = guest.email.toLowerCase();
+      console.log("email",email);
+      let user = await User.findOne({ email });
+      console.log("user", user);
       if (!user) {
         user = await User.create({
           user_id: generateUniqueId(),
-          email: guest.email.toLowerCase(),
+          email,
           password_hash: "password",
           display_name: `${guest.first_name} ${guest.last_name}`,
           role: "End User",
         });
-        console.log(`Created user`);
+        console.log("user created")
+      }
+      
+      // 3. CHECK DUPLICATE MAPPING
+      console.log("booking._id",booking._id);
+      const existingMapping = await UserGuestMap.findOne({
+        // user_id: user._id,
+        // guest_id: guest._id,
+        booking_id: booking._id,
+      });
+      console.log("existingMapping",existingMapping);
+      if (existingMapping) {
+        console.log("Mapping already exists → skipping");
+        continue;
       }
 
-      // -----------------------------------------------------
-      // 4. CREATE USER → GUEST → BOOKING MAPPING
-      // -----------------------------------------------------
       await UserGuestMap.create({
         user_guest_map_id: generateUniqueId(),
         user_id: user._id,
@@ -258,13 +258,24 @@ export const processUserMappingFeed = async () => {
         booking_id: booking._id,
         Status: true,
       });
+      console.log(`Mapping created for booking ${booking._id}`);
 
-      console.log(`Mapping created`);
+      // // 4. CREATE MAPPING
+      // await UserGuestMap.create({
+      //   user_guest_map_id: generateUniqueId(),
+      //   user_id: user._id,
+      //   guest_id: guest._id,
+      //   booking_id: booking._id,
+      //   Status: true,
+      // });
+
+      // console.log(`Mapping created for booking ${booking._id}`);
     }
   } catch (err) {
     console.error(err);
   }
 };
+
 
 export const updateBookingStatusController = async (req, res) => {
   try {
