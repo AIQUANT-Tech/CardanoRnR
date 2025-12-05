@@ -17,6 +17,33 @@ const FullReviewModal = ({ open, onClose, review }) => {
   const [fullReviewDetails, setFullReviewDetails] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [adminReply, setAdminReply] = useState(null);
+
+  useEffect(() => {
+    const fetchAdminReply = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}api/reply/`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ review_id: review.review_id }),
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.data.length > 0) {
+          // You want the first reply OR latest reply
+          setAdminReply(data.data[data.data.length - 1]); // latest reply
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    if (open && review?.review_id) {
+      fetchAdminReply();
+    }
+  }, [open, review]);
+
 
   useEffect(() => {
     if (open && review?.user_id) {
@@ -171,6 +198,7 @@ const FullReviewModal = ({ open, onClose, review }) => {
                 </Typography>
               )}
             </Box>
+
             <Divider sx={{ mb: 3 }} />
             {/* <Typography
                             variant="h6"
@@ -247,6 +275,38 @@ const FullReviewModal = ({ open, onClose, review }) => {
                 ))}
               </Box>
             ))}
+            {adminReply && (
+              <Box
+                sx={{
+                  mt: 3,
+                  p: 2,
+                  borderRadius: 2,
+                  bgcolor: "#f9f2f2",
+                  boxShadow: 1,
+                }}
+              >
+                <Typography
+                  variant="subtitle1"
+                  fontWeight="bold"
+                  gutterBottom
+                  sx={{ color: "text.primary" }}
+                >
+                  Admin Reply:
+                </Typography>
+
+                <Typography variant="body1" sx={{ mb: 1 }}>
+                  {adminReply.content}
+                </Typography>
+
+                <Typography variant="caption" color="text.secondary">
+                  {format(
+                    new Date(adminReply.created_at),
+                    "MMM dd, yyyy hh:mm a"
+                  )}
+                </Typography>
+              </Box>
+            )}
+
             <Button
               variant="contained"
               color="primary"
