@@ -373,6 +373,7 @@ const CustomerReviewManagement = () => {
                     >
                       Customer Name
                     </TableCell>
+
                     <TableCell
                       align="center"
                       sx={{
@@ -383,6 +384,7 @@ const CustomerReviewManagement = () => {
                     >
                       Rating
                     </TableCell>
+
                     <TableCell
                       align="center"
                       sx={{
@@ -393,6 +395,7 @@ const CustomerReviewManagement = () => {
                     >
                       Review
                     </TableCell>
+
                     <TableCell
                       align="center"
                       sx={{
@@ -403,6 +406,7 @@ const CustomerReviewManagement = () => {
                     >
                       Room Type
                     </TableCell>
+
                     <TableCell
                       align="center"
                       sx={{
@@ -413,6 +417,7 @@ const CustomerReviewManagement = () => {
                     >
                       Category Name
                     </TableCell>
+
                     <TableCell
                       align="center"
                       sx={{
@@ -423,23 +428,39 @@ const CustomerReviewManagement = () => {
                     >
                       Time of Stay
                     </TableCell>
+
                     <TableCell
                       align="center"
                       sx={{ width: "120px", padding: "8px" }}
                     >
                       Response Status
                     </TableCell>
+
+                    {/* ---------------- NEW COLUMN ---------------- */}
+                    <TableCell
+                      align="center"
+                      sx={{
+                        width: "180px",
+                        padding: "8px",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      Blockchain Tx
+                    </TableCell>
                   </TableRow>
                 </TableHead>
+
                 <TableBody>
                   {currentReviews.map((review) => (
                     <TableRow key={review.id}>
                       <TableCell sx={{ padding: "8px", textAlign: "center" }}>
                         {review.user_display_name}
                       </TableCell>
+
                       <TableCell align="center" sx={{ padding: "8px" }}>
                         {review.rating}
                       </TableCell>
+
                       <TableCell
                         sx={{
                           padding: "8px",
@@ -448,7 +469,7 @@ const CustomerReviewManagement = () => {
                           position: "relative",
                           cursor: "pointer",
                           "&:hover": {
-                            backgroundColor: "#FFF3F3", // light highlight
+                            backgroundColor: "#FFF3F3",
                           },
                         }}
                       >
@@ -456,7 +477,7 @@ const CustomerReviewManagement = () => {
                           sx={{
                             display: "flex",
                             alignItems: "center",
-                            gap: 2, // spacing between text & arrow
+                            gap: 2,
                             overflow: "hidden",
                           }}
                         >
@@ -471,7 +492,7 @@ const CustomerReviewManagement = () => {
                                 overflow: "hidden",
                                 textOverflow: "ellipsis",
                                 whiteSpace: "nowrap",
-                                flexGrow: 1, // take remaining space
+                                flexGrow: 1,
                               }}
                             >
                               {review.review}
@@ -500,12 +521,15 @@ const CustomerReviewManagement = () => {
                       <TableCell align="center" sx={{ padding: "8px" }}>
                         {review.booking_details?.room_type}
                       </TableCell>
+
                       <TableCell align="center" sx={{ padding: "8px" }}>
                         {review.category_name}
                       </TableCell>
+
                       <TableCell align="center" sx={{ padding: "8px" }}>
                         {review.time_of_stay}
                       </TableCell>
+
                       <TableCell align="center" sx={{ padding: "8px" }}>
                         <Box
                           display="inline-block"
@@ -524,11 +548,40 @@ const CustomerReviewManagement = () => {
                           {review.review_responded ? "Sent" : "Un Sent"}
                         </Box>
                       </TableCell>
+
+                      {/* ---------------- NEW ROW CELL ---------------- */}
+                      <TableCell align="center" sx={{ padding: "8px" }}>
+                        <Tooltip
+                          title={review.blockchain_tx || "No transaction"}
+                        >
+                          {review.blockchain_tx ? (
+                            <a
+                              href={`https://preprod.cardanoscan.io/transaction/${review.blockchain_tx}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                textDecoration: "none",
+                                color: "#1976d2",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                                display: "inline-block",
+                                maxWidth: "160px",
+                              }}
+                            >
+                              {review.blockchain_tx.slice(0, 10) + "..."}
+                            </a>
+                          ) : (
+                            <Typography color="text.secondary">—</Typography>
+                          )}
+                        </Tooltip>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </TableContainer>
+
             <Box
               sx={{
                 display: "flex",
