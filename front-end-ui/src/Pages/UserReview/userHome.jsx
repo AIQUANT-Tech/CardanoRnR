@@ -12,7 +12,7 @@ const ReviewsPage = () => {
   const [showAllCategories, setShowAllCategories] = useState(false);
   const { companyName } = useParams();
 
-  console.log("I am from company:", companyName);
+  // console.log("I am from company:", companyName);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -53,7 +53,7 @@ const ReviewsPage = () => {
           }
         );
 
-        console.log("Response:", response);
+        // console.log("Response:", response);
 
         setData(response.review_rating_fetch_rs);
       } catch (error) {
