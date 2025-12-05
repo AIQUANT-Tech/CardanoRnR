@@ -87,7 +87,7 @@ reviewQueue.process(async (job, done) => {
     overall_rating,
     overall_review,
     category_wise_review_rating,
-    categoryIds,
+    validCategories, // ✅ FIX: read validCategories
     serializedReviewDatum,
     serializedReviewRedeemer,
   } = job.data;
@@ -95,8 +95,6 @@ reviewQueue.process(async (job, done) => {
   try {
     const reviewDatum = Data.from(serializedReviewDatum);
     const reviewRedeemer = Data.from(serializedReviewRedeemer);
-
-    console.log("Waiting for UTxO:", lockTxHash);
 
     await waitForUTxOWithTimeout(
       scriptAddress,
@@ -106,19 +104,12 @@ reviewQueue.process(async (job, done) => {
       10000
     );
 
-    console.log("Redeeming review data...");
-
     const { txHash: redeemTxHash, reputationScore } = await redeemFunds(
       reviewDatum,
       reviewRedeemer
     );
 
-    console.log("Redeemed with tx:", redeemTxHash);
-    console.log("Reputation Score:", reputationScore);
-
-    // ---- SAVE FINAL REVIEW IN MONGODB ----
-
-    // Save main overall review
+    // 1️⃣ Save overall review
     const savedOverall = await Review.create({
       user_id: userId,
       category_id: null,
@@ -130,7 +121,7 @@ reviewQueue.process(async (job, done) => {
       created_at: new Date(),
     });
 
-    // Save category-wise reviews
+    // 2️⃣ Save category reviews
     const categoryReviews = category_wise_review_rating.map((catRev) => {
       const categoryDoc = validCategories.find(
         (cat) => cat.category_id === catRev.category_id
@@ -138,7 +129,7 @@ reviewQueue.process(async (job, done) => {
 
       return {
         user_id: userId,
-        category_id: categoryDoc._id, 
+        category_id: categoryDoc?._id, // ✅ FIXED
         review: catRev.review,
         rating: catRev.rating,
         overall_review,
@@ -149,17 +140,16 @@ reviewQueue.process(async (job, done) => {
       };
     });
 
-
     await Review.insertMany(categoryReviews);
 
-    console.log("All reviews successfully stored in DB.");
-
+    console.log("All reviews stored successfully.");
     done();
   } catch (error) {
     console.error("Worker error:", error.message);
     done(new Error(error.message));
   }
 });
+
 
 console.log("Bull worker is running and waiting for jobs...");
 

@@ -193,14 +193,14 @@ const emailEndpoint = process.env.EMAIL_URL;
 export const processUserMappingFeed = async () => {
   try {
     const bookings = await BookingInfo.find();
-    console.log("bookings",bookings);
+    // console.log("bookings",bookings);
     let counter = 1;
     for (const booking of bookings) {
-      console.log("counter",counter);
+      // console.log("counter",counter);
       counter++;
-      console.log("booking",booking.guest_id);
+      // console.log("booking",booking.guest_id);
       const guest = await GuestInfo.findById(booking.guest_id);
-      console.log("guest",guest);
+      // console.log("guest",guest);
       if (!guest) continue;
 
       // 1. EMAIL LOGIC
@@ -224,9 +224,9 @@ export const processUserMappingFeed = async () => {
 
       // 2. FIND USER
       const email = guest.email.toLowerCase();
-      console.log("email",email);
+      // console.log("email",email);
       let user = await User.findOne({ email });
-      console.log("user", user);
+      // console.log("user", user);
       if (!user) {
         user = await User.create({
           user_id: generateUniqueId(),
@@ -235,17 +235,17 @@ export const processUserMappingFeed = async () => {
           display_name: `${guest.first_name} ${guest.last_name}`,
           role: "End User",
         });
-        console.log("user created")
+        console.log("user created");
       }
-      
+
       // 3. CHECK DUPLICATE MAPPING
-      console.log("booking._id",booking._id);
+      // console.log("booking._id",booking._id);
       const existingMapping = await UserGuestMap.findOne({
         // user_id: user._id,
         // guest_id: guest._id,
         booking_id: booking._id,
       });
-      console.log("existingMapping",existingMapping);
+      // console.lo g("existingMapping",existingMapping);
       if (existingMapping) {
         console.log("Mapping already exists → skipping");
         continue;
@@ -276,30 +276,29 @@ export const processUserMappingFeed = async () => {
   }
 };
 
-
 export const updateBookingStatusController = async (req, res) => {
   try {
     const result = await updateBookingStatus();
     return res.status(200).json({
       success: true,
       message: "Booking status update scheduler executed",
-      data: result
+      data: result,
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
       message: "Error executing scheduler",
-      error: error.message
+      error: error.message,
     });
   }
 };
-
 
 export const updateBookingStatus = async () => {
   try {
     // Normalize today's date (00:00:00)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    console.log("uodating checkout date");
 
     const bookings = await BookingInfo.find();
 
@@ -310,7 +309,10 @@ export const updateBookingStatus = async () => {
       checkoutDate.setHours(0, 0, 0, 0);
 
       // If checkout date is today → mark Checkedout
-      if (checkoutDate.getTime() === today.getTime() && booking.booking_status !== "Checkedout") {
+      if (
+        checkoutDate.getTime() === today.getTime() &&
+        booking.booking_status !== "Checkedout"
+      ) {
         booking.booking_status = "Checkedout";
         await booking.save();
         updatedCount++;
@@ -318,10 +320,9 @@ export const updateBookingStatus = async () => {
       }
     }
 
-    return { updatedCount };  // <-- IMPORTANT
+    return { updatedCount }; // <-- IMPORTANT
   } catch (error) {
     console.error("Error updating booking status:", error.message);
     throw error; // <-- ALSO IMPORTANT for API error handling
   }
 };
-

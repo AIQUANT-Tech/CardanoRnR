@@ -12,9 +12,11 @@ import schedulerRoutes from "./scheduler/schedulerRoutes.js";
 import Node_Mailer_Router from "./Node_Mailer/Node_Mailer_Routes.js";
 import { initScheduler } from "./scheduler/scheduler.js";
 
+import { statusScheduler } from "./scheduler/scheduler.js";
+
 import dbConnection from "./db/Config.js";
 
-// ⭐ NEW IMPORT
+//  NEW IMPORT
 import { swaggerDocs } from "./swagger/swagger.js";
 
 dotenv.config();
@@ -30,6 +32,7 @@ app.use(cors());
 
 // Start scheduler
 initScheduler();
+statusScheduler();
 
 // Routes
 app.use("/api/reviewcategory", reviewCategoryRoutes);
@@ -41,7 +44,7 @@ app.use("/api/hotel_booking_system/", HbsRoutes);
 app.use("/api/scheduler", schedulerRoutes);
 app.use("/api/emails", Node_Mailer_Router);
 
-// ⭐ Enable Swagger
+//  Enable Swagger
 swaggerDocs(app);
 
 app.listen(process.env.PORT, () => {
