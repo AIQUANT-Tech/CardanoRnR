@@ -55,17 +55,19 @@ const GuestReviews = () => {
           }
         );
 
-        const data = await response.json();
-        const parentTx = data.review_rating_fetch_rs?.blockchain_tx;
+       const data = await response.json();
+    
+       const fetchedReviews =
+         data.review_rating_fetch_rs?.review_rating_details_overall?.map(
+           (item) => ({
+             ...item,
+             blockchain_tx: item.blockchain_tx, // ✔ correct hash per item
+           })
+          );
 
-        const fetchedReviews = (
-          data.review_rating_fetch_rs?.review_rating_details_overall || []
-        ).map((item) => ({
-          ...item,
-          blockchain_tx: parentTx, // ⬅️ ADD HASH HERE
-        }));
 
-        setReviews(fetchedReviews);
+       setReviews(fetchedReviews);
+
 
       } catch (error) {
         console.error("Error fetching reviews:", error);
@@ -104,8 +106,14 @@ const GuestReviews = () => {
     const matchedReply = businessReplies.find(
       (reply) => reply.review_id === review.review_id
     );
-    return { ...review, business_reply: matchedReply?.content };
+
+    return {
+      ...review,
+      blockchain_tx: review.blockchain_tx, // ✔ keep the tx hash visible
+      business_reply: matchedReply?.content || null,
+    };
   });
+
 
   const handleShowReview = (review) => {
     setSelectedReview(review);

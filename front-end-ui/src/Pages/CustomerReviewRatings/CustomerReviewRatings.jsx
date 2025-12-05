@@ -363,6 +363,7 @@ const CustomerReviewManagement = () => {
                   }}
                   variant="outlined"
                   size="small"
+                  blockchain_tx
                   sx={{
                     borderColor: "#DA9C9C",
                     display: "flex",

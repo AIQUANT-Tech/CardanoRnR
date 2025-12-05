@@ -1865,6 +1865,7 @@ export const getReviewsForEndUser = async (req, res) => {
           rating: r.overall_rating,
           reputation_score: blockchainReputationScore,
           booking_details: bookingDetailsForThisUser, // This includes room_type and check_out_date
+          blockchain_tx:r.blockchain_tx
         };
       })
     );
@@ -1915,7 +1916,7 @@ export const getReviewsForEndUser = async (req, res) => {
           : 0,
         review_rating_details_overall: reviewRatingDetailsOverall,
         category_wise_review_rating: categoryWiseReviewList,
-        blockchain_tx: overallReviews[0]?.blockchain_tx || "",
+        // blockchain_tx: overallReviews[0]?.blockchain_tx || "",
       },
     });
   } catch (error) {
