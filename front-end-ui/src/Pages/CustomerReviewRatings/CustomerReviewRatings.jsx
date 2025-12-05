@@ -85,7 +85,6 @@ const CustomerReviewManagement = () => {
         response.data.review_rating_info_rs.review_rating_info_by_user;
 
       // ------------------ MERGE REVIEWS BY TX HASH ------------------
-      // ------------------ MERGE REVIEWS BY TX HASH ------------------
       const mergedReviewsMap = new Map();
 
       fetchedReviews.forEach((review) => {
@@ -209,7 +208,7 @@ const CustomerReviewManagement = () => {
         {/* Header */}
         <Box
           position="fixed"
-          width={isMobile ? "100%" : "calc(100% - 20%)"}
+          width={isMobile ? "100%" : "calc(100% - 40%)"}
           ml={isMobile ? 0 : "20%"}
           zIndex={1000}
           bgcolor="white"
@@ -443,7 +442,7 @@ const CustomerReviewManagement = () => {
                         textAlign: "center",
                       }}
                     >
-                      Review
+                      Reviews
                     </TableCell>
 
                     <TableCell
