@@ -180,7 +180,7 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
         const data = await response.json();
         // Assume that the response returns the overall review document in data.overall
         // Immediately set state to "submitted" (lock tx hash received)
-        setReviewId(data.overall._id);
+        // setReviewId(data.overall._id);
         setSubmissionStatus("submitted");
       } else {
         const errorData = await response.json();
@@ -390,11 +390,13 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
                 Review submitted successfully!
               </Typography>
               {submissionStatus === "submitted" && (
-                <Typography variant="body2" color="textSecondary">
-                  Your review is submitted. We are still processing the
-                  blockchain redemption.
+                <Typography variant="body2" color="textSecondary" mt={1}>
+                  🎉 Thank you for submitting your review!
+                  <br />
+                  We are processing the blockchain transaction.
                 </Typography>
               )}
+              
               {submissionStatus === "finalSuccess" && (
                 <Typography variant="body2" color="textSecondary">
                   Blockchain redemption successful.
