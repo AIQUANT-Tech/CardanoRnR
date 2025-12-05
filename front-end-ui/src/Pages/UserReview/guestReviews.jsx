@@ -115,9 +115,26 @@ const GuestReviews = () => {
   });
 
 
-  const handleShowReview = (review) => {
-    setSelectedReview(review);
-  };
+  // const handleShowReview = (review) => {
+  //   setSelectedReview(review);
+  // };
+
+
+
+
+
+
+const handleShowReview = (review) => {
+  setSelectedReview({
+    review_id: review.review_id, // <-- THIS is the correct one
+    user_id: review.user_id,
+    user_name: review.user_name,
+  });
+};
+
+
+
+
 
   const handleCloseModal = () => {
     setSelectedReview(null);

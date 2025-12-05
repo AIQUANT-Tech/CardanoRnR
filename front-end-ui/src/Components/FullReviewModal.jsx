@@ -19,30 +19,36 @@ const FullReviewModal = ({ open, onClose, review }) => {
   const [error, setError] = useState(null);
   const [adminReply, setAdminReply] = useState(null);
 
-  useEffect(() => {
-    const fetchAdminReply = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}api/reply/`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ review_id: review.review_id }),
-        });
+useEffect(() => {
+  if (!review?.overall_review_id) return;
 
-        const data = await response.json();
+  const fetchAdminReply = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}api/reply/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ review_id: review.overall_review_id }),
+      });
 
-        if (data.success && data.data.length > 0) {
-          // You want the first reply OR latest reply
-          setAdminReply(data.data[data.data.length - 1]); // latest reply
-        }
-      } catch (err) {
-        console.error(err);
+      const data = await response.json();
+
+      if (data.success && data.data.length > 0) {
+        setAdminReply(data.data[data.data.length - 1]);
+      } else {
+        setAdminReply(null);
       }
-    };
-
-    if (open && review?.review_id) {
-      fetchAdminReply();
+    } catch (err) {
+      console.error(err);
     }
-  }, [open, review]);
+  };
+
+  fetchAdminReply();
+}, [review]);
+
+
+
+
+
 
 
   useEffect(() => {
