@@ -52,6 +52,8 @@ const CustomerReviewManagement = () => {
 
   const [openReviewDialog, setOpenReviewDialog] = useState(false);
   const [selectedReviewText, setSelectedReviewText] = useState("");
+  const [selectedReview, setSelectedReview] = useState(null);
+
 
   // Debounced search
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
@@ -81,6 +83,45 @@ const CustomerReviewManagement = () => {
 
       let fetchedReviews =
         response.data.review_rating_info_rs.review_rating_info_by_user;
+
+      // ------------------ MERGE REVIEWS BY TX HASH ------------------
+      // ------------------ MERGE REVIEWS BY TX HASH ------------------
+      const mergedReviewsMap = new Map();
+
+      fetchedReviews.forEach((review) => {
+        const tx = review.blockchain_tx || "NO_TX";
+
+        if (!mergedReviewsMap.has(tx)) {
+          mergedReviewsMap.set(tx, {
+            ...review,
+            categories: [
+              {
+                category_name: review.category_name,
+                rating: review.rating,
+                review_text: review.review, // <-- ADD THIS
+              },
+            ],
+          });
+        } else {
+          const existing = mergedReviewsMap.get(tx);
+
+          existing.categories.push({
+            category_name: review.category_name,
+            rating: review.rating,
+            review_text: review.review, // <-- ADD THIS
+          });
+
+          // Keep latest main review
+          if (new Date(review.created_at) > new Date(existing.created_at)) {
+            existing.created_at = review.created_at;
+            existing.review = review.review;
+          }
+
+          mergedReviewsMap.set(tx, existing);
+        }
+      });
+
+      fetchedReviews = Array.from(mergedReviewsMap.values());
 
       // Filter reviews based on debounced search query
       if (debouncedSearchQuery) {
@@ -140,6 +181,15 @@ const CustomerReviewManagement = () => {
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+  const overallCategory = selectedReview?.categories?.find(
+    (cat) => cat.category_name.toLowerCase() === "overall rating"
+  );
+
+  const otherCategories = selectedReview?.categories?.filter(
+    (cat) => cat.category_name.toLowerCase() !== "overall rating"
+  );
+
 
   return (
     <Box display="flex" width="100vw" height="100vh" bgcolor="white">
@@ -509,7 +559,7 @@ const CustomerReviewManagement = () => {
                               },
                             }}
                             onClick={() => {
-                              setSelectedReviewText(review.review);
+                              setSelectedReview(review);
                               setOpenReviewDialog(true);
                             }}
                           >
@@ -618,11 +668,60 @@ const CustomerReviewManagement = () => {
         fullWidth
         maxWidth="sm"
       >
-        <DialogTitle>Full Review</DialogTitle>
         <DialogContent>
-          <Typography variant="body1" sx={{ whiteSpace: "pre-wrap" }}>
-            {selectedReviewText}
+          {/* --------------- HEADER --------------- */}
+          <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" }}>
+            Full Review
           </Typography>
+
+          {/* --------------- OVERALL RATING --------------- */}
+          {overallCategory && (
+            <Box sx={{ mb: 3 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Typography sx={{ fontWeight: "bold" }}>
+                  Overall Rating
+                </Typography>
+                <Typography>{overallCategory.rating} ⭐</Typography>
+              </Box>
+
+              <Typography sx={{ mt: 1, color: "GrayText" }}>
+                {overallCategory.review_text}
+              </Typography>
+            </Box>
+          )}
+
+          {/* --------------- CATEGORY RATINGS SECTION --------------- */}
+          <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: "bold" }}>
+            Category Ratings:
+          </Typography>
+
+          {otherCategories?.map((cat, index) => (
+            <Box
+              key={index}
+              sx={{
+                padding: "10px 0",
+                borderBottom: "1px solid #eee",
+              }}
+            >
+              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                <Typography sx={{ fontWeight: 600 }}>
+                  {cat.category_name}
+                </Typography>
+
+                <Typography>{cat.rating} ⭐</Typography>
+              </Box>
+
+              <Typography sx={{ mt: 1, color: "GrayText" }}>
+                {cat.review_text}
+              </Typography>
+            </Box>
+          ))}
         </DialogContent>
       </Dialog>
     </Box>
