@@ -970,6 +970,7 @@ export const getReviewsForBusinessUser = async (req, res) => {
         created_at: review.created_at,
         booking_details: bookingDetails,
         time_of_stay: timeOfStay,
+        blockchain_tx: review.blockchain_tx?.toString(),
       };
     });
 
