@@ -56,9 +56,17 @@ const GuestReviews = () => {
         );
 
         const data = await response.json();
-        const fetchedReviews =
-          data.review_rating_fetch_rs?.review_rating_details_overall || [];
+        const parentTx = data.review_rating_fetch_rs?.blockchain_tx;
+
+        const fetchedReviews = (
+          data.review_rating_fetch_rs?.review_rating_details_overall || []
+        ).map((item) => ({
+          ...item,
+          blockchain_tx: parentTx, // ⬅️ ADD HASH HERE
+        }));
+
         setReviews(fetchedReviews);
+
       } catch (error) {
         console.error("Error fetching reviews:", error);
       }
@@ -162,29 +170,17 @@ const GuestReviews = () => {
                     alt=""
                     style={{ width: "30px", height: "30px" }}
                   />
-                  {/* {review.review.charAt(0)} */}
                 </Avatar>
+
                 <Typography variant="body2" fontWeight="bold" mt={1}>
                   {review.user_name}
                 </Typography>
               </Grid>
+
               <Grid item xs={12} md={10}>
                 <Box bottom={19} left={8} display="flex" alignItems="center">
                   {[1, 2, 3, 4, 5].map((star) =>
                     review.rating >= star ? (
-                      // <StarIcon
-                      //     key={star}
-                      //     sx={{
-                      //         color:
-                      //             star <= review.rating
-                      //                 ? "#fdd835"
-                      //                 : "#e0e0e0",
-                      //         fontSize: 35,
-                      //         position: "relative",
-                      //         left: "80%"
-
-                      //     }}
-                      // />
                       <img
                         key={star}
                         src={Star}
@@ -203,6 +199,7 @@ const GuestReviews = () => {
                     )
                   )}
                 </Box>
+
                 <Typography fontSize={16} fontWeight="bold">
                   {review.review}
                 </Typography>
@@ -216,6 +213,7 @@ const GuestReviews = () => {
                     )}
                   </Typography>
                 )}
+
                 {review?.booking_details && (
                   <Box>
                     <Typography variant="body2" color="textSecondary">
@@ -261,9 +259,10 @@ const GuestReviews = () => {
                         <img
                           src={business}
                           alt=""
-                          style={{ height: "30px", width: "30px" }}
+                          style={{ height: 30, width: 30 }}
                         />
                       </Avatar>
+
                       <Typography
                         variant="body2"
                         fontWeight="bold"
@@ -271,16 +270,39 @@ const GuestReviews = () => {
                         sx={{
                           fontSize: 18,
                           display: "flex",
-                          alignContent: "center",
-                          flexWrap: "wrap",
+                          alignItems: "center",
                           paddingLeft: 1,
                         }}
                       >
                         {companyName}
                       </Typography>
                     </Typography>
+
                     <Typography variant="body2">
                       {review.business_reply}
+                    </Typography>
+                  </Box>
+                )}
+
+                {/* ✅ ADDED — Blockchain TX Hash */}
+                {review.blockchain_tx && (
+                  <Box mt={2}>
+                    <Typography variant="body2" fontWeight="bold">
+                      Transaction Hash:
+                    </Typography>
+
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        wordBreak: "break-all",
+                        background: "#f5f5f5",
+                        padding: "8px",
+                        borderRadius: "8px",
+                        fontFamily: "monospace",
+                        mt: 1,
+                      }}
+                    >
+                      {review.blockchain_tx}
                     </Typography>
                   </Box>
                 )}
