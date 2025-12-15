@@ -214,7 +214,7 @@ export const processUserMappingFeed = async () => {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ reciepientEmail: guest.email }),
           });
-
+            console.log("Response", response);
           if (response.ok) {
             booking.is_rnr_notified = true;
             await booking.save();
@@ -247,7 +247,7 @@ export const processUserMappingFeed = async () => {
       });
       // console.lo g("existingMapping",existingMapping);
       if (existingMapping) {
-        console.log("Mapping already exists → skipping");
+        // console.log("Mapping already exists → skipping");
         continue;
       }
 
