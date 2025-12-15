@@ -229,7 +229,7 @@ const CategoriesTable = () => {
       const response = await fetch(
         `${API_BASE_URL}api/reviewcategory/deleteReviewCategory`,
         {
-          method: "DELETE",
+          method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
