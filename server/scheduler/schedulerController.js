@@ -190,43 +190,119 @@ const emailEndpoint = process.env.EMAIL_URL;
 //   }
 // };
 
+// export const processUserMappingFeed = async () => {
+//   try {
+//     const bookings = await BookingInfo.find();
+//     // console.log("bookings",bookings);
+//     let counter = 1;
+//     for (const booking of bookings) {
+//       // console.log("counter",counter);
+//       counter++;
+//       // console.log("booking",booking.guest_id);
+//       const guest = await GuestInfo.findById(booking.guest_id);
+//       // console.log("guest",guest);
+//       if (!guest) continue;
+
+//       // 1. EMAIL LOGIC
+//       const bookings = await BookingInfo.find({
+//   booking_status: "Checkedout",
+//   is_rnr_notified: false
+// });
+
+// for (const booking of bookings) {
+//   const guest = await GuestInfo.findById(booking.guest_id);
+//   if (!guest) continue;
+
+//   const locked = await BookingInfo.findOneAndUpdate(
+//     {
+//       _id: booking._id,
+//       is_rnr_notified: false
+//     },
+//     {
+//       $set: { is_rnr_notified: true }
+//     }
+//   );
+
+//   if (!locked) continue; // already processed
+
+//   await fetch(emailEndpoint, {
+//     method: "POST",
+//     headers: { "Content-Type": "application/json" },
+//     body: JSON.stringify({ reciepientEmail: guest.email }),
+//   });
+// }
+
+
+//       // 2. FIND USER
+//       const email = guest.email.toLowerCase();
+//       // console.log("email",email);
+//       let user = await User.findOne({ email });
+//       // console.log("user", user);
+//       if (!user) {
+//         user = await User.create({
+//           user_id: generateUniqueId(),
+//           email,
+//           password_hash: "password",
+//           display_name: `${guest.first_name} ${guest.last_name}`,
+//           role: "End User",
+//         });
+//         console.log("user created");
+//       }
+
+//       // 3. CHECK DUPLICATE MAPPING
+//       // console.log("booking._id",booking._id);
+//       const existingMapping = await UserGuestMap.findOne({
+//         // user_id: user._id,
+//         // guest_id: guest._id,
+//         booking_id: booking._id,
+//       });
+//       // console.lo g("existingMapping",existingMapping);
+//       if (existingMapping) {
+//         // console.log("Mapping already exists → skipping");
+//         continue;
+//       }
+
+//       await UserGuestMap.create({
+//         user_guest_map_id: generateUniqueId(),
+//         user_id: user._id,
+//         guest_id: guest._id,
+//         booking_id: booking._id,
+//         Status: true,
+//       });
+//       console.log(`Mapping created for booking ${booking._id}`);
+
+//       // // 4. CREATE MAPPING
+//       // await UserGuestMap.create({
+//       //   user_guest_map_id: generateUniqueId(),
+//       //   user_id: user._id,
+//       //   guest_id: guest._id,
+//       //   booking_id: booking._id,
+//       //   Status: true,
+//       // });
+
+//       // console.log(`Mapping created for booking ${booking._id}`);
+//     }
+//   } catch (err) {
+//     console.error(err);
+//   }
+// };
+
 export const processUserMappingFeed = async () => {
   try {
-    const bookings = await BookingInfo.find();
-    // console.log("bookings",bookings);
-    let counter = 1;
-    for (const booking of bookings) {
-      // console.log("counter",counter);
-      counter++;
-      // console.log("booking",booking.guest_id);
+    // 1️⃣ FETCH ALL BOOKINGS (REQUIRED FOR MAPPING)
+    const allBookings = await BookingInfo.find();
+
+    for (const booking of allBookings) {
+      // 2️⃣ LOAD GUEST
       const guest = await GuestInfo.findById(booking.guest_id);
-      // console.log("guest",guest);
       if (!guest) continue;
 
-      // 1. EMAIL LOGIC
-      if (
-        booking.booking_status?.toLowerCase() === "checkedout" &&
-        !booking.is_rnr_notified
-      ) {
-        try {
-          const response = await fetch(emailEndpoint, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ reciepientEmail: guest.email }),
-          });
-            console.log("Response", response);
-          if (response.ok) {
-            booking.is_rnr_notified = true;
-            await booking.save();
-          }
-        } catch (err) {}
-      }
-
-      // 2. FIND USER
+      // --------------------------------------------------
+      // 3️⃣ USER ↔ GUEST MAPPING (RUNS FOR ALL BOOKINGS)
+      // --------------------------------------------------
       const email = guest.email.toLowerCase();
-      // console.log("email",email);
+
       let user = await User.findOne({ email });
-      // console.log("user", user);
       if (!user) {
         user = await User.create({
           user_id: generateUniqueId(),
@@ -235,46 +311,61 @@ export const processUserMappingFeed = async () => {
           display_name: `${guest.first_name} ${guest.last_name}`,
           role: "End User",
         });
-        console.log("user created");
       }
 
-      // 3. CHECK DUPLICATE MAPPING
-      // console.log("booking._id",booking._id);
       const existingMapping = await UserGuestMap.findOne({
-        // user_id: user._id,
-        // guest_id: guest._id,
         booking_id: booking._id,
       });
-      // console.lo g("existingMapping",existingMapping);
-      if (existingMapping) {
-        // console.log("Mapping already exists → skipping");
-        continue;
+
+      if (!existingMapping) {
+        await UserGuestMap.create({
+          user_guest_map_id: generateUniqueId(),
+          user_id: user._id,
+          guest_id: guest._id,
+          booking_id: booking._id,
+          Status: true,
+        });
       }
-
-      await UserGuestMap.create({
-        user_guest_map_id: generateUniqueId(),
-        user_id: user._id,
-        guest_id: guest._id,
-        booking_id: booking._id,
-        Status: true,
-      });
-      console.log(`Mapping created for booking ${booking._id}`);
-
-      // // 4. CREATE MAPPING
-      // await UserGuestMap.create({
-      //   user_guest_map_id: generateUniqueId(),
-      //   user_id: user._id,
-      //   guest_id: guest._id,
-      //   booking_id: booking._id,
-      //   Status: true,
-      // });
-
-      // console.log(`Mapping created for booking ${booking._id}`);
     }
+
+    // --------------------------------------------------
+    // 4️⃣ EMAIL LOGIC (SEPARATE, ATOMIC, SAFE)
+    // --------------------------------------------------
+    const emailBookings = await BookingInfo.find({
+      booking_status: "Checkedout",
+      is_rnr_notified: false,
+    });
+
+    for (const booking of emailBookings) {
+      const guest = await GuestInfo.findById(booking.guest_id);
+      if (!guest) continue;
+
+      // 🔐 Atomic lock (prevents duplicates)
+      const locked = await BookingInfo.findOneAndUpdate(
+        {
+          _id: booking._id,
+          is_rnr_notified: false,
+        },
+        {
+          $set: { is_rnr_notified: true },
+        }
+      );
+
+      if (!locked) continue;
+
+      await fetch(emailEndpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reciepientEmail: guest.email }),
+      });
+    }
+
+    console.log("✅ processUserMappingFeed completed successfully");
   } catch (err) {
-    console.error(err);
+    console.error("❌ processUserMappingFeed error:", err);
   }
 };
+
 
 export const updateBookingStatusController = async (req, res) => {
   try {
