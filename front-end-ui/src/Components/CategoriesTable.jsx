@@ -83,13 +83,69 @@ const CategoriesTable = () => {
   }, []);
 
   // Handle adding new categories
-  const handleAddCategories = async (newCategories) => {
-    const user = JSON.parse(localStorage.getItem("user"));
+  // const handleAddCategories = async (newCategories) => {
+  //   const user = JSON.parse(localStorage.getItem("user"));
 
+  //   const categoryList = newCategories.map((category) => ({
+  //     category_name: category.category_name,
+  //     category_desc: category.category_desc,
+  //     Status: category.Status,
+  //     created_by: user.display_name,
+  //     modified_by: user.display_name,
+  //   }));
+
+  //   const payload = {
+  //     review_category_crud_rq: {
+  //       header: {
+  //         user_name: user.display_name,
+  //         product: "rnr",
+  //         request_type: "CREATE_REVIEW_CATEGORY",
+  //       },
+  //       category_list: categoryList,
+  //     },
+  //   };
+  //   console.log("Payload for adding categories:", payload);
+    
+
+  //   try {
+  //     const response = await fetch(
+  //       `${API_BASE_URL}api/reviewcategory/createReviewCategory`,
+  //       {
+  //         method: "POST",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //         },
+  //         body: JSON.stringify(payload),
+  //       }
+  //     );
+
+  //     if (!response.ok) {
+  //       throw new Error("Failed to add categories");
+  //     }
+
+  //     const result = await response.json();
+  //     console.log("Categories added successfully:", result);
+
+  //     // Refresh data after adding new categories
+  //     setCategoriesData((prevData) => [...prevData, ...categoryList]);
+  //   } catch (error) {
+  //     console.error("Error adding categories:", error);
+  //   }
+  // };
+
+  const handleAddCategories = async (newCategories) => {
+    // 1️⃣ Get logged-in user safely
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!user) {
+      console.error("User session not found");
+      return;
+    }
+
+    // 2️⃣ Build request payload (ONLY for API call)
     const categoryList = newCategories.map((category) => ({
       category_name: category.category_name,
       category_desc: category.category_desc,
-      Status: category.Status,
+      Status: category.Status, // keep as selected (Active / Inactive)
       created_by: user.display_name,
       modified_by: user.display_name,
     }));
@@ -106,6 +162,7 @@ const CategoriesTable = () => {
     };
 
     try {
+      // 3️⃣ Call backend API
       const response = await fetch(
         `${API_BASE_URL}api/reviewcategory/createReviewCategory`,
         {
@@ -121,11 +178,33 @@ const CategoriesTable = () => {
         throw new Error("Failed to add categories");
       }
 
+      // 4️⃣ Parse backend response
       const result = await response.json();
-      console.log("Categories added successfully:", result);
 
-      // Refresh data after adding new categories
-      setCategoriesData((prevData) => [...prevData, ...categoryList]);
+      // 5️⃣ Defensive check (very important)
+      if (
+        !result.data ||
+        !Array.isArray(result.data) ||
+        result.data.length === 0
+      ) {
+        console.error("Backend returned no category data", result);
+        return;
+      }
+
+      // 6️⃣ Map backend → frontend structure
+      const backendCategory = result.data[0];
+
+      const mappedCategory = {
+        category_id: backendCategory.category_id,
+        category_name: backendCategory.category_name,
+        category_desc: backendCategory.category_description,
+        Status: backendCategory.status, // 👈 keep DB format (Active / Inactive)
+        created_by: backendCategory.created_by,
+        modified_by: backendCategory.modified_by,
+      };
+
+      // 7️⃣ Update UI state using BACKEND data only
+      setCategoriesData((prevData) => [...prevData, mappedCategory]);
     } catch (error) {
       console.error("Error adding categories:", error);
     }
