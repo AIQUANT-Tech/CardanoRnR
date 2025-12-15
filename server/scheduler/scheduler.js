@@ -18,7 +18,7 @@ export const initScheduler = () => {
 
   // Runs every 1 minute (your previous cron was wrong)
   cron.schedule("* * * * *", async () => {
-    console.log("Running user mapping scheduler...");
+    // console.log("Running user mapping scheduler...");
      await processUserMappingFeed();
   });
 };
