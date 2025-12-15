@@ -206,7 +206,7 @@ router.put('/editReviewCategory', editReviewCategory);
  *       500:
  *         description: Server error while deleting category
  */
-router.delete('/deleteReviewCategory', deleteReviewCategory);
+router.post('/deleteReviewCategory', deleteReviewCategory);
 
 
 
