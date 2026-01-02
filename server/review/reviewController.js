@@ -1344,6 +1344,7 @@ export const getUserReviews = async (req, res) => {
       }
 
       categories[categoryId].reviews.push({
+        review_id: review._id, // ⭐ REQUIRED
         review: review.review,
         rating: review.rating,
       });
@@ -1353,19 +1354,21 @@ export const getUserReviews = async (req, res) => {
 
     const categoryWiseReviewList = Object.values(categoryWiseReviews);
 
-    return res.status(200).json({
-      status: "success",
-      data: {
-        user: {
-          user_id: user._id,
-          user_name: user.name,
-        },
-        overall_review: reviews[0]?.overall_review || "No overall review",
-        overall_rating: totalOverallRating,
-        created_at: reviews[0].created_at,
-        category_wise_reviews: categoryWiseReviewList,
-      },
-    });
+   return res.status(200).json({
+     status: "success",
+     data: {
+       overall_review_id: reviews[0]._id, // ⭐ REQUIRED
+       user: {
+         user_id: user._id,
+         user_name: user.name,
+       },
+       overall_review: reviews[0]?.overall_review || "No overall review",
+       overall_rating: totalOverallRating,
+       created_at: reviews[0].created_at,
+       category_wise_reviews: categoryWiseReviewList,
+     },
+   });
+
   } catch (error) {
     console.error("Error fetching user reviews:", error.message);
     return res.status(500).json({

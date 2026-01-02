@@ -17,36 +17,52 @@ const FullReviewModal = ({ open, onClose, review }) => {
   const [fullReviewDetails, setFullReviewDetails] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [adminReply, setAdminReply] = useState(null);
+const [adminReplies, setAdminReplies] = useState([]);
 
 useEffect(() => {
-  if (!review?.overall_review_id) return;
+  if (!open || !review) return;
 
-  const fetchAdminReply = async () => {
+  const fetchAdminReplies = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}api/reply/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ review_id: review.overall_review_id }),
+        body: JSON.stringify({
+          user_id: review.user_id, // fetch all replies for this user
+        }),
       });
 
       const data = await response.json();
 
-      if (data.success && data.data.length > 0) {
-        setAdminReply(data.data[data.data.length - 1]);
+      if (data?.success && Array.isArray(data.data)) {
+        setAdminReplies(data.data);
       } else {
-        setAdminReply(null);
+        setAdminReplies([]);
       }
     } catch (err) {
-      console.error(err);
+      console.error("Admin reply fetch failed", err);
+      setAdminReplies([]);
     }
   };
 
-  fetchAdminReply();
-}, [review]);
+  fetchAdminReplies();
+}, [open, review]);
 
 
 
+useEffect(() => {
+  if (!open) {
+    setAdminReplies([]);
+  }
+}, [open]);
+
+
+
+
+
+const overallAdminReply = adminReplies.find(
+  (r) => r.review_id === review?.overall_review_id
+);
 
 
 
@@ -274,42 +290,53 @@ useEffect(() => {
                 >
                   {category.category_desc}
                 </Typography>
-                {category.reviews.map((catReview, idx) => (
-                  <Typography variant="body2" key={idx}>
-                    - {catReview.review}{" "}
-                  </Typography>
-                ))}
+                {category.reviews.map((catReview) => {
+                  const reply = adminReplies.find(
+                    (r) => r.review_id === catReview.review_id
+                  );
+
+                  return (
+                    <Box key={catReview.review_id} sx={{ mt: 1 }}>
+                      <Typography variant="body2">
+                        - {catReview.review}
+                      </Typography>
+
+                      {reply && (
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            mt: 0.5,
+                            ml: 2,
+                            fontStyle: "italic",
+                            color: "text.secondary",
+                          }}
+                        >
+                          Admin: {reply.content}
+                        </Typography>
+                      )}
+                    </Box>
+                  );
+                })}
               </Box>
             ))}
-            {adminReply && (
-              <Box
-                sx={{
-                  mt: 3,
-                  p: 2,
-                  borderRadius: 2,
-                  bgcolor: "#f9f2f2",
-                  boxShadow: 1,
-                }}
-              >
-                <Typography
-                  variant="subtitle1"
-                  fontWeight="bold"
-                  gutterBottom
-                  sx={{ color: "text.primary" }}
-                >
-                  Admin Reply:
+            {overallAdminReply && (
+              <Box sx={{ mt: 3, p: 2, borderRadius: 2, bgcolor: "#f9f2f2" }}>
+                <Typography variant="subtitle1" fontWeight="bold">
+                  Admin Reply (Overall):
                 </Typography>
 
-                <Typography variant="body1" sx={{ mb: 1 }}>
-                  {adminReply.content}
+                <Typography variant="body1">
+                  {overallAdminReply.content}
                 </Typography>
 
-                <Typography variant="caption" color="text.secondary">
-                  {format(
-                    new Date(adminReply.created_at),
-                    "MMM dd, yyyy hh:mm a"
-                  )}
-                </Typography>
+                {overallAdminReply.created_at && (
+                  <Typography variant="caption" color="text.secondary">
+                    {format(
+                      new Date(overallAdminReply.created_at),
+                      "MMM dd, yyyy hh:mm a"
+                    )}
+                  </Typography>
+                )}
               </Box>
             )}
 
