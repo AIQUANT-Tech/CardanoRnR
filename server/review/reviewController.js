@@ -1847,16 +1847,19 @@ export const getReviewsForEndUser = async (req, res) => {
         const userId = r.user_id._id;
 
         let bookingDetailsForThisUser = null;
-        const userFetch = await User.findOne({ _id: userId });
-        // console.log("My Data:", userFetch);
-
         const userGuestMapping = await UserGuestMap.findOne({
-          user_id: userFetch.user_id,
+          user_id: userId.toString(),
         });
+
+
+    console.log("userGuestMapping1:", userGuestMapping);
+
         if (userGuestMapping && userGuestMapping.guest_id) {
-          bookingDetailsForThisUser = await BookingInfo.findOne({
-            guest_id: userGuestMapping.guest_id,
-          }).select("room_type check_out_date");
+          
+         bookingDetailsForThisUser = await BookingInfo.findOne({
+           _id: userGuestMapping.booking_id,
+         }).select("room_type check_in_date check_out_date");
+
         }
 
         return {
