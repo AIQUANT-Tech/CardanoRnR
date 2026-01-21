@@ -12,12 +12,31 @@ import { format } from "date-fns";
 import { motion } from "framer-motion";
 import Star from "../assets/Star.svg";
 import API_BASE_URL from "../config.js";
+import { differenceInCalendarDays } from "date-fns";
+
 
 const FullReviewModal = ({ open, onClose, review }) => {
   const [fullReviewDetails, setFullReviewDetails] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 const [adminReplies, setAdminReplies] = useState([]);
+
+const checkIn = review?.booking_details?.check_in_date
+  ? new Date(review.booking_details.check_in_date)
+  : null;
+
+const checkOut = review?.booking_details?.check_out_date
+  ? new Date(review.booking_details.check_out_date)
+  : null;
+
+let nights = null;
+if (checkIn && checkOut) {
+  nights = differenceInCalendarDays(checkOut, checkIn);
+
+  // safety: if your DB has swapped dates (as in your sample), make it positive
+  nights = Math.abs(nights);
+}
+
 
 useEffect(() => {
   if (!open || !review) return;
@@ -215,9 +234,68 @@ const overallAdminReply = adminReplies.find(
                   Created At:{" "}
                   {format(
                     new Date(fullReviewDetails.created_at),
-                    "MMM dd, yyyy hh:mm a"
+                    "MMM dd, yyyy hh:mm a",
                   )}
                 </Typography>
+              )}
+              {review?.booking_details && (
+                <Box
+                  mt={2}
+                  p={2}
+                  sx={{ bgcolor: "#fff", borderRadius: 2, boxShadow: 1 }}
+                >
+                  <Typography variant="subtitle2" fontWeight="bold">
+                    Stay Details
+                  </Typography>
+
+                  <Typography variant="body2" mt={1}>
+                    Room Type:{" "}
+                    <b>
+                      {review.booking_details?.room_type?.toUpperCase() ??
+                        "N/A"}
+                    </b>
+                  </Typography>
+
+                  <Typography variant="body2" mt={0.5}>
+                    Check In:{" "}
+                    <b>
+                      {review.booking_details?.check_in_date
+                        ? format(
+                            new Date(review.booking_details.check_in_date),
+                            "MMM dd, yyyy",
+                          )
+                        : "N/A"}
+                    </b>
+                  </Typography>
+
+                  <Typography variant="body2" mt={0.5}>
+                    Check Out:{" "}
+                    <b>
+                      {review.booking_details?.check_out_date
+                        ? format(
+                            new Date(review.booking_details.check_out_date),
+                            "MMM dd, yyyy",
+                          )
+                        : "N/A"}
+                    </b>
+                  </Typography>
+
+                  {/* ✅ Duration */}
+                  {checkIn && checkOut && (
+                    <Typography variant="body2" mt={0.5}>
+                      Stay Duration:{" "}
+                      <b>
+                        {Math.abs(differenceInCalendarDays(checkOut, checkIn))}{" "}
+                        night
+                        {Math.abs(
+                          differenceInCalendarDays(checkOut, checkIn),
+                        ) === 1
+                          ? ""
+                          : "s"}
+                      </b>
+                    </Typography>
+                  )}
+                </Box>
               )}
             </Box>
 
@@ -276,7 +354,7 @@ const overallAdminReply = adminReplies.find(
                             />
                           ) : (
                             <span key={star}></span>
-                          )
+                          ),
                         )}
                       </Typography>
                     </Typography>
@@ -292,7 +370,7 @@ const overallAdminReply = adminReplies.find(
                 </Typography>
                 {category.reviews.map((catReview) => {
                   const reply = adminReplies.find(
-                    (r) => r.review_id === catReview.review_id
+                    (r) => r.review_id === catReview.review_id,
                   );
 
                   return (
@@ -333,7 +411,7 @@ const overallAdminReply = adminReplies.find(
                   <Typography variant="caption" color="text.secondary">
                     {format(
                       new Date(overallAdminReply.created_at),
-                      "MMM dd, yyyy hh:mm a"
+                      "MMM dd, yyyy hh:mm a",
                     )}
                   </Typography>
                 )}

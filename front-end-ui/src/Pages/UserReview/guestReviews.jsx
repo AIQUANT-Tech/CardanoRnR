@@ -17,6 +17,8 @@ import Star from "../../assets/Star.svg";
 import business from "../../assets/businessProfile.svg";
 import user from "../../assets/userProfile.svg";
 import API_BASE_URL from "../../config.js";
+import { differenceInCalendarDays } from "date-fns";
+
 
 const GuestReviews = () => {
   const [reviews, setReviews] = useState([]);
@@ -125,11 +127,7 @@ const GuestReviews = () => {
 
 
 const handleShowReview = (review) => {
-  setSelectedReview({
-    review_id: review.review_id, // <-- THIS is the correct one
-    user_id: review.user_id,
-    user_name: review.user_name,
-  });
+  setSelectedReview(review); // ✅ pass everything
 };
 
 
@@ -221,7 +219,7 @@ const handleShowReview = (review) => {
                       />
                     ) : (
                       <span key={star}></span>
-                    )
+                    ),
                   )}
                 </Box>
 
@@ -234,7 +232,7 @@ const handleShowReview = (review) => {
                     Created At:{" "}
                     {format(
                       new Date(review.created_at),
-                      "MMM dd, yyyy hh:mm a"
+                      "MMM dd, yyyy hh:mm a",
                     )}
                   </Typography>
                 )}
@@ -246,11 +244,15 @@ const handleShowReview = (review) => {
                       {review.booking_details?.room_type?.toUpperCase() ??
                         "N/A"}{" "}
                       {" | "}
-                      Stay On:{" "}
-                      {review.booking_details?.check_out_date
-                        ? new Date(
-                            review.booking_details.check_out_date
-                          ).toLocaleDateString()
+                      Stay Duration:{" "}
+                      {review.booking_details?.check_in_date &&
+                      review.booking_details?.check_out_date
+                        ? `${Math.abs(
+                            differenceInCalendarDays(
+                              new Date(review.booking_details.check_out_date),
+                              new Date(review.booking_details.check_in_date),
+                            ),
+                          )} night(s)`
                         : "N/A"}
                     </Typography>
                   </Box>
