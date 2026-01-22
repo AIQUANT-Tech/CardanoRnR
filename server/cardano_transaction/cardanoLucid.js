@@ -3,6 +3,7 @@ import { Lucid, Blockfrost, Constr, Data, fromHex, toHex } from "lucid-cardano";
 import dotenv from "dotenv";
 import cbor from "cbor";
 import { BlockFrostAPI } from "@blockfrost/blockfrost-js";
+import { log } from "console";
 // import { log } from "util";
 // import { assets } from "@blockfrost/blockfrost-js/lib/endpoints/api/assets";
 
@@ -25,6 +26,8 @@ const lucid = await Lucid.new(
 // Connect wallet using the mnemonic
 lucid.selectWalletFromSeed(process.env.MNEMONIC);
 
+
+
 // Matching Number Validator Script (to lock funds)
 const script = {
   type: "PlutusV2",
@@ -33,7 +36,8 @@ const script = {
 
 // Derive script address
 export const scriptAddress = lucid.utils.validatorToAddress(script);
-console.log(scriptAddress);
+console.log("Script Address:", scriptAddress);
+
 
 const businessAddress = await lucid.wallet.address();
 
@@ -42,6 +46,10 @@ console.log("Reward Address:", addr);
 
 const pkh =
   lucid.utils.getAddressDetails(businessAddress).paymentCredential.hash;
+
+  console.log("Payment Key Hash:", pkh);
+
+  
 
 const enterpriseAddress = lucid.utils.credentialToAddress(
   lucid.utils.keyHashToCredential(pkh)
@@ -60,6 +68,7 @@ const priv = lucid.utils.generatePrivateKey(
 );
 console.log("priv:", priv);
 
+const utxo = await lucid.utxosAt(businessAddress);
 const SIGNERkey =  lucid.utils.getAddressDetails(enterpriseAddress).paymentCredential.hash;
 
 console.log("Signer Key Hash:", SIGNERkey);
@@ -324,20 +333,41 @@ export const TxDetails = async (req, res) => {
   }
 };
 
+// function calculateReputation(totalScore, ratingCount) {
+//   const wr = 50n; // Weight for average rating
+//   const wn = 50n; // Weight for normalized count
+
+//   if (ratingCount === 0n) return 0n; // Prevent division by zero
+//   console.log("Total Score: ", totalScore);
+//   console.log("Rating Count: ", ratingCount);
+
+// avgRating = totalScore / ratingCount
+//   const normalizeCount = ratingCount / 100n;
+//   console.log("Normalize Count: ", normalizeCount);
+
+//   return (wr * avgRating + wn * normalizeCount) / 100n; // BigInt division
+// }
+
 function calculateReputation(totalScore, ratingCount) {
-  const wr = 50n; // Weight for average rating
-  const wn = 50n; // Weight for normalized count
+  const wr = 50n; // Weight for rating quality
+  const wn = 50n; // Weight for review volume
 
-  if (ratingCount === 0n) return 0n; // Prevent division by zero
-  console.log("Total Score: ", totalScore);
-  console.log("Rating Count: ", ratingCount);
+  if (ratingCount === 0n) return 0n;
 
-  const avgRating = totalScore / ratingCount;
-  const normalizeCount = ratingCount / 100n;
-  console.log("Normalize Count: ", normalizeCount);
+  // normalizedRating = (avgRating / 5) * 100
+  // integer-safe => (totalScore * 100) / (ratingCount * 5)
+  const normalizedRating = (totalScore * 100n) / (ratingCount * 5n);
 
-  return (wr * avgRating + wn * normalizeCount) / 100n; // BigInt division
+  // normalizedCount = min(100, floor(ratingCount / 100))
+  let normalizedCount = ratingCount / 100n;
+  if (normalizedCount > 100n) normalizedCount = 100n;
+
+  // reputation = (wr*normalizedRating + wn*normalizedCount)/100
+  const reputation = (wr * normalizedRating + wn * normalizedCount) / 100n;
+
+  return reputation;
 }
+
 
 function updateReputation(review) {
   const newTotalScore = review.totalScore + review.overallRating;

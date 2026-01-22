@@ -105,11 +105,23 @@ PlutusTx.unstableMakeIsData ''Redeem
 {-# INLINEABLE calculateReputation #-}
 calculateReputation :: Integer -> Integer -> Integer
 calculateReputation totalScore ratingCount =
-  let wr = 50  -- weight for average rating
-      wn = 50  -- weight for normalized count
-      avgRating = if ratingCount > 0 then totalScore `divide` ratingCount else 0
-      normalizeCount = ratingCount `divide` 100
-  in (wr * avgRating + wn * normalizeCount) `divide` 100
+  let wr = 50
+      wn = 50
+
+      -- normalizedRating = (avgRating/5)*100
+      -- integer-safe: (totalScore * 100) / (ratingCount * 5)
+      normalizedRating =
+        if ratingCount > 0
+          then (totalScore * 100) `divide` (ratingCount * 5)
+          else 0
+
+      -- normalizedCount = min(100, floor(ratingCount/100))
+      normalizedCountRaw = ratingCount `divide` 100
+      normalizedCount =
+        if normalizedCountRaw > 100 then 100 else normalizedCountRaw
+
+  in (wr * normalizedRating + wn * normalizedCount) `divide` 100
+
  
 {-# INLINEABLE listLength #-}
 listLength :: [a] -> Integer
