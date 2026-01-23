@@ -209,7 +209,17 @@ const overallAdminReply = adminReplies.find(
                   </Typography>
                 </Grid>
                 <Grid item sx={{ display: "flex" }}>
-                  {[...Array(fullReviewDetails.overall_rating)].map((_, i) => (
+                  {[
+                    ...Array(
+                      Math.max(
+                        0,
+                        Math.min(
+                          5,
+                          parseInt(fullReviewDetails?.overall_rating, 10) || 0,
+                        ),
+                      ),
+                    ),
+                  ].map((_, i) => (
                     <motion.div
                       key={i}
                       whileHover={{ scale: 1.3 }}
