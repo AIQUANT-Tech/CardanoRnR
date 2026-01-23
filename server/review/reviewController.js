@@ -1811,7 +1811,7 @@ export const getReviewsForEndUser = async (req, res) => {
       )
       .populate("user_id", "display_name");
 
-    console.log("Reviews fetched:", reviews);
+    //console.log("Reviews fetched:", reviews);
 
 
     // if (!reviews || reviews.length === 0) {
@@ -1878,20 +1878,34 @@ export const getReviewsForEndUser = async (req, res) => {
 
     // Category-wise review details (unchanged)
     const categoryIds = [...new Set(reviews.map((r) => r.category_id))];
+    // const categoriesTest = await ReviewCategory.find({
+    //   _id: { $in: categoryIds }
+    // });
+    // console.log(
+    //   "-------------------------categoryIds-----------",
+    //   categoriesTest,
+    // );
     const categories = await ReviewCategory.find({
       _id: { $in: categoryIds },
+      status: "Active",
     }).select("category_id category_name category_description");
 
+    //  console.log("--------------------------categories", categories);
+
+
+    
     const categoryDetailsMap = categories.reduce((map, category) => {
       map[category._id.toString()] = {
         category_name: category.category_name,
-        category_desc: category.category_description,
+        category_desc: category.category_description
       };
       return map;
     }, {});
-
+    
     const categoryWiseReviewRating = reviews.reduce((categories, review) => {
       const category = categoryDetailsMap[review.category_id];
+      
+
       if (!category) return categories;
       const categoryId = review.category_id.toString();
       if (!categories[categoryId]) {
