@@ -1320,7 +1320,9 @@ export const getUserReviews = async (req, res) => {
 
     const categories = await ReviewCategory.find({
       _id: { $in: categoryIds },
-    }).select("category_id category_name category_description");
+      status: "Active", // ✅ only active categories
+    }).select("category_id category_name category_description status");
+
 
     const categoryDetailsMap = categories.reduce((map, category) => {
       map[category._id.toString()] = {
