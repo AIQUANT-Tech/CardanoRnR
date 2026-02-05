@@ -200,6 +200,75 @@ export const getAllReviewCategories = async (req, res) => {
 };
 
 
+export const getActiveReviewCategories = async (req, res) => {
+  try {
+    const { review_category_fetch_rq } = req.body;
+
+    if (!review_category_fetch_rq) {
+      return res.status(400).json({
+        review_category_fetch_rs: {
+          status: responses.validation.invalidRequest,
+        },
+      });
+    }
+
+    const {
+      header: { request_type },
+    } = review_category_fetch_rq;
+
+    if (request_type !== "FETCH_ACTIVE_REVIEW_CATEGORY") {
+      return res.status(400).json({
+        review_category_fetch_rs: {
+          status: responses.validation.invalidRequest,
+        },
+      });
+    }
+
+    // 🔥 Only Active categories
+    const query = { status: "Active" };
+    const projection = {
+      category_id: 1,
+      category_name: 1,
+      category_description: 1,
+    };
+
+    const reviewCategories = await ReviewCategory.find(query, projection);
+
+    if (!reviewCategories || reviewCategories.length === 0) {
+      return res.status(404).json({
+        review_category_fetch_rs: {
+          category_list: [],
+          status: responses.validation.NoCategories,
+        },
+      });
+    }
+
+    const categoryList = reviewCategories.map((category) => ({
+      category_id: category.category_id,
+      category_name: category.category_name,
+      category_desc: category.category_description,
+    }));
+
+    return res.status(200).json({
+      review_category_fetch_rs: {
+        category_list: categoryList,
+        status: responses.success.success,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching active review categories:", error);
+
+    return res.status(500).json({
+      review_category_fetch_rs: {
+        category_list: [],
+        status: responses.error.ServerError,
+        error: error.message,
+      },
+    });
+  }
+};
+
+
 export const editReviewCategory = async (req, res) => {
   try {
     const {
