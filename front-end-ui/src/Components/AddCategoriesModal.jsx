@@ -12,12 +12,14 @@ import AddIcon from '@mui/icons-material/Add';
 
 const AddCategoriesModal = ({ open, onClose, onSubmit }) => {
   const [categories, setCategories] = useState([
-    { name: '', status: 'Inactive' },
+    { name: "", status: "Active", desc: "" },
   ]);
 
+
   const handleAddCategory = () => {
-    setCategories([...categories, { name: '', status: 'Inactive' }]);
+    setCategories([...categories, { name: "", status: "Active", desc: "" }]);
   };
+
 
   const handleCategoryChange = (index, field, value) => {
     const updatedCategories = [...categories];

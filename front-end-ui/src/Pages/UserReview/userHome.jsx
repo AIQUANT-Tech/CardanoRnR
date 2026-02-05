@@ -11,6 +11,8 @@ const ReviewsPage = () => {
   const [loading, setLoading] = useState(true);
   const [showAllCategories, setShowAllCategories] = useState(false);
   const { companyName } = useParams();
+  const [activeCategories, setActiveCategories] = useState([]);
+
 
   // console.log("I am from company:", companyName);
 
@@ -52,10 +54,38 @@ const ReviewsPage = () => {
             },
           }
         );
+        const { data: activeCategoriesData } = await axios.post(
+          `${API_BASE_URL}api/reviewcategory/getReviewCategoryInfoOfActive`,
+          {
+            review_category_fetch_rq: {
+              header: {
+                request_type: "FETCH_ACTIVE_REVIEW_CATEGORY",
+              },
+            },
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+            },
+          },
+        );
 
-        // console.log("Response:", response);
+
+        //  console.log(
+        //    "Response:",
+        //    response.review_rating_fetch_rs.category_wise_review_rating,
+        //  );
+        //  console.log(
+        //    "Active Categories Response:",
+        //    activeCategoriesData.review_category_fetch_rs.category_list,
+        //  );
 
         setData(response.review_rating_fetch_rs);
+        setActiveCategories(
+          activeCategoriesData.review_category_fetch_rs.category_list || [],
+        );
+
       } catch (error) {
         console.error(error);
       } finally {
@@ -92,6 +122,25 @@ const ReviewsPage = () => {
     review_rating_details_overall,
   } = data;
 
+  const mergedCategories = activeCategories.map((activeCat) => {
+    const matchedCategory = category_wise_review_rating.find(
+      (c) => c.category_name === activeCat.category_name,
+    );
+
+    return {
+      category_id: activeCat.category_id,
+      category_name: activeCat.category_name,
+      category_desc: activeCat.category_desc,
+
+      review_rating_details_by_category:
+        matchedCategory?.review_rating_details_by_category || [],
+    };
+  });
+
+  // console.log("-------",mergedCategories);
+  
+
+
   // Calculate Guest Overall Rating
   const guestOverallRating =
     review_rating_details_overall && review_rating_details_overall.length > 0
@@ -118,9 +167,27 @@ const ReviewsPage = () => {
   });
 
   // Determine the categories to show based on "showAllCategories" state
-  const visibleCategories = showAllCategories
-    ? category_wise_review_rating
-    : category_wise_review_rating.slice(0, 3);
+  // const visibleCategories = showAllCategories
+  //   ? category_wise_review_rating
+  //   : category_wise_review_rating.slice(0, 3);
+
+  const sortedCategories = [...mergedCategories].sort(
+    (a, b) =>
+      b.review_rating_details_by_category.length -
+      a.review_rating_details_by_category.length,
+  );
+
+  // console.log("Sorted Categories:", sortedCategories.map((c) => c));
+
+  // const visibleCategories = showAllCategories
+  //   ? sortedCategories
+  //   : sortedCategories.slice(0, 4);
+   const visibleCategories = sortedCategories
+
+
+    // console.log("Visible Categories:", visibleCategories.map((c) => c.category_name));
+    
+
 
   return (
     <>
@@ -134,8 +201,8 @@ const ReviewsPage = () => {
           {guestOverallRating >= 4
             ? "Good"
             : guestOverallRating >= 3
-            ? "Average"
-            : "Bad"}
+              ? "Average"
+              : "Bad"}
         </Typography>
         <Typography align="center" color="textSecondary">
           {totalReviews} Real Reviews
@@ -215,41 +282,40 @@ const ReviewsPage = () => {
             Guest Categories Ratings
           </Typography>
 
-          {visibleCategories.map((category, index) => (
-            <Box key={index} display="flex" alignItems="center" mb={2}>
-              <Typography variant="body1" width={120}>
-                {category.category_name}
-              </Typography>
-              <LinearProgress
-                variant="determinate"
-                value={
-                  (category.review_rating_details_by_category.reduce(
-                    (sum, r) => sum + r.rating,
-                    0
-                  ) /
-                    category.review_rating_details_by_category.length) *
-                  20
-                }
-                sx={{
-                  flexGrow: 1,
-                  height: 8,
-                  marginX: 2,
-                  backgroundColor: "#eaeaea",
-                  "& .MuiLinearProgress-bar": {
-                    backgroundColor: "#00bcd4",
-                  },
-                }}
-              />
-              <Typography variant="body2" fontWeight="bold">
-                {(
-                  category.review_rating_details_by_category.reduce(
-                    (sum, r) => sum + r.rating,
-                    0
-                  ) / category.review_rating_details_by_category.length
-                ).toFixed(1)}
-              </Typography>
-            </Box>
-          ))}
+          {visibleCategories.map((category, index) => {
+            const ratings = category.review_rating_details_by_category || [];
+
+            const avgRating =
+              ratings.length > 0
+                ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
+                : 0;
+
+            return (
+              <Box key={index} display="flex" alignItems="center" mb={2}>
+                <Typography variant="body1" width={120}>
+                  {category.category_name}
+                </Typography>
+
+                <LinearProgress
+                  variant="determinate"
+                  value={avgRating * 20} // 0–100
+                  sx={{
+                    flexGrow: 1,
+                    height: 8,
+                    marginX: 2,
+                    backgroundColor: "#eaeaea",
+                    "& .MuiLinearProgress-bar": {
+                      backgroundColor: "#00bcd4",
+                    },
+                  }}
+                />
+
+                <Typography variant="body2" fontWeight="bold">
+                  {avgRating.toFixed(1)}
+                </Typography>
+              </Box>
+            );
+          })}
 
           <Button
             variant="outlined"
