@@ -1783,7 +1783,7 @@ export const getReputationScoreFromBlockchain = async (req, res) => {
 // };
 
 export const getReviewsForEndUser = async (req, res) => {
-  console.log("fn called");
+  //console.log("fn called");
 
   try {
     if (!req.body || !req.body.review_rating_fetch_rq) {
@@ -1841,7 +1841,7 @@ export const getReviewsForEndUser = async (req, res) => {
       blockchainReputationScore = await fetchReputationScore(lastUserId);
     }
 
-    console.log("ReputationScore: ", blockchainReputationScore);
+    // console.log("ReputationScore: ", blockchainReputationScore);
 
     // For each overall review, fetch its own blockchain reputation score and booking details
     const reviewRatingDetailsOverall = await Promise.all(
@@ -1854,7 +1854,7 @@ export const getReviewsForEndUser = async (req, res) => {
         });
 
 
-    console.log("userGuestMapping1:", userGuestMapping);
+    // console.log("userGuestMapping1:", userGuestMapping);
 
         if (userGuestMapping && userGuestMapping.guest_id) {
           

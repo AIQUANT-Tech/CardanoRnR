@@ -4,6 +4,7 @@ import {
     getAllReviewCategories,
     editReviewCategory,
     deleteReviewCategory,
+    getActiveReviewCategories
 } from './reviewCategoryController.js';
 
 const router = express.Router();
@@ -146,6 +147,8 @@ router.post('/createReviewCategory', createReviewCategory);
  */
 router.post('/getReviewCategoryInfo', getAllReviewCategories);
 
+
+router.post("/getReviewCategoryInfoOfActive", getActiveReviewCategories);
 
 
 /**

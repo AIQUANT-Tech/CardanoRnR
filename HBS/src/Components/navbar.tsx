@@ -2,6 +2,7 @@ import { NavLink } from "react-router-dom";
 // import { useState } from "react";
 
 export default function Navbar() {
+  const bookingEngineUrl = import.meta.env.VITE_EXTERNAL_HOTEL_API_URL;
   const linkClasses =
     "px-4 py-2 text-white hover:text-amber-300 transition-all font-medium";
   // const LRS_URL = import.meta.env.VITE_LRS_URL;
@@ -29,7 +30,7 @@ export default function Navbar() {
 
         <div className="flex gap-6 items-center">
           <a
-            href="https://postprod1.ratetiger.com:9460/#/home?lang=EN"
+            href={bookingEngineUrl}
             className={linkClasses}
             target="_blank"
             rel="noopener noreferrer"
