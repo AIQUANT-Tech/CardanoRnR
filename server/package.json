@@ -35,7 +35,7 @@
     "fix": "^0.0.3",
     "jsonwebtoken": "^9.0.2",
     "lucid-cardano": "^0.10.11",
-    "mongoose": "^8.8.3",
+    "mongoose": "^9.2.1",
     "node-cron": "^3.0.3",
     "nodemailer": "^7.0.3",
     "nodemon": "^3.1.7",
