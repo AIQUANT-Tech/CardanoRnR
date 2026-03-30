@@ -9,6 +9,7 @@ import {
   lockFunds,
   redeemFunds,
   scriptAddress,
+  fetchLatestChainState,
 } from "../cardano_transaction/cardanoLucid.js";
 import reviewQueue from "./reviewQueue.js";
 
@@ -440,7 +441,7 @@ export const createReview = async (req, res) => {
 
     // Validate categories
     const categoryIds = category_wise_review_rating.map(
-      (catReview) => catReview.category_id
+      (catReview) => catReview.category_id,
     );
     const validCategories = await ReviewCategory.find({
       category_id: { $in: categoryIds },
@@ -449,28 +450,25 @@ export const createReview = async (req, res) => {
       return res.status(404).json({ error: "Invalid category IDs" });
     }
 
-    // Calculate dynamic values
-    const allOverall = await Review.find({ category_id: null });
-    const ratingCount = BigInt(allOverall.length);
-    const totalScore = allOverall.reduce(
-      (acc, review) => acc + BigInt(review.overall_rating),
-      0n
-    );
+    //  FIX: Fetch cumulative state from BLOCKCHAIN instead of MongoDB
+    console.log("Fetching latest reputation state from blockchain...");
+    const { totalScore, ratingCount } = await fetchLatestChainState();
 
-    const reputationScore = ratingCount > 0n ? totalScore / ratingCount : 0n;
+    console.log("On-chain totalScore:", totalScore.toString());
+    console.log("On-chain ratingCount:", ratingCount.toString());
 
     const timestamp = BigInt(Date.now());
     const reviewId = Buffer.from(user._id.toString()).toString("hex");
 
-    // On-chain datum and redeemer
+    // On-chain datum and redeemer — built from blockchain state
     const reviewDatum = new Constr(0, [
       reviewId,
       new Constr(1, []),
       BigInt(Math.floor(overall_rating)),
       timestamp,
-      totalScore,
-      ratingCount,
-      reputationScore,
+      totalScore, //  from blockchain
+      ratingCount, //  from blockchain
+      ratingCount > 0n ? totalScore / ratingCount : 0n,
     ]);
     const reviewRedeemer = new Constr(0, [reviewId]);
 
@@ -487,18 +485,17 @@ export const createReview = async (req, res) => {
     const serializedReviewDatum = Data.to(reviewDatum);
     const serializedReviewRedeemer = Data.to(reviewRedeemer);
 
-    // Send to queue -> worker will *save final data to DB*
+    // Send to queue -> worker will save final data to DB after redemption
     reviewQueue.add({
       lockTxHash,
       userId: user._id.toString(),
       overall_rating,
       overall_review,
       category_wise_review_rating,
-      validCategories, // 👈 pass mongo docs
+      validCategories, // pass mongo docs for worker
       serializedReviewDatum,
       serializedReviewRedeemer,
     });
-
 
     return res.status(202).json({
       status: "processing",
