@@ -3,12 +3,10 @@ import BookingInfo from "./Hbs_Booking_Info_Schema.js";
 import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
 
-
 export const processGuestBookingInfo = async (req, res) => {
   try {
     const { guest_booking_info_rq } = req.body;
     console.log(guest_booking_info_rq);
-    
 
     if (!guest_booking_info_rq || !guest_booking_info_rq.guest_list) {
       return res.status(400).json({ error: "Invalid request format" });
@@ -76,7 +74,6 @@ export const processGuestBookingInfo = async (req, res) => {
   }
 };
 
-
 export const invokeBEData = async (req, res) => {
   try {
     console.log(req.body);
@@ -99,7 +96,7 @@ export const invokeBEData = async (req, res) => {
     const apiResponse = await axios.post(
       "https://postprod1.ratetiger.com:9460/DelegateRequestIBE/DelegateRequest?context=ReservationListenerCertTAV8&service=IbeBooking&method=",
       requestPayload,
-      { headers: { "Content-Type": "application/json" } }
+      { headers: { "Content-Type": "application/json" } },
     );
 
     const parsedResponse = apiResponse.data;
@@ -111,7 +108,7 @@ export const invokeBEData = async (req, res) => {
 
     // Step 3: Extract guest info
     const firstGuest = hotelReservation?.ResGuests?.ResGuest?.find(
-      (guest) => guest?.Profiles?.ProfileInfo?.Profile?.ProfileType === 1
+      (guest) => guest?.Profiles?.ProfileInfo?.Profile?.ProfileType === 1,
     );
 
     const guestData = {
@@ -165,7 +162,6 @@ export const invokeBEData = async (req, res) => {
     return res.status(500).json({ error: "Failed to fetch/save booking info" });
   }
 };
-
 
 // const { v4: uuidv4 } = require("uuid");
 
@@ -258,19 +254,24 @@ const processGuestBookingInfoForBookingEngine = async (req) => {
       await BookingInfo.insertMany(bookingsToInsert);
     }
 
-    return { success: true, message: "Guest and booking data processed successfully" };
+    return {
+      success: true,
+      message: "Guest and booking data processed successfully",
+    };
   } catch (error) {
     throw new Error(`Guest booking processing failed: ${error.message}`);
   }
 };
 
-export const bookingEngineData= async (req, res) => {
- try {
+export const bookingEngineData = async (req, res) => {
+  try {
     console.log("Incoming Payload:", req.body);
 
     const hotelReservation = req.body?.hotelReservation;
     if (!hotelReservation) {
-      return res.status(400).json({ error: "hotelReservation missing in request" });
+      return res
+        .status(400)
+        .json({ error: "hotelReservation missing in request" });
     }
 
     // ---------------------------------
@@ -296,27 +297,27 @@ export const bookingEngineData= async (req, res) => {
 
     const savedGuests = [];
 
-for (const guest of hotelReservation.guestDetails || []) {
-  console.log("Guest Data:", guest);
-  const guestData = {
-    first_name: guest.personName?.firstName || "",
-    last_name: guest.personName?.surName || "",
-    email: guest.email || "",
-    phone_number: guest.telePhone?.phoneNo || "",
-    address_city: guest.address?.city || "",
-    address_country: guest.address?.countryCode || "",
-    guest_id: guest.guestID || uuidv4(),
-    guest_id_external: guest.guestID,
-  };
+    for (const guest of hotelReservation.guestDetails || []) {
+      console.log("Guest Data:", guest);
+      const guestData = {
+        first_name: guest.personName?.firstName || "",
+        last_name: guest.personName?.surName || "",
+        email: guest.email || "",
+        phone_number: guest.telePhone?.phoneNo || "",
+        address_city: guest.address?.city || "",
+        address_country: guest.address?.countryCode || "",
+        guest_id: guest.guestID || uuidv4(),
+        guest_id_external: guest.guestID,
+      };
 
-  const savedGuest = await GuestInfo.findOneAndUpdate(
-    { email: guestData.email },
-    { $set: guestData },
-    { new: true, upsert: true }
-  );
+      const savedGuest = await GuestInfo.findOneAndUpdate(
+        { email: guestData.email },
+        { $set: guestData },
+        { new: true, upsert: true },
+      );
 
-  savedGuests.push(savedGuest);
-}
+      savedGuests.push(savedGuest);
+    }
 
     if (savedGuests.length === 0) {
       return res.status(400).json({ error: "No guest details found" });
@@ -337,37 +338,37 @@ for (const guest of hotelReservation.guestDetails || []) {
       guest_id: primaryGuest._id.toString(),
 
       // REQUIRED — Ratetiger does not give room_id → fallback
-      room_id: primaryRoomStay?.roomStayID
-        ? Number(primaryRoomStay.roomStayID)
+      room_id: hotelReservation?.roomStayID
+        ? Number(hotelReservation.roomStayID)
         : 1,
 
       // REQUIRED — Ratetiger does not give room_type → fallback
-      room_type:
-        primaryRoomStay?.roomRates?.[0]?.invCode ||
-        primaryRoomStay?.roomRates?.[0]?.ratePlanCode ||
-        "Standard",
+      room_type: hotelReservation.room_type || "Deluxe",
+      // hotelReservation?.roomRates?.[0]?.invCode ||
+      // hotelReservation?.roomRates?.[0]?.ratePlanCode ||
+      // "Standard",
 
-      check_in_date: new Date(primaryRoomStay?.timeSpan?.start),
-      check_out_date: new Date(primaryRoomStay?.timeSpan?.end),
+      check_in_date: new Date(hotelReservation?.check_in_date),
+      check_out_date: new Date(hotelReservation?.check_out_date),
 
       booking_status: hotelReservation?.resStatus || "pending",
 
-      total_amount: primaryRoomStay?.totalPrice?.amountBeforeTax
-        ? parseFloat(primaryRoomStay.totalPrice.amountBeforeTax)
+      total_amount: hotelReservation?.total_amount
+        ? parseFloat(hotelReservation.total_amount)
         : 0,
 
       payment_status: "PAID", // required fallback
 
-      is_rnr_notified: false
+      is_rnr_notified: false,
     };
 
     // SAVE BOOKING
     // const savedBooking = await BookingInfo.create(bookingData);
     const savedBooking = await BookingInfo.findOneAndUpdate(
-  { booking_id: bookingData.booking_id },
-  { $set: bookingData },
-  { new: true, upsert: true }
-);
+      { booking_id: bookingData.booking_id },
+      { $set: bookingData },
+      { new: true, upsert: true },
+    );
 
     // ---------------------------------
     // 3. FINAL RESPONSE
@@ -378,10 +379,9 @@ for (const guest of hotelReservation.guestDetails || []) {
       message: "Guest + Booking saved successfully.",
       data: {
         guest: primaryGuest,
-        booking: savedBooking
-      }
+        booking: savedBooking,
+      },
     });
-
   } catch (error) {
     console.error("Error in invokeBEData:", error);
     return res.status(500).json({ error: "Failed to save booking info" });
