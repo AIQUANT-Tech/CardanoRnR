@@ -28,7 +28,7 @@ export default function Home() {
               world-class hospitality
             </p>
             <a
-              href="https://postprod1.ratetiger.com:9460/#/home?lang=EN"
+              href="http://localhost:4200"
               target="_blank"
               rel="noopener noreferrer"
               className="w-1/6 mx-auto mt-4 bg-amber-500 hover:bg-amber-600 text-white py-4 rounded-3xl font-semibold text-3xl flex items-sta justify-center gap-2 transition-all shadow-lg hover:shadow-xl transform hover:scale-105 cursor-pointer"
