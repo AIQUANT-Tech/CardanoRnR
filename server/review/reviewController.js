@@ -6,26 +6,25 @@ import ReviewCategory from "../reviewCategory/ReviewCategories.js";
 import responses from "../utils/responses.js";
 import roles from "../utils/roles.js";
 import {
-  lockFunds,
-  redeemFunds,
+  lockReview,
+  processReview,
   scriptAddress,
   fetchLatestChainState,
 } from "../cardano_transaction/cardanoLucid.js";
 import reviewQueue from "./reviewQueue.js";
 
-import { Constr, Data, Lucid, Blockfrost } from "lucid-cardano";
+import { Constr, Data, Lucid, Blockfrost, getAddressDetails, credentialToAddress, keyHashToCredential } from "@lucid-evolution/lucid";
 import review from "./Reviews.js";
 import { log } from "console";
 
-const lucid = await Lucid.new(
-  new Blockfrost(
-    "https://cardano-preprod.blockfrost.io/api/v0",
-    process.env.BLOCKFROST_KEY
-  ),
-  "Preprod"
-);
-
-lucid.selectWalletFromSeed(process.env.MNEMONIC);
+ const lucid = await Lucid(
+   new Blockfrost(
+     "https://cardano-preprod.blockfrost.io/api/v0",
+     process.env.BLOCKFROST_KEY,
+   ),
+   "Preprod",
+ );
+ lucid.selectWallet.fromSeed(process.env.MNEMONIC); 
 
 function convertBigInts(obj) {
   if (typeof obj === "bigint") {
@@ -147,7 +146,7 @@ export async function waitForUTxOWithTimeout(
 
 //     // Lock funds on-chain using the datum.
 //     console.log("Locking review data on-chain...");
-//     const lockTxHash = await lockFunds(reviewDatum);
+//     const lockTxHash = await lockReview(reviewDatum);
 //     if (!lockTxHash) {
 //       return res
 //         .status(500)
@@ -331,7 +330,7 @@ export async function waitForUTxOWithTimeout(
 //     const reviewRedeemer = new Constr(0, [reviewId]);
 
 //     console.log("Locking review data on-chain...");
-//     const lockTxHash = await lockFunds(reviewDatum);
+//     const lockTxHash = await lockReview(reviewDatum);
 //     if (!lockTxHash) {
 //       return res
 //         .status(500)
@@ -414,6 +413,7 @@ export const createReview = async (req, res) => {
     const {
       header: { request_type, user_name },
       user_email_id,
+      bookingId,
       overall_rating,
       overall_review,
       category_wise_review_rating,
@@ -439,6 +439,16 @@ export const createReview = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
+    const booking = await BookingInfo.findOne({ booking_id: bookingId });
+
+    if (!booking) {
+      return res.status(404).json({ error: "Booking not found" });
+    }
+
+    if (booking.booking_status !== "Checkedout") {
+      return res.status(403).json({ error: "Only checked-out guests can submit reviews" });
+    }
+
     // Validate categories
     const categoryIds = category_wise_review_rating.map(
       (catReview) => catReview.category_id,
@@ -458,12 +468,12 @@ export const createReview = async (req, res) => {
     console.log("On-chain ratingCount:", ratingCount.toString());
 
     const timestamp = BigInt(Date.now());
-    const reviewId = Buffer.from(user._id.toString()).toString("hex");
+    const reviewId = Buffer.from(`${user._id}${booking._id}`).toString("hex");
 
     // On-chain datum and redeemer — built from blockchain state
     const reviewDatum = new Constr(0, [
       reviewId,
-      new Constr(1, []),
+      new Constr(0, [Buffer.from(bookingId).toString("hex")]),
       BigInt(Math.floor(overall_rating)),
       timestamp,
       totalScore, //  from blockchain
@@ -473,7 +483,7 @@ export const createReview = async (req, res) => {
     const reviewRedeemer = new Constr(0, [reviewId]);
 
     console.log("Locking review data on-chain...");
-    const lockTxHash = await lockFunds(reviewDatum);
+    const lockTxHash = await lockReview(reviewDatum);
 
     if (!lockTxHash) {
       return res
@@ -1588,19 +1598,13 @@ export const calculateReviewStats = async (req, res) => {
 
 export async function fetchReputationScore(userId) {
   try {
-    // Recreate reviewId from the user id (using the same logic as in createReview)
-    const reviewId = Buffer.from(userId.toString()).toString("hex");
+    // Recreate reviewId using userId + bookingId (same logic as createReview)
+    const userMapping = await UserGuestMap.findOne({ user_id: userId.toString() });
+    const bookingId = userMapping?.booking_id?.toString() || "";
+    const reviewId = Buffer.from(`${userId}${bookingId}`).toString("hex");
     console.log("ReviewId:", reviewId);
 
-    // Assume the redeemed UTXO is at the wallet address
-    const businessAddress = await lucid.wallet.address();
-    const pkh =
-      lucid.utils.getAddressDetails(businessAddress).paymentCredential.hash;
-
-    const enterpriseAddress = lucid.utils.credentialToAddress(
-      lucid.utils.keyHashToCredential(pkh)
-    );
-    const utxos = await lucid.utxosAt(enterpriseAddress);
+    const utxos = await lucid.utxosAt(scriptAddress);
     let reputationScore = 0;
 
     // Iterate through UTXOs and check for an inline datum (or datum field) that matches our reviewId.

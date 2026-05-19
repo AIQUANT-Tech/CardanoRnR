@@ -18,7 +18,7 @@ const transporter = nodemailer.createTransport({
 
 export const SendRnREmail = async (req, res) => {
   try {
-    const { reciepientEmail } = req.body;
+    const { reciepientEmail, bookingId } = req.body;
     console.log("Reciepient Email:", reciepientEmail);
 
     if (!reciepientEmail) {
@@ -46,7 +46,7 @@ We would truly appreciate it if you could spare a moment to share your feedback 
 
 Your review helps us improve and continue delivering the best hospitality experience.
 
-Review Link: ${process.env.Hotel_Name_Url}
+Review Link: ${process.env.Hotel_Name_Url}?bookingId=${bookingId}
 
 Warm regards,
 Team Hotel Kimpton Aluna
@@ -70,7 +70,7 @@ Team Hotel Kimpton Aluna
     </p>
 
     <div style="text-align: center; margin: 30px 0;">
-      <a href="${process.env.Hotel_Name_Url}"
+      <a href="${process.env.Hotel_Name_Url}?bookingId=${bookingId}"
         style="
           background: #ff9800;
           color: #fff;
@@ -94,8 +94,8 @@ Team Hotel Kimpton Aluna
 
     <p style="font-size: 13px; color: #888; line-height: 1.5;">
       If the button above doesn't work, copy and paste this link into your browser: <br>
-      <a href="${process.env.Hotel_Name_Url}" style="color: #007bff;">
-        ${process.env.Hotel_Name_Url}
+      <a href="${process.env.Hotel_Name_Url}?bookingId=${bookingId}" style="color: #007bff;">
+        ${process.env.Hotel_Name_Url}?bookingId=${bookingId}
       </a>
     </p>
 

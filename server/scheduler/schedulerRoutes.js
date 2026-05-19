@@ -3,6 +3,7 @@ import {
   processUserMappingFeed,
   updateBookingStatusController
 } from "./schedulerController.js";
+import { cleanOrphanedScriptUtxos, getScriptState } from "../cardano_transaction/cardanoLucid.js";
 
 const router = express.Router();
 
@@ -131,6 +132,23 @@ router.post("/run", processUserMappingFeed);
  */
 router.post("/updateBookingStatus", updateBookingStatusController);
 
+router.post("/sweepOrphanedUtxos", async (req, res) => {
+  try {
+    await cleanOrphanedScriptUtxos();
+    return res.status(200).json({ success: true, message: "Orphaned lock UTxO sweep complete" });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get("/scriptState", async (req, res) => {
+  try {
+    const state = await getScriptState();
+    return res.status(200).json(state);
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 
 export default router;

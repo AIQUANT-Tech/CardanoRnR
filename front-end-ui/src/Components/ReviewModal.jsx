@@ -18,7 +18,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import Star from "../assets/Star.svg";
 import API_BASE_URL from "../config.js";
 
-const ReviewModal = ({ open, setOpen, email, setEmail }) => {
+const ReviewModal = ({ open, setOpen, email, setEmail , bookingId }) => {
   // Form fields
   const [overallRating, setOverallRating] = useState(0);
   const [hover, setHover] = useState(-1);
@@ -160,6 +160,7 @@ const ReviewModal = ({ open, setOpen, email, setEmail }) => {
             request_type: "CREATE_NEW_REVIEW_RATING",
           },
           user_email_id: email,
+          bookingId: bookingId,
           overall_rating: overallRating.toString(),
           overall_review: overallReview,
           category_wise_review_rating: selectedCategories.map((category) => ({
