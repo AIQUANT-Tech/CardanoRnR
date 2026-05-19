@@ -21,7 +21,7 @@ export default function HotelDetails() {
       try {
         const data = await verifyReservation({
           unique_id: 73279767,
-          booker_email: "ishikaaj98@gmail.com",
+          booker_email: import.meta.env.VITE_BOOKER_EMAIL,
           propertyId: hotelId,
         });
 

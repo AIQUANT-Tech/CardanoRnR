@@ -95,10 +95,10 @@ data Review = Review
 PlutusTx.unstableMakeIsData ''Review
  
 -- | Redeemer for redeeming/updating a review
-data Redeem = Redeem
-  { redeemReviewId :: BuiltinByteString }
+data Redeem = ReviewRedeem BuiltinByteString
+            | StateRedeem
   deriving Show
- 
+
 PlutusTx.unstableMakeIsData ''Redeem
  
 -- Calculate reputation from totalScore and ratingCount
@@ -142,36 +142,36 @@ updateReputation r =
 mkValidateReview :: PubKeyHash -> Review -> Redeem -> ScriptContext -> Bool
 mkValidateReview businessPKH review redeem ctx =
   let info = scriptContextTxInfo ctx
-      -- must be signed by the Business user
-      txSignedByBusinessUser = traceIfFalse "Transaction not signed by review author!"
-                                         (txSignedBy info businessPKH)
-      -- reviewId matches redeemer
-      validReviewId  = traceIfFalse "Invalid Review ID!"
-                                         (reviewId review == redeemReviewId redeem)
-      -- rating in [1,5]
-      validRating    = traceIfFalse "Invalid Rating! Must be between 1 and 5"
-                                         (overallRating review > 0 && overallRating review <= 5)
-      -- reference ID, if present, non-empty
-      validReferenceId       = case reviewReferenceId review of
-                         Nothing -> True
-                         Just x  -> traceIfFalse "Invalid reference ID!" (x /= "")
-      -- update and check reputation
-      updatedReview        = updateReputation review
-      validReputation     = traceIfFalse "Reputation score must be > 0 !!" (reputationScore updatedReview > 0)
-      -- Expected inline datum (the updated review state)
-      expectedDatum = Datum (toBuiltinData updatedReview)
-      businessAddress = Address {
-        addressCredential = PubKeyCredential businessPKH
-        , addressStakingCredential = Nothing }
-      
-      --Checks if the transaction contains exactly one output with the correct updated datum at the correct address
-      checkOutput output =
-        case txOutDatum output of
-          OutputDatum d -> d == expectedDatum && txOutAddress output == businessAddress
-          _             -> False
-      outputsMatching        = filter checkOutput (txInfoOutputs info)
-      validCombinedOutput    = traceIfFalse "Transaction must contain exactly one output with the correct updated datum at the correct address!" (listLength outputsMatching == 1)
-  in txSignedByBusinessUser && validReviewId && validRating && validReferenceId && validReputation && validCombinedOutput
+  in case redeem of
+    StateRedeem ->
+      traceIfFalse "Not signed by business user!" (txSignedBy info businessPKH)
+    ReviewRedeem redeemId ->
+      let -- must be signed by the Business user
+          txSignedByBusinessUser = traceIfFalse "Transaction not signed by review author!"
+                                             (txSignedBy info businessPKH)
+          -- reviewId matches redeemer
+          validReviewId  = traceIfFalse "Invalid Review ID!"
+                                             (reviewId review == redeemId)
+          -- rating in [1,5]
+          validRating    = traceIfFalse "Invalid Rating! Must be between 1 and 5"
+                                             (overallRating review > 0 && overallRating review <= 5)
+          -- reference ID, if present, non-empty
+          validReferenceId = case reviewReferenceId review of
+                               Nothing -> True
+                               Just x  -> traceIfFalse "Invalid reference ID!" (x /= "")
+          -- update and check reputation
+          updatedReview    = updateReputation review
+          validReputation  = traceIfFalse "Reputation score must be > 0 !!" (reputationScore updatedReview > 0)
+          -- Expected inline datum (the updated review state)
+          expectedDatum    = Datum (toBuiltinData updatedReview)
+          -- Check exactly one continuing output (back to script) with correct datum
+          continuingOutputs     = getContinuingOutputs ctx
+          checkContinuingOutput output =
+            case txOutDatum output of
+              OutputDatum d -> d == expectedDatum
+              _             -> False
+          validCombinedOutput = traceIfFalse "Must have exactly one continuing output with correct datum!" (listLength (filter checkContinuingOutput continuingOutputs) == 1)
+      in txSignedByBusinessUser && validReviewId && validRating && validReferenceId && validReputation && validCombinedOutput
  
 -- | Wrap into built-in types
 {-# INLINEABLE wrapValidator #-}

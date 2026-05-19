@@ -1,13 +1,8 @@
 import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
 import responses from '../utils/responses.js';
 import roles from '../utils/roles.js';
 
-const generateRandomSecret = () => {
-    return crypto.randomBytes(64).toString('hex'); 
-};
-
-const JWT_SECRET = generateRandomSecret(); 
+const JWT_SECRET = process.env.JWT_SECRET;
 
 export const generateToken = (user) => {
     return jwt.sign(

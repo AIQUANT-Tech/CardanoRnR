@@ -1,6 +1,6 @@
 import express from "express";
 import { fetchRedeemers } from "./index.js";
-import { lockFundsController, redeemFundsController, TxDetails } from "./cardanoLucid.js";
+import { lockReviewController, processReviewController, TxDetails } from "./cardanoLucid.js";
 
 const router = express.Router();
 
@@ -175,7 +175,7 @@ router.post("/fetchRedeemers", fetchRedeemers);
  *       500:
  *         description: Cardano transaction construction/signing error
  */
-router.post("/lockFunds", lockFundsController);
+router.post("/lockFunds", lockReviewController);
 
 
 
@@ -204,7 +204,7 @@ router.post("/lockFunds", lockFundsController);
  *       500:
  *         description: Redeeming failed due to invalid redeemer or script mismatch
  */
-router.post("/redeemFunds", redeemFundsController);
+router.post("/redeemFunds", processReviewController);
 
 
 

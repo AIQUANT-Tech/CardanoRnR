@@ -118,7 +118,7 @@ export const invokeBEData = async (req, res) => {
       last_name:
         firstGuest?.Profiles?.ProfileInfo?.Profile?.Customer?.PersonName
           ?.Surname || "",
-      email: "arpnmaitra@gmail.com", // ⚠️ replace with real email from API if available
+      email: firstGuest?.Profiles?.ProfileInfo?.Profile?.Customer?.Email || process.env.FALLBACK_GUEST_EMAIL,
       phone_number:
         firstGuest?.Profiles?.ProfileInfo?.Profile?.Customer?.Telephone
           ?.PhoneNumber || "",

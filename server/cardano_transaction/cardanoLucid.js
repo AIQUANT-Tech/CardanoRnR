@@ -1,5 +1,18 @@
 // controllers/transactionController.js
-import { Lucid, Blockfrost, Constr, Data, fromHex, toHex } from "lucid-cardano";
+// import { Lucid, Blockfrost, Constr, Data, fromHex, toHex } from "lucid-cardano";
+import {
+  Lucid,
+  Blockfrost,
+  Constr,
+  Data,
+  fromHex,
+  toHex,
+  validatorToAddress,
+  getAddressDetails,
+  credentialToAddress,
+  keyHashToCredential,
+  generatePrivateKey,
+} from "@lucid-evolution/lucid";                 
 import dotenv from "dotenv";
 import cbor from "cbor";
 import { BlockFrostAPI } from "@blockfrost/blockfrost-js";
@@ -16,17 +29,27 @@ const { encode } = cbor;
 const blockfrost = new BlockFrostAPI({ projectId: process.env.BLOCKFROST_KEY });
 
 // Initialize Lucid
-const lucid = await Lucid.new(
-  new Blockfrost(
-    "https://cardano-preprod.blockfrost.io/api/v0",
-    process.env.BLOCKFROST_KEY,
-  ),
-  "Preprod",
-);
+// const lucid = await Lucid.new(
+//   new Blockfrost(
+//     "https://cardano-preprod.blockfrost.io/api/v0",
+//     process.env.BLOCKFROST_KEY,
+//   ),
+//   "Preprod",
+// );
+
+  const lucid = await Lucid(
+    new Blockfrost(
+      "https://cardano-preprod.blockfrost.io/api/v0",
+      process.env.BLOCKFROST_KEY,
+    ),
+    "Preprod",
+  );  
+
+
 
 // Connect wallet using the mnemonic
-lucid.selectWalletFromSeed(process.env.MNEMONIC);
-
+// lucid.selectWalletFromSeed(process.env.MNEMONIC);
+  lucid.selectWallet.fromSeed(process.env.MNEMONIC);                                                        
 // Matching Number Validator Script (to lock funds)
 const script = {
   type: "PlutusV2",
@@ -34,66 +57,69 @@ const script = {
 };
 
 // Derive script address
-export const scriptAddress = lucid.utils.validatorToAddress(script);
+export const scriptAddress = validatorToAddress("Preprod", script);
 console.log("Script Address:", scriptAddress);
 
-const businessAddress = await lucid.wallet.address();
-
-const addr = await lucid.wallet.rewardAddress();
+  const businessAddress = await lucid.wallet().address();
+const addr = await lucid.wallet().rewardAddress();
 console.log("Reward Address:", addr);
 
 const pkh =
-  lucid.utils.getAddressDetails(businessAddress).paymentCredential.hash;
+  getAddressDetails(businessAddress).paymentCredential.hash;
 
 console.log("Payment Key Hash:", pkh);
 
-const enterpriseAddress = lucid.utils.credentialToAddress(
-  lucid.utils.keyHashToCredential(pkh),
+const enterpriseAddress = credentialToAddress(
+  "Preprod",
+  keyHashToCredential(pkh),
 );
 
 console.log("Business Address:", businessAddress);
 console.log("Enterprise Address:", enterpriseAddress);
-console.log(lucid.utils.keyHashToCredential(pkh));
+console.log(keyHashToCredential(pkh));
 
-const Signkey = lucid.utils.generatePrivateKey(businessAddress);
-const priv = lucid.utils.generatePrivateKey(enterpriseAddress);
+const Signkey = generatePrivateKey();
+const priv = generatePrivateKey();
 console.log("priv:", priv);
 
 const utxo = await lucid.utxosAt(businessAddress);
 const SIGNERkey =
-  lucid.utils.getAddressDetails(enterpriseAddress).paymentCredential.hash;
+  getAddressDetails(enterpriseAddress).paymentCredential.hash;
 
 console.log("Signer Key Hash:", SIGNERkey);
 
 console.log("Signkey Hash:", Signkey);
 
-// Lock ADA at the script
-export const lockFunds = async (dataToLock) => {
+const LOCK_LOVELACE = 3000000n;   // ADA locked per review submission
+const STATE_LOVELACE = 2000000n;  // ADA held in the ongoing state UTxO
+
+// Lock review datum at the script address
+export const lockReview = async (dataToLock) => {
   if (typeof dataToLock !== "object" || dataToLock === null) {
     throw new Error("Datum must be a valid JSON object");
   }
   try {
     const tx = await lucid
       .newTx()
-      .payToContract(
+      .pay.ToContract(
         scriptAddress,
-        { inline: Data.to(dataToLock) },
-        { lovelace: 3000000n },
+        { kind: "inline", value: Data.to(dataToLock) },
+        { lovelace: LOCK_LOVELACE },
       )
       .complete();
 
-    const signedTx = await tx.sign().complete();
+    const signedTx = await tx.sign.withWallet().complete();
     const txHash = await signedTx.submit();
-    console.log("Funds locked with transaction:", txHash);
+    console.log("Review locked on-chain, txHash:", txHash);
     return txHash;
   } catch (error) {
-    console.error("Error locking funds:", error);
-    throw new Error("Error locking funds: " + error.message); // ✅ preserve message
+    console.error("Error locking review:", error);
+    throw new Error("Error locking review: " + error.message);
   }
 };
 
-export async function redeemFunds(datumToRedeem, redeemer) {
-  const MAX_RETRIES = 2;
+export async function processReview(datumToRedeem, redeemer) {
+  const MAX_RETRIES = 3;
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
@@ -136,10 +162,16 @@ export async function redeemFunds(datumToRedeem, redeemer) {
         }
       } catch {}
 
-      // STEP 3: Find previous state UTxO at enterprise address
-      const enterpriseUtxos = await lucid.utxosAt(enterpriseAddress);
+      // STEP 3: Find previous state UTxO at script address (exclude the review UTxO itself)
+      const allScriptUtxos = await lucid.utxosAt(scriptAddress);
 
-      const validStateUtxos = enterpriseUtxos
+      const validStateUtxos = allScriptUtxos
+        .filter((utxo) =>
+          // exclude the current review UTxO
+          !(utxo.txHash === reviewUtxo.txHash && utxo.outputIndex === reviewUtxo.outputIndex) &&
+          // state UTxOs hold STATE_LOVELACE (2 ADA); lock UTxOs hold LOCK_LOVELACE (3 ADA)
+          utxo.assets.lovelace === STATE_LOVELACE
+        )
         .map((utxo) => {
           try {
             const d = Data.from(utxo.inlineDatum || utxo.datum);
@@ -180,7 +212,7 @@ export async function redeemFunds(datumToRedeem, redeemer) {
 
       const updatedDatum = new Constr(0, [
         reviewDatum.fields[0],
-        new Constr(1, []),
+        reviewDatum.fields[1],
         BigInt(updatedReview.overallRating),
         BigInt(reviewDatum.fields[3]),
         BigInt(updatedReview.totalScore),
@@ -192,8 +224,7 @@ export async function redeemFunds(datumToRedeem, redeemer) {
       const reviewLovelace = reviewUtxo.assets.lovelace;
       const stateLovelace = previousStateUtxo?.assets.lovelace || 0n;
       const totalLovelace = reviewLovelace + stateLovelace;
-      const STATE_UTXO_LOVELACE = 2000000n;
-      const remainder = totalLovelace - STATE_UTXO_LOVELACE;
+      const remainder = totalLovelace - STATE_LOVELACE;
 
       if (remainder < 0n) {
         throw new Error("Not enough ADA to cover state minimum");
@@ -208,30 +239,30 @@ export async function redeemFunds(datumToRedeem, redeemer) {
       let txBuilder = lucid
         .newTx()
         .collectFrom([reviewUtxo], Data.to(redeemer))
-        .attachSpendingValidator(script)
-        .addSigner(enterpriseAddress);
+        .attach.SpendingValidator(script)
+        .addSignerKey(SIGNERkey);
 
       if (previousStateUtxo) {
-        txBuilder = txBuilder.collectFrom([previousStateUtxo]);
+        txBuilder = txBuilder.collectFrom([previousStateUtxo], Data.to(new Constr(1, [])));
       }
 
-      txBuilder = txBuilder.payToAddressWithData(
-        enterpriseAddress,
-        { inline: Data.to(updatedDatum) },
-        { lovelace: STATE_UTXO_LOVELACE },
+      txBuilder = txBuilder.pay.ToContract(
+        scriptAddress,
+        { kind: "inline", value: Data.to(updatedDatum) },
+        { lovelace: STATE_LOVELACE },
       );
 
       if (remainder > 0n) {
-        txBuilder = txBuilder.payToAddress(businessAddress, {
+        txBuilder = txBuilder.pay.ToAddress(businessAddress, {
           lovelace: remainder,
         });
       }
 
       const tx = await txBuilder.complete();
-      const signedTx = await tx.sign().complete();
+      const signedTx = await tx.sign.withWallet().complete();
       const txHash = await signedTx.submit();
 
-      console.log("✅ Funds redeemed successfully:", txHash);
+      console.log("✅ Review processed successfully, txHash:", txHash);
       return { txHash, reputationScore: updatedReview.reputationScore };
     } catch (error) {
       console.error(`❌ Attempt ${attempt + 1} failed:`, error.message);
@@ -239,7 +270,7 @@ export async function redeemFunds(datumToRedeem, redeemer) {
         throw new Error("Transaction failed: " + error.message);
       }
       console.log("🔁 Retrying due to possible UTxO race...");
-      await new Promise((r) => setTimeout(r, 3000));
+      await new Promise((r) => setTimeout(r, 25000));
     }
   }
 }
@@ -267,7 +298,7 @@ const getTransactionDetails = async (txHash) => {
   }
 };
 
-export const lockFundsController = async (req, res) => {
+export const lockReviewController = async (req, res) => {
   const { datum } = req.body;
   console.log(datum);
 
@@ -276,31 +307,31 @@ export const lockFundsController = async (req, res) => {
   }
 
   try {
-    const txHash = await lockFunds(datum);
+    const txHash = await lockReview(datum);
     res.status(200).json({ txHash });
   } catch (error) {
     res
       .status(500)
-      .json({ error: "Error locking funds", details: error.message });
+      .json({ error: "Error locking review", details: error.message });
   }
 };
 
-export const redeemFundsController = async (req, res) => {
+export const processReviewController = async (req, res) => {
   const { datum, redeemer } = req.body;
 
   if (!redeemer) {
-    return res.status(400).json({ error: "No redeemer provided to unlock" });
+    return res.status(400).json({ error: "No redeemer provided" });
   }
   if (!datum) {
-    return res.status(400).json({ error: "No datum provided to unlock" });
+    return res.status(400).json({ error: "No datum provided" });
   }
   try {
-    const txHash = await redeemFunds(datum, redeemer);
+    const txHash = await processReview(datum, redeemer);
     res.status(200).json({ txHash });
   } catch (error) {
     res
       .status(500)
-      .json({ error: "Error redeeming funds", details: error.message });
+      .json({ error: "Error processing review", details: error.message });
   }
 };
 
@@ -370,14 +401,7 @@ function updateReputation(review) {
 }
 export async function fetchLatestChainState() {
   try {
-    const businessAddress = await lucid.wallet.address();
-    const pkh =
-      lucid.utils.getAddressDetails(businessAddress).paymentCredential.hash;
-    const enterpriseAddress = lucid.utils.credentialToAddress(
-      lucid.utils.keyHashToCredential(pkh),
-    );
-
-    const utxos = await lucid.utxosAt(enterpriseAddress);
+    const utxos = await lucid.utxosAt(scriptAddress);
 
     if (!utxos || utxos.length === 0) {
       console.log("No prior on-chain state found. Starting from zero.");
@@ -423,26 +447,53 @@ export async function cleanOrphanedScriptUtxos() {
     const utxos = await lucid.utxosAt(scriptAddress);
     console.log("Total UTxOs at script address:", utxos.length);
 
-    // Find UTxOs older than 24 hours that are not being actively processed
-    // Since we can't know "active" ones, only call this when no jobs are running
-    for (const utxo of utxos) {
-      if (!utxo.datum) continue;
+    // Only target lock UTxOs (3 ADA) — state UTxOs (2 ADA) are intentionally there
+    const orphanedLocks = utxos.filter(
+      (u) => u.assets.lovelace === LOCK_LOVELACE
+    );
+    console.log("Orphaned lock UTxOs to sweep:", orphanedLocks.length);
+
+    for (const utxo of orphanedLocks) {
+      const rawDatum = utxo.inlineDatum || utxo.datum;
+      if (!rawDatum) continue;
       try {
-        const datum = Data.from(utxo.datum);
-        if (datum?.fields?.length < 7) continue;
+        const datum = Data.from(rawDatum);
+        if (!datum?.fields || datum.fields.length !== 7) continue;
 
         const reviewId = datum.fields[0];
         const redeemer = new Constr(0, [reviewId]);
 
+        // Find existing state UTxO (2 ADA) — exclude this orphan
+        const allUtxos = await lucid.utxosAt(scriptAddress);
+        const stateUtxos = allUtxos.filter(
+          (u) =>
+            u.assets.lovelace === STATE_LOVELACE &&
+            !(u.txHash === utxo.txHash && u.outputIndex === utxo.outputIndex)
+        );
+        const stateUtxo = stateUtxos.length > 0
+          ? stateUtxos.reduce((best, curr) => {
+              const bd = Data.from(best.inlineDatum || best.datum);
+              const cd = Data.from(curr.inlineDatum || curr.datum);
+              return cd.fields[5] > bd.fields[5] ? curr : best;
+            })
+          : null;
+
+        const stateData = stateUtxo
+          ? Data.from(stateUtxo.inlineDatum || stateUtxo.datum)
+          : null;
+
+        const totalScore = stateData ? stateData.fields[4] : datum.fields[4];
+        const ratingCount = stateData ? stateData.fields[5] : datum.fields[5];
+
         const updatedReview = updateReputation({
-          totalScore: datum.fields[4],
-          ratingCount: datum.fields[5],
+          totalScore,
+          ratingCount,
           overallRating: datum.fields[2],
         });
 
         const updatedDatum = new Constr(0, [
           datum.fields[0],
-          new Constr(1, []),
+          datum.fields[1],
           BigInt(updatedReview.overallRating),
           BigInt(datum.fields[3]),
           BigInt(updatedReview.totalScore),
@@ -450,34 +501,56 @@ export async function cleanOrphanedScriptUtxos() {
           BigInt(updatedReview.reputationScore),
         ]);
 
-        const remainder = utxo.assets.lovelace - 2000000n;
-        if (remainder < 0n) continue;
+        const stateLovelace = stateUtxo?.assets.lovelace || 0n;
+        const totalLovelace = utxo.assets.lovelace + stateLovelace;
+        const remainder = totalLovelace - STATE_LOVELACE;
 
-        const tx = await lucid
+        let txBuilder = lucid
           .newTx()
           .collectFrom([utxo], Data.to(redeemer))
-          .attachSpendingValidator(script)
-          .addSigner(enterpriseAddress)
-          .payToAddressWithData(
-            enterpriseAddress,
-            { inline: Data.to(updatedDatum) },
-            { lovelace: 2000000n },
-          )
-          .payToAddress(businessAddress, { lovelace: remainder })
-          .complete();
+          .attach.SpendingValidator(script)
+          .addSignerKey(SIGNERkey);
 
-        const signed = await tx.sign().complete();
+        if (stateUtxo) {
+          txBuilder = txBuilder.collectFrom([stateUtxo], Data.to(new Constr(1, [])));
+        }
+
+        txBuilder = txBuilder.pay.ToContract(
+          scriptAddress,
+          { kind: "inline", value: Data.to(updatedDatum) },
+          { lovelace: STATE_LOVELACE },
+        );
+
+        if (remainder > 0n) {
+          txBuilder = txBuilder.pay.ToAddress(businessAddress, { lovelace: remainder });
+        }
+
+        const tx = await txBuilder.complete();
+        const signed = await tx.sign.withWallet().complete();
         const txHash = await signed.submit();
-        console.log("✅ Cleaned orphaned UTxO:", utxo.txHash, "→", txHash);
+        console.log("✅ Swept orphaned lock UTxO:", utxo.txHash, "→", txHash);
 
-        // Wait between cleanups
         await new Promise((r) => setTimeout(r, 30000));
       } catch (err) {
-        console.error("Could not clean UTxO:", utxo.txHash, err.message);
+        console.error("Could not sweep UTxO:", utxo.txHash, err.message);
       }
     }
+    console.log("✅ Orphan sweep complete");
   } catch (error) {
     console.error("Cleanup failed:", error.message);
   }
 }
-// await cleanOrphanedScriptUtxos();
+
+export async function getScriptState() {
+  const utxos = await lucid.utxosAt(scriptAddress);
+  const stateUtxos = utxos.filter(u => u.assets.lovelace === STATE_LOVELACE);
+  const lockUtxos  = utxos.filter(u => u.assets.lovelace === LOCK_LOVELACE);
+  return {
+    scriptAddress,
+    totalUtxos: utxos.length,
+    isEmpty: utxos.length === 0,
+    stateUtxos: stateUtxos.map(u => ({ txHash: u.txHash, lovelace: u.assets.lovelace.toString() })),
+    lockUtxos:  lockUtxos.map(u =>  ({ txHash: u.txHash, lovelace: u.assets.lovelace.toString() })),
+  };
+}
+

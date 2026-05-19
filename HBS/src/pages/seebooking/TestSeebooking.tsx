@@ -76,7 +76,7 @@ export default function TestSeebooking() {
 
       const { lovelace } = await inrToAda(total);
       const receiver =
-        "addr_test1qrwhxfcsnvx8x2wtxz90tw6k0g8h86e8mpg40asw0sfadsmcyfnnx6xp029luwr5yg6vp2vun27zm33h0uz97lw2py2sngnsna";
+        import.meta.env.VITE_RECEIVER_ADDRESS;
 
       console.log("Sending Lovelace:", lovelace);
 

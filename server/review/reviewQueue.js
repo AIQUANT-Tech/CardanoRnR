@@ -1,10 +1,10 @@
 import Queue from "bull";
 import {
-  redeemFunds,
+  processReview,
   scriptAddress,
 } from "../cardano_transaction/cardanoLucid.js";
 import { waitForUTxOWithTimeout } from "./reviewController.js";
-import { Data } from "lucid-cardano";
+import { Data } from "@lucid-evolution/lucid";
 import Review from "./Reviews.js";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
@@ -55,7 +55,7 @@ const reviewQueue = new Queue("reviewQueue", {
 //       "Background job: UTxO found. Redeeming review data on-chain..."
 //     );
 
-//     const { txHash: redeemTxHash, reputationScore } = await redeemFunds(
+//     const { txHash: redeemTxHash, reputationScore } = await processReview(
 //       reviewDatum,
 //       reviewRedeemer
 //     );
@@ -104,7 +104,7 @@ reviewQueue.process(async (job, done) => {
       10000
     );
 
-    const { txHash: redeemTxHash, reputationScore } = await redeemFunds(
+    const { txHash: redeemTxHash, reputationScore } = await processReview(
       reviewDatum,
       reviewRedeemer
     );
