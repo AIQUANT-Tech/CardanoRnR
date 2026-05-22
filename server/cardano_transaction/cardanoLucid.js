@@ -74,6 +74,8 @@ const enterpriseAddress = credentialToAddress(
   keyHashToCredential(pkh),
 );
 
+console.log("Wallet Utxos: ", await lucid.wallet().getUtxos());
+
 console.log("Business Address:", businessAddress);
 console.log("Enterprise Address:", enterpriseAddress);
 console.log(keyHashToCredential(pkh));
@@ -82,7 +84,9 @@ const Signkey = generatePrivateKey();
 const priv = generatePrivateKey();
 console.log("priv:", priv);
 
-const utxo = await lucid.utxosAt(businessAddress);
+const utxo = await lucid.utxosAt(scriptAddress);
+console.log("UTxOs at script address:", utxo);
+
 const SIGNERkey =
   getAddressDetails(enterpriseAddress).paymentCredential.hash;
 
@@ -92,6 +96,19 @@ console.log("Signkey Hash:", Signkey);
 
 const LOCK_LOVELACE = 3000000n;   // ADA locked per review submission
 const STATE_LOVELACE = 2000000n;  // ADA held in the ongoing state UTxO
+
+// NFT (State Thread Token) — identifies the authentic state UTxO
+// "StateToken" in hex = 5374617465546f6b656e
+const STATE_TOKEN_UNIT = (process.env.STATE_POLICY_ID || "") + (process.env.STATE_NAME || ""); 
+
+
+console.log("State Token Unit:", STATE_TOKEN_UNIT);
+
+
+const mintingPolicyScript = {
+  type: "PlutusV2",
+  script: process.env.MINTING_POLICY_CBOR,
+};
 
 // Lock review datum at the script address
 export const lockReview = async (dataToLock) => {
@@ -129,6 +146,9 @@ export async function processReview(datumToRedeem, redeemer) {
       // STEP 1: Find review UTxO
       const utxos = await lucid.utxosAt(scriptAddress);
       console.log("🔹 UTxOs at Script Address:", utxos.length);
+
+
+      
 
       const reviewUtxo = utxos.find((utxo) => utxo.datum === datumCbor);
       if (!reviewUtxo) throw new Error("No valid UTxO with datum found!");
@@ -169,8 +189,8 @@ export async function processReview(datumToRedeem, redeemer) {
         .filter((utxo) =>
           // exclude the current review UTxO
           !(utxo.txHash === reviewUtxo.txHash && utxo.outputIndex === reviewUtxo.outputIndex) &&
-          // state UTxOs hold STATE_LOVELACE (2 ADA); lock UTxOs hold LOCK_LOVELACE (3 ADA)
-          utxo.assets.lovelace === STATE_LOVELACE
+          // state UTxO is the one holding the NFT — prevents spoofing
+          utxo.assets[STATE_TOKEN_UNIT] === 1n
         )
         .map((utxo) => {
           try {
@@ -242,14 +262,30 @@ export async function processReview(datumToRedeem, redeemer) {
         .attach.SpendingValidator(script)
         .addSignerKey(SIGNERkey);
 
-      if (previousStateUtxo) {
+      if (isGenesis) {
+        // First review ever — mint the NFT by spending the one-shot genesis UTxO
+        // Use getUtxos() to cover both base and enterprise address variants
+        const walletUtxosForGenesis = await lucid.wallet().getUtxos();
+        const genesisUtxo = walletUtxosForGenesis.find(
+          (u) =>
+            u.txHash === process.env.GENESIS_UTXO_TXHASH &&
+            u.outputIndex === Number(process.env.GENESIS_UTXO_INDEX)
+        );
+        if (!genesisUtxo) throw new Error("Genesis UTxO not found — NFT may already be minted");
+        txBuilder = txBuilder
+          .collectFrom([genesisUtxo])
+          .mintAssets({ [STATE_TOKEN_UNIT]: 1n }, Data.to(new Constr(0, [])))
+          .attach.MintingPolicy(mintingPolicyScript);
+      } else {
+        // Subsequent reviews — spend the existing state UTxO to carry NFT forward
         txBuilder = txBuilder.collectFrom([previousStateUtxo], Data.to(new Constr(1, [])));
       }
 
+      // State output always carries the NFT forward (minted on genesis, forwarded on subsequent)
       txBuilder = txBuilder.pay.ToContract(
         scriptAddress,
         { kind: "inline", value: Data.to(updatedDatum) },
-        { lovelace: STATE_LOVELACE },
+        { lovelace: STATE_LOVELACE, [STATE_TOKEN_UNIT]: 1n },
       );
 
       if (remainder > 0n) {
@@ -408,9 +444,10 @@ export async function fetchLatestChainState() {
       return { totalScore: 0n, ratingCount: 0n };
     }
 
-    // Find UTxOs that have a valid inline datum with our Review structure (7 fields)
+    // Only the UTxO holding the NFT is the authentic state UTxO
     const validUtxos = utxos.filter((utxo) => {
       try {
+        if (utxo.assets[STATE_TOKEN_UNIT] !== 1n) return false;
         const datum = Data.from(utxo.inlineDatum || utxo.datum);
         return datum?.fields?.length >= 7;
       } catch {
@@ -467,7 +504,7 @@ export async function cleanOrphanedScriptUtxos() {
         const allUtxos = await lucid.utxosAt(scriptAddress);
         const stateUtxos = allUtxos.filter(
           (u) =>
-            u.assets.lovelace === STATE_LOVELACE &&
+            u.assets[STATE_TOKEN_UNIT] === 1n &&
             !(u.txHash === utxo.txHash && u.outputIndex === utxo.outputIndex)
         );
         const stateUtxo = stateUtxos.length > 0
@@ -518,7 +555,7 @@ export async function cleanOrphanedScriptUtxos() {
         txBuilder = txBuilder.pay.ToContract(
           scriptAddress,
           { kind: "inline", value: Data.to(updatedDatum) },
-          { lovelace: STATE_LOVELACE },
+          { lovelace: STATE_LOVELACE, [STATE_TOKEN_UNIT]: 1n },
         );
 
         if (remainder > 0n) {
@@ -541,10 +578,24 @@ export async function cleanOrphanedScriptUtxos() {
   }
 }
 
+export async function fetchCurrentReputationScore() {
+  try {
+    const utxos = await lucid.utxosAt(scriptAddress);
+    const stateUtxo = utxos.find(u => u.assets[STATE_TOKEN_UNIT] === 1n);
+    if (!stateUtxo) return 0;
+    const datum = Data.from(stateUtxo.inlineDatum || stateUtxo.datum);
+    if (!datum?.fields || datum.fields.length < 7) return 0;
+    return Number(datum.fields[6]);
+  } catch (error) {
+    console.error("Error fetching reputation score from chain:", error.message);
+    return 0;
+  }
+}
+
 export async function getScriptState() {
   const utxos = await lucid.utxosAt(scriptAddress);
-  const stateUtxos = utxos.filter(u => u.assets.lovelace === STATE_LOVELACE);
-  const lockUtxos  = utxos.filter(u => u.assets.lovelace === LOCK_LOVELACE);
+  const stateUtxos = utxos.filter(u => u.assets[STATE_TOKEN_UNIT] === 1n);
+  const lockUtxos  = utxos.filter(u => u.assets.lovelace === LOCK_LOVELACE && u.assets[STATE_TOKEN_UNIT] !== 1n);
   return {
     scriptAddress,
     totalUtxos: utxos.length,

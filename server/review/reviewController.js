@@ -10,6 +10,7 @@ import {
   processReview,
   scriptAddress,
   fetchLatestChainState,
+  fetchCurrentReputationScore,
 } from "../cardano_transaction/cardanoLucid.js";
 import reviewQueue from "./reviewQueue.js";
 
@@ -425,6 +426,7 @@ export const createReview = async (req, res) => {
 
     if (
       !user_email_id ||
+      !bookingId ||
       overall_rating == null ||
       !overall_review ||
       !Array.isArray(category_wise_review_rating) ||
@@ -445,9 +447,9 @@ export const createReview = async (req, res) => {
       return res.status(404).json({ error: "Booking not found" });
     }
 
-    if (booking.booking_status !== "Checkedout") {
-      return res.status(403).json({ error: "Only checked-out guests can submit reviews" });
-    }
+    // if (booking.booking_status !== "Checkedout") {
+    //   return res.status(403).json({ error: "Only checked-out guests can submit reviews" });
+    // }
 
     // Validate categories
     const categoryIds = category_wise_review_rating.map(
@@ -1597,44 +1599,9 @@ export const calculateReviewStats = async (req, res) => {
 // };
 
 export async function fetchReputationScore(userId) {
-  try {
-    // Recreate reviewId using userId + bookingId (same logic as createReview)
-    const userMapping = await UserGuestMap.findOne({ user_id: userId.toString() });
-    const bookingId = userMapping?.booking_id?.toString() || "";
-    const reviewId = Buffer.from(`${userId}${bookingId}`).toString("hex");
-    console.log("ReviewId:", reviewId);
-
-    const utxos = await lucid.utxosAt(scriptAddress);
-    let reputationScore = 0;
-
-    // Iterate through UTXOs and check for an inline datum (or datum field) that matches our reviewId.
-    for (const utxo of utxos) {
-      const inlineData = utxo.inlineDatum || utxo.datum;
-      console.log("Debug: ", inlineData);
-
-      if (inlineData) {
-        const datum = Data.from(inlineData);
-        // console.log("Datum: ", datum);
-
-        // console.log("Decoded datum:", datum);
-        // Check if the datum has at least 7 fields and the first field matches our reviewId.
-        if (
-          datum.fields &&
-          datum.fields.length >= 7 &&
-          datum.fields[0] === reviewId
-        ) {
-          reputationScore = Number(datum.fields[6]);
-          console.log("repu:" + reputationScore);
-
-          break;
-        }
-      }
-    }
-    return reputationScore;
-  } catch (error) {
-    console.error("Error in fetchReputationScore:", error.message);
-    throw error;
-  }
+  // Reputation score is global (stored in the state UTxO identified by the NFT).
+  // No per-user matching needed — just read fields[6] from the state UTxO.
+  return fetchCurrentReputationScore();
 }
 
 // --------------------------------------------------------------------
@@ -1836,7 +1803,6 @@ export const getReviewsForEndUser = async (req, res) => {
 
     const lastUserId =
       overallReviews.length > 0 ? overallReviews[0].user_id._id : null;
-    console.log(lastUserId);
 
     if (overallReviews.length > 0) {
       blockchainReputationScore = await fetchReputationScore(lastUserId);

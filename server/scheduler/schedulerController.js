@@ -331,7 +331,7 @@ export const processUserMappingFeed = async () => {
     // 4️⃣ EMAIL LOGIC (SEPARATE, ATOMIC, SAFE)
     // --------------------------------------------------
     const emailBookings = await BookingInfo.find({
-      booking_status: "Checkedout",
+      // booking_status: "Checkedout",
       is_rnr_notified: false,
     });
 

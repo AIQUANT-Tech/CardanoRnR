@@ -10,7 +10,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
  
-module Review.RnR (Review (..), Redeem (..), validator,  writeScript, saveUpdatedDatum, main, calculateReputation, mkValidateReview, updateReputation, wrapValidator ) where
+module Review.RnR (Review (..), Redeem (..), validator, writeScript, saveUpdatedDatum, main, calculateReputation, mkValidateReview, updateReputation, wrapValidator, mintingPolicy, writeMintingPolicy, mkMintingPolicy, stateTokenName ) where
  
 import Plutus.V2.Ledger.Api (
     BuiltinByteString,
@@ -32,6 +32,7 @@ import Plutus.V2.Ledger.Api (
     unsafeFromBuiltinData
   )
 import Plutus.V1.Ledger.Credential (Credential(..))
+import Plutus.V1.Ledger.Value (valueOf)
 import Plutus.V2.Ledger.Contexts (txSignedBy, TxOut(..), scriptContextTxInfo)
 import PlutusTx (compile, toBuiltinData, unstableMakeIsData, applyCode, liftCode)
 import PlutusTx.Prelude (Bool (..), Integer, Maybe (..), traceError, traceIfFalse, (&&), (>), (>=), (<=), (==))
@@ -49,14 +50,14 @@ import Data.Maybe (fromMaybe)
 import Data.Scientific (toBoundedInteger)
 import qualified Data.Text as T
 import qualified Plutus.Script.Utils.V2.Typed.Scripts as Scripts
-import Plutus.V2.Ledger.Api (BuiltinByteString, BuiltinData, Datum (..), OutputDatum (..), POSIXTime (..), ScriptContext, ScriptPurpose (..), TxOut (..), TxOutRef, Validator, fromData, mkValidatorScript, txInfoOutputs, txOutDatum, unValidatorScript, unsafeFromBuiltinData)
-import Plutus.V2.Ledger.Contexts (scriptContextTxInfo, getContinuingOutputs)
+import Plutus.V2.Ledger.Api (BuiltinByteString, BuiltinData, CurrencySymbol (..), Datum (..), OutputDatum (..), POSIXTime (..), ScriptContext, ScriptPurpose (..), TxId (..), TxInInfo (..), TxOut (..), TxOutRef (..), TokenName (..), Value, Validator, MintingPolicy, fromData, mkMintingPolicyScript, mkValidatorScript, txInfoInputs, txInfoMint, txInfoOutputs, txOutDatum, unMintingPolicyScript, unValidatorScript, unsafeFromBuiltinData)
+import Plutus.V2.Ledger.Contexts (scriptContextTxInfo, getContinuingOutputs, ownCurrencySymbol)
 import PlutusTx (ToData, compile, toBuiltinData, toData, unstableMakeIsData)
 import PlutusTx.Prelude (Bool (..), fromBuiltin, Either (..), Eq (..), Integer, Maybe (..), any, divide, toBuiltin, traceError, traceIfFalse, ($), (&&), (*), (+), (++), (/=), (<=), (==), (>), filter)
 import System.Directory (createDirectoryIfMissing)
 import System.FilePath (takeDirectory)
 import System.IO (appendFile, getLine, writeFile)
-import Prelude (FilePath, IO, Show, String, floor, print, putStrLn, return, show, writeFile, (.), (<$>), (<*>), fail, length)
+import Prelude (FilePath, IO, Show, String, floor, print, putStrLn, read, return, show, writeFile, (.), (<$>), (<*>), fail, length)
 import qualified Data.Text.Encoding as TE
 import qualified Data.ByteString.Base16 as B16
 import PlutusTx.Builtins (toBuiltin)
@@ -100,7 +101,10 @@ data Redeem = ReviewRedeem BuiltinByteString
   deriving Show
 
 PlutusTx.unstableMakeIsData ''Redeem
- 
+
+stateTokenName :: TokenName
+stateTokenName = TokenName "RnrStateToken"
+
 -- Calculate reputation from totalScore and ratingCount
 {-# INLINEABLE calculateReputation #-}
 calculateReputation :: Integer -> Integer -> Integer
@@ -137,10 +141,10 @@ updateReputation r =
       newReput  = calculateReputation newTotal newCount
   in r { totalScore = newTotal, ratingCount = newCount, reputationScore = newReput }
  
--- Only review author may sign, and exactly one continuing output with updated datum
+-- Only review author may sign, exactly one continuing output with updated datum and state token
 {-# INLINEABLE mkValidateReview #-}
-mkValidateReview :: PubKeyHash -> Review -> Redeem -> ScriptContext -> Bool
-mkValidateReview businessPKH review redeem ctx =
+mkValidateReview :: PubKeyHash -> CurrencySymbol -> Review -> Redeem -> ScriptContext -> Bool
+mkValidateReview businessPKH stateCS review redeem ctx =
   let info = scriptContextTxInfo ctx
   in case redeem of
     StateRedeem ->
@@ -171,31 +175,35 @@ mkValidateReview businessPKH review redeem ctx =
               OutputDatum d -> d == expectedDatum
               _             -> False
           validCombinedOutput = traceIfFalse "Must have exactly one continuing output with correct datum!" (listLength (filter checkContinuingOutput continuingOutputs) == 1)
-      in txSignedByBusinessUser && validReviewId && validRating && validReferenceId && validReputation && validCombinedOutput
+          -- Check state token is carried forward in the continuing output
+          validNFTForwarded   = traceIfFalse "State token not forwarded to output!"
+                                  (any (\o -> valueOf (txOutValue o) stateCS stateTokenName == 1) continuingOutputs)
+      in txSignedByBusinessUser && validReviewId && validRating && validReferenceId && validReputation && validCombinedOutput && validNFTForwarded
  
 -- | Wrap into built-in types
 {-# INLINEABLE wrapValidator #-}
-wrapValidator :: PubKeyHash -> BuiltinData -> BuiltinData -> BuiltinData -> ()
-wrapValidator businessPKH d r ctx =
+wrapValidator :: PubKeyHash -> CurrencySymbol -> BuiltinData -> BuiltinData -> BuiltinData -> ()
+wrapValidator businessPKH stateCS d r ctx =
   let review = unsafeFromBuiltinData d
       red    = unsafeFromBuiltinData r
       sc     = unsafeFromBuiltinData ctx
-  in if mkValidateReview businessPKH review red sc
+  in if mkValidateReview businessPKH stateCS review red sc
        then ()
        else traceError "Validation failed!"
  
 -- | The compiled Validator
-validator :: PubKeyHash -> Validator
-validator businessPKH =
+validator :: PubKeyHash -> CurrencySymbol -> Validator
+validator businessPKH stateCS =
   mkValidatorScript
     (   $$(compile [|| wrapValidator ||])
     `applyCode` liftCode businessPKH
+    `applyCode` liftCode stateCS
     )
  
--- Writing the Plutus Script
-writeScript :: FilePath -> PubKeyHash -> IO ()
-writeScript file businessPKH = do
-  let val = validator businessPKH
+-- Writing the Plutus Validator Script
+writeScript :: FilePath -> PubKeyHash -> CurrencySymbol -> IO ()
+writeScript file businessPKH stateCS = do
+  let val = validator businessPKH stateCS
   createDirectoryIfMissing True (takeDirectory file)
   let script      = serialise (unValidatorScript val)
       shortScript = SBS.toShort (LBS.toStrict script)
@@ -206,6 +214,47 @@ writeScript file businessPKH = do
   case result of
     Left err -> print (displayError err)
     Right () -> putStrLn $ "Wrote script to " ++ file
+
+-- One-shot minting policy: mints exactly 1 StateToken, consuming a specific UTxO
+{-# INLINEABLE mkMintingPolicy #-}
+mkMintingPolicy :: TxOutRef -> () -> ScriptContext -> Bool
+mkMintingPolicy utxoRef () ctx =
+  let info    = scriptContextTxInfo ctx
+      hasUtxo = any (\i -> txInInfoOutRef i == utxoRef) (txInfoInputs info)
+      minted  = valueOf (txInfoMint info) (ownCurrencySymbol ctx) stateTokenName
+  in traceIfFalse "Genesis UTxO not consumed" hasUtxo &&
+     traceIfFalse "Must mint exactly 1 state token" (minted == 1)
+
+{-# INLINEABLE wrapMintingPolicy #-}
+wrapMintingPolicy :: TxOutRef -> BuiltinData -> BuiltinData -> ()
+wrapMintingPolicy utxoRef r ctx =
+  let red = unsafeFromBuiltinData r
+      sc  = unsafeFromBuiltinData ctx
+  in if mkMintingPolicy utxoRef red sc
+       then ()
+       else traceError "Minting policy failed!"
+
+mintingPolicy :: TxOutRef -> MintingPolicy
+mintingPolicy utxoRef =
+  mkMintingPolicyScript
+    (   $$(compile [|| wrapMintingPolicy ||])
+    `applyCode` liftCode utxoRef
+    )
+
+-- Writing the Minting Policy Script
+writeMintingPolicy :: FilePath -> TxOutRef -> IO ()
+writeMintingPolicy file utxoRef = do
+  let mp = mintingPolicy utxoRef
+  createDirectoryIfMissing True (takeDirectory file)
+  let script      = serialise (unMintingPolicyScript mp)
+      shortScript = SBS.toShort (LBS.toStrict script)
+  result <- writeFileTextEnvelope @(PlutusScript PlutusScriptV2)
+                                    file
+                                    Nothing
+                                    (PlutusScriptSerialised shortScript)
+  case result of
+    Left err -> print (displayError err)
+    Right () -> putStrLn $ "Wrote minting policy to " ++ file
  
 -- Save the updated datum to a JSON file
 saveUpdatedDatum :: FilePath -> Review -> IO ()
@@ -217,18 +266,37 @@ saveUpdatedDatum filePath review = do
   LBS.writeFile filePath encodedJson
   putStrLn $ "Updated datum saved to " ++ filePath
  
--- Main function to read JSON, process it, and save updated review datum
+-- Main function: writes minting policy then validator
 main :: IO ()
 main = do
-  putStrLn "Enter business PubKeyHash (hex):"
-  pkhHex <- getLine
-  putStrLn "Enter output filepath (e.g. compiled/ReputationRnR.plutus):"
-  outPath <- getLine
-  case B16.decode (BS.pack pkhHex) of
-    Right raw -> do
-      let businessPkh = PubKeyHash (toBuiltin raw)
-      -- write the parameterized script
-      writeScript outPath businessPkh
-      putStrLn "Script written."
-    Left _ -> putStrLn "Invalid hex for PubKeyHash. Exiting."
+  putStrLn "=== Step 1: Minting Policy ==="
+  putStrLn "Enter one-shot UTxO txHash (hex):"
+  txHashHex <- getLine
+  putStrLn "Enter one-shot UTxO output index (integer):"
+  idxStr <- getLine
+  putStrLn "Enter minting policy output filepath (e.g. compiled/StateTokenPolicy.plutus):"
+  mpPath <- getLine
+  case B16.decode (BS.pack txHashHex) of
+    Right txHashBytes -> do
+      let txId    = TxId (toBuiltin txHashBytes)
+          utxoRef = TxOutRef txId (read idxStr)
+      writeMintingPolicy mpPath utxoRef
+      putStrLn "Minting policy written."
+      putStrLn "Run: cardano-cli transaction policyid --script-file <mpPath>"
+      putStrLn ""
+      putStrLn "=== Step 2: Spending Validator ==="
+      putStrLn "Enter business PubKeyHash (hex):"
+      pkhHex <- getLine
+      putStrLn "Enter CurrencySymbol / policy ID (hex, from cardano-cli above):"
+      csHex <- getLine
+      putStrLn "Enter validator output filepath (e.g. compiled/ReputationRnR.plutus):"
+      outPath <- getLine
+      case (B16.decode (BS.pack pkhHex), B16.decode (BS.pack csHex)) of
+        (Right rawPkh, Right rawCs) -> do
+          let businessPkh = PubKeyHash (toBuiltin rawPkh)
+              stateCS     = CurrencySymbol (toBuiltin rawCs)
+          writeScript outPath businessPkh stateCS
+          putStrLn "Validator written."
+        _ -> putStrLn "Invalid hex for PubKeyHash or CurrencySymbol. Exiting."
+    Left _ -> putStrLn "Invalid UTxO txHash hex. Exiting."
  
