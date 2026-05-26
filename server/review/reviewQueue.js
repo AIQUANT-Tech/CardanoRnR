@@ -84,10 +84,11 @@ reviewQueue.process(async (job, done) => {
   const {
     lockTxHash,
     userId,
+    bookingId,
     overall_rating,
     overall_review,
     category_wise_review_rating,
-    validCategories, // ✅ FIX: read validCategories
+    validCategories,
     serializedReviewDatum,
     serializedReviewRedeemer,
   } = job.data;
@@ -113,6 +114,7 @@ reviewQueue.process(async (job, done) => {
     const savedOverall = await Review.create({
       user_id: userId,
       category_id: null,
+      booking_id: bookingId || null,
       overall_review,
       overall_rating,
       blockchain_tx: redeemTxHash,

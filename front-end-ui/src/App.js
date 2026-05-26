@@ -18,7 +18,7 @@ function App() {
     i18n.changeLanguage(lang);
   };
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/app">
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/profile" element={<BusinessUserProfile />} />

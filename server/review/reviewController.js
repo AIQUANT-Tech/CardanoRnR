@@ -501,10 +501,11 @@ export const createReview = async (req, res) => {
     reviewQueue.add({
       lockTxHash,
       userId: user._id.toString(),
+      bookingId,
       overall_rating,
       overall_review,
       category_wise_review_rating,
-      validCategories, // pass mongo docs for worker
+      validCategories,
       serializedReviewDatum,
       serializedReviewRedeemer,
     });
