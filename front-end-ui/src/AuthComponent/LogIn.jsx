@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Navbar, Nav, Dropdown } from "react-bootstrap";
 import axios from "axios";
 import workspace from "../AuthComponent/image/LogIn.jpg";
@@ -15,6 +16,7 @@ function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   // const [isLanguageDropdownVisible, setIsLanguageDropdownVisible] =
   //   useState(false);
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const { i18n } = useTranslation(); // Get i18n instance from react-i18next
 
@@ -53,7 +55,7 @@ function LoginPage() {
         localStorage.setItem("user", JSON.stringify(user));
 
         alert("Login successful!");
-        window.location.href = "/categories"; // Redirect to dashboard
+        navigate("/categories");
       }
     } catch (err) {
       const errorMsg =
