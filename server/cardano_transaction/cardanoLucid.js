@@ -99,7 +99,7 @@ const STATE_LOVELACE = 2000000n;  // ADA held in the ongoing state UTxO
 
 // NFT (State Thread Token) — identifies the authentic state UTxO
 // "StateToken" in hex = 5374617465546f6b656e
-const STATE_TOKEN_UNIT = (process.env.STATE_POLICY_ID || "") + (process.env.STATE_NAME || ""); 
+const STATE_TOKEN_UNIT = (process.env.STATE_POLICY_ID || "").trim() + (process.env.STATE_NAME || "").trim();
 
 
 console.log("State Token Unit:", STATE_TOKEN_UNIT);
@@ -116,6 +116,14 @@ export const lockReview = async (dataToLock) => {
     throw new Error("Datum must be a valid JSON object");
   }
   try {
+    // Exclude genesis UTxO from coin selection so it stays available for NFT minting
+    const genesisHash = (process.env.GENESIS_UTXO_TXHASH || "").trim();
+    const genesisIndex = Number((process.env.GENESIS_UTXO_INDEX || "0").trim());
+    const allWalletUtxos = await lucid.wallet().getUtxos();
+    const nonGenesisUtxos = allWalletUtxos.filter(
+      (u) => !(u.txHash === genesisHash && u.outputIndex === genesisIndex)
+    );
+
     const tx = await lucid
       .newTx()
       .pay.ToContract(
@@ -123,7 +131,7 @@ export const lockReview = async (dataToLock) => {
         { kind: "inline", value: Data.to(dataToLock) },
         { lovelace: LOCK_LOVELACE },
       )
-      .complete();
+      .complete({ presetWalletInputs: nonGenesisUtxos });
 
     const signedTx = await tx.sign.withWallet().complete();
     const txHash = await signedTx.submit();
@@ -266,10 +274,10 @@ export async function processReview(datumToRedeem, redeemer) {
         // First review ever — mint the NFT by spending the one-shot genesis UTxO
         // Use getUtxos() to cover both base and enterprise address variants
         const walletUtxosForGenesis = await lucid.wallet().getUtxos();
+        const genesisHash = (process.env.GENESIS_UTXO_TXHASH || "").trim();
+        const genesisIndex = Number((process.env.GENESIS_UTXO_INDEX || "0").trim());
         const genesisUtxo = walletUtxosForGenesis.find(
-          (u) =>
-            u.txHash === process.env.GENESIS_UTXO_TXHASH &&
-            u.outputIndex === Number(process.env.GENESIS_UTXO_INDEX)
+          (u) => u.txHash === genesisHash && u.outputIndex === genesisIndex
         );
         if (!genesisUtxo) throw new Error("Genesis UTxO not found — NFT may already be minted");
         txBuilder = txBuilder
