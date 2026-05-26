@@ -11,7 +11,6 @@ import {
   getAddressDetails,
   credentialToAddress,
   keyHashToCredential,
-  generatePrivateKey,
 } from "@lucid-evolution/lucid";                 
 import dotenv from "dotenv";
 import cbor from "cbor";
@@ -80,19 +79,10 @@ console.log("Business Address:", businessAddress);
 console.log("Enterprise Address:", enterpriseAddress);
 console.log(keyHashToCredential(pkh));
 
-const Signkey = generatePrivateKey();
-const priv = generatePrivateKey();
-console.log("priv:", priv);
-
 const utxo = await lucid.utxosAt(scriptAddress);
-console.log("UTxOs at script address:", utxo);
 
 const SIGNERkey =
   getAddressDetails(enterpriseAddress).paymentCredential.hash;
-
-console.log("Signer Key Hash:", SIGNERkey);
-
-console.log("Signkey Hash:", Signkey);
 
 const LOCK_LOVELACE = 3000000n;   // ADA locked per review submission
 const STATE_LOVELACE = 2000000n;  // ADA held in the ongoing state UTxO

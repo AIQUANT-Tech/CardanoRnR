@@ -47,6 +47,16 @@ const Reviews = new mongoose.Schema({
     default: false,
     description: "Response given or pending",
   },
+  booking_id: {
+    type: String,
+    default: null,
+    description: "HBS booking reference ID",
+  },
+  reputation_score: {
+    type: String,
+    default: null,
+    description: "Reputation score at time of review",
+  },
   blockchain_tx: {
     type: String,
     default: "",
