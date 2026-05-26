@@ -80,6 +80,7 @@ console.log("Enterprise Address:", enterpriseAddress);
 console.log(keyHashToCredential(pkh));
 
 const utxo = await lucid.utxosAt(scriptAddress);
+console.log("UTxOs at script address:", utxo);
 
 const SIGNERkey =
   getAddressDetails(enterpriseAddress).paymentCredential.hash;
