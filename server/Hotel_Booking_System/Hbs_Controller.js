@@ -20,6 +20,8 @@ export const processGuestBookingInfo = async (req, res) => {
         guest_id,
         first_name,
         last_name,
+        full_name,
+        fullName,
         email,
         phone_number,
         booking_id,
@@ -32,11 +34,15 @@ export const processGuestBookingInfo = async (req, res) => {
         payment_status,
       } = guestData;
 
+      const nameParts = ((full_name || fullName || "").trim()).split(/\s+/);
+      const resolvedFirstName = first_name || nameParts[0] || "";
+      const resolvedLastName = last_name || nameParts.slice(1).join(" ") || "";
+
       // Create guest document
       const guest = new GuestInfo({
         guest_id,
-        first_name,
-        last_name,
+        first_name: resolvedFirstName,
+        last_name: resolvedLastName,
         email,
         phone_number,
         created_at: new Date(),
