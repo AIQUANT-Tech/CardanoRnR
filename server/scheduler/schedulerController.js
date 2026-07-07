@@ -95,6 +95,7 @@ import User from "../user/UserMast.js";
 import UserGuestMap from "../user/UserGuestMap.js";
 import crypto from "crypto";
 import fetch from "node-fetch";
+import bcrypt from "bcryptjs";
 
 const generateUniqueId = () => crypto.randomUUID();
 const emailEndpoint = process.env.EMAIL_URL;
@@ -303,10 +304,17 @@ export const processUserMappingFeed = async () => {
 
       let user = await User.findOne({ email });
       if (!user) {
+        // Login uses bcrypt.compare, so the auto-provisioned password must be a
+        // bcrypt hash — storing plaintext made these accounts impossible to log
+        // into. The default is read from the environment (never hard-coded).
+        const defaultPasswordHash = await bcrypt.hash(
+          process.env.DEFAULT_USER_PASSWORD,
+          10,
+        );
         user = await User.create({
           user_id: generateUniqueId(),
           email,
-          password_hash: "password",
+          password_hash: defaultPasswordHash,
           display_name: `${guest.first_name} ${guest.last_name}`,
           role: "End User",
         });
