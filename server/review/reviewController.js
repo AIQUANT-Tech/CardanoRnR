@@ -13,6 +13,7 @@ import {
   fetchCurrentReputationScore,
 } from "../cardano_transaction/cardanoLucid.js";
 import reviewQueue from "./reviewQueue.js";
+import { fetchLatestChainState as fetchStateV2 } from "../cardano_transaction/rnrContract.js";
 
 import { Constr, Data, Lucid, Blockfrost, getAddressDetails, credentialToAddress, keyHashToCredential } from "@lucid-evolution/lucid";
 import review from "./Reviews.js";
@@ -462,59 +463,39 @@ export const createReview = async (req, res) => {
       return res.status(404).json({ error: "Invalid category IDs" });
     }
 
-    //  FIX: Fetch cumulative state from BLOCKCHAIN instead of MongoDB
-    console.log("Fetching latest reputation state from blockchain...");
-    const { totalScore, ratingCount } = await fetchLatestChainState();
-
-    console.log("On-chain totalScore:", totalScore.toString());
-    console.log("On-chain ratingCount:", ratingCount.toString());
-
-    const timestamp = BigInt(Date.now());
+    // Deterministic review id — unique per user per booking.
     const reviewId = Buffer.from(`${user._id}${booking._id}`).toString("hex");
 
-    // On-chain datum and redeemer — built from blockchain state
-    const reviewDatum = new Constr(0, [
-      reviewId,
-      new Constr(0, [Buffer.from(bookingId).toString("hex")]),
-      BigInt(Math.floor(overall_rating)),
-      timestamp,
-      totalScore, //  from blockchain
-      ratingCount, //  from blockchain
-      ratingCount > 0n ? totalScore / ratingCount : 0n,
-    ]);
-    const reviewRedeemer = new Constr(0, [reviewId]);
-
-    console.log("Locking review data on-chain...");
-    const lockTxHash = await lockReview(reviewDatum);
-
-    if (!lockTxHash) {
+    // Reject duplicate reviews for the same booking. This is also enforced at
+    // the database level by a unique (sparse) index on Reviews.reviewId, so a
+    // race cannot slip a second one through.
+    const existingReview = await Review.findOne({ reviewId });
+    if (existingReview) {
       return res
-        .status(500)
-        .json({ error: "Lock review funds failed on blockchain" });
+        .status(409)
+        .json({ error: "A review has already been submitted for this booking" });
     }
 
-    // Serialize datum/redeemer
-    const serializedReviewDatum = Data.to(reviewDatum);
-    const serializedReviewRedeemer = Data.to(reviewRedeemer);
-
-    // Send to queue -> worker will save final data to DB after redemption
+    // Queue the on-chain submission. The whole review is now a SINGLE
+    // transaction (see cardano_transaction/rnrContract.js): it spends the
+    // current state UTxO and produces the next one, recomputing the running
+    // totals on-chain from the previous state. The worker processes jobs one at
+    // a time, which serializes access to the shared state UTxO (the concurrency
+    // guarantee is provided off-chain by this custodial submission queue).
     reviewQueue.add({
-      lockTxHash,
+      reviewId,
       userId: user._id.toString(),
       bookingId,
       overall_rating,
       overall_review,
       category_wise_review_rating,
       validCategories,
-      serializedReviewDatum,
-      serializedReviewRedeemer,
     });
 
     return res.status(202).json({
       status: "processing",
       message:
-        "Review submitted. Blockchain processing started. Will store review after redemption completes.",
-      lockTxHash,
+        "Review submitted. Blockchain processing started; the review will be stored once the transaction confirms.",
     });
   } catch (error) {
     console.error("Error creating review:", error.message);
@@ -1600,9 +1581,11 @@ export const calculateReviewStats = async (req, res) => {
 // };
 
 export async function fetchReputationScore(userId) {
-  // Reputation score is global (stored in the state UTxO identified by the NFT).
-  // No per-user matching needed — just read fields[6] from the state UTxO.
-  return fetchCurrentReputationScore();
+  // Reputation score is global — stored in the state UTxO identified by the STT.
+  // Read it from the current (single-tx design) state contract. Return a plain
+  // Number (0-100) so it JSON-serializes — fetchStateV2 returns BigInts.
+  const { reputationScore } = await fetchStateV2();
+  return Number(reputationScore);
 }
 
 // --------------------------------------------------------------------

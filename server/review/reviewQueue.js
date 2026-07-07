@@ -1,10 +1,5 @@
 import Queue from "bull";
-import {
-  processReview,
-  scriptAddress,
-} from "../cardano_transaction/cardanoLucid.js";
-import { waitForUTxOWithTimeout } from "./reviewController.js";
-import { Data } from "@lucid-evolution/lucid";
+import { submitReview } from "../cardano_transaction/rnrContract.js";
 import Review from "./Reviews.js";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
@@ -82,48 +77,53 @@ const reviewQueue = new Queue("reviewQueue", {
 
 reviewQueue.process(async (job, done) => {
   const {
-    lockTxHash,
+    reviewId,
     userId,
     bookingId,
     overall_rating,
     overall_review,
     category_wise_review_rating,
     validCategories,
-    serializedReviewDatum,
-    serializedReviewRedeemer,
   } = job.data;
 
   try {
-    const reviewDatum = Data.from(serializedReviewDatum);
-    const reviewRedeemer = Data.from(serializedReviewRedeemer);
+    // Re-check for a duplicate right before the on-chain submit. The HTTP
+    // handler already rejects duplicates, but two requests for the same booking
+    // can both pass that check before either is stored; without this guard the
+    // second would still be submitted on-chain (inflating the reputation) and
+    // only then fail the unique index. Since the worker is serialized, checking
+    // here means the second job sees the first job's stored review and skips.
+    const alreadyProcessed = await Review.findOne({ reviewId });
+    if (alreadyProcessed) {
+      console.log(
+        `Duplicate review ${reviewId} already processed — skipping on-chain submit.`
+      );
+      return done();
+    }
 
-    await waitForUTxOWithTimeout(
-      scriptAddress,
-      reviewDatum,
-      lockTxHash,
-      600000,
-      10000
+    // One on-chain transaction: spend the current state UTxO and produce the
+    // updated one. Running totals are recomputed on-chain from the old state.
+    const { txHash, reputationScore } = await submitReview(
+      reviewId,
+      bookingId,
+      overall_rating
     );
 
-    const { txHash: redeemTxHash, reputationScore } = await processReview(
-      reviewDatum,
-      reviewRedeemer
-    );
-
-    // 1️⃣ Save overall review
-    const savedOverall = await Review.create({
+    // 1️⃣ Overall review — carries the unique reviewId + booking_id.
+    await Review.create({
       user_id: userId,
       category_id: null,
-      booking_id: bookingId || null,
       overall_review,
       overall_rating,
-      blockchain_tx: redeemTxHash,
+      booking_id: bookingId,
+      reviewId,
+      blockchain_tx: txHash,
       reputation_score: reputationScore?.toString() || null,
       status: true,
       created_at: new Date(),
     });
 
-    // 2️⃣ Save category reviews
+    // 2️⃣ Category reviews.
     const categoryReviews = category_wise_review_rating.map((catRev) => {
       const categoryDoc = validCategories.find(
         (cat) => cat.category_id === catRev.category_id
@@ -131,12 +131,13 @@ reviewQueue.process(async (job, done) => {
 
       return {
         user_id: userId,
-        category_id: categoryDoc?._id, // ✅ FIXED
+        category_id: categoryDoc?._id,
         review: catRev.review,
         rating: catRev.rating,
         overall_review,
         overall_rating,
-        blockchain_tx: redeemTxHash,
+        booking_id: bookingId,
+        blockchain_tx: txHash,
         status: true,
         created_at: new Date(),
       };
@@ -144,7 +145,7 @@ reviewQueue.process(async (job, done) => {
 
     await Review.insertMany(categoryReviews);
 
-    console.log("All reviews stored successfully.");
+    console.log("Review stored successfully. tx:", txHash);
     done();
   } catch (error) {
     console.error("Worker error:", error.message);

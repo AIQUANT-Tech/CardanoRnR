@@ -62,11 +62,23 @@ const Reviews = new mongoose.Schema({
     default: "",
     description: "Blockchain transaction ID",
   },
+  // Deterministic id = hex(userId + booking._id). Set only on the overall review
+  // document; the unique (sparse) index below makes a second review for the same
+  // booking impossible at the database level.
+  reviewId: {
+    type: String,
+    default: undefined,
+    description: "Unique review id (per user per booking)",
+  },
   status: {
     type: Boolean,
     default: true,
   },
 });
+
+// DB-level guarantee: one overall review per (user, booking). reviewId is only
+// set on the overall document, so the sparse index ignores category rows.
+Reviews.index({ reviewId: 1 }, { unique: true, sparse: true });
 
 const review = new mongoose.model("Review", Reviews);
 export default review;
