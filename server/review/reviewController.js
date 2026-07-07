@@ -5,13 +5,6 @@ import User from "../user/UserMast.js";
 import ReviewCategory from "../reviewCategory/ReviewCategories.js";
 import responses from "../utils/responses.js";
 import roles from "../utils/roles.js";
-import {
-  lockReview,
-  processReview,
-  scriptAddress,
-  fetchLatestChainState,
-  fetchCurrentReputationScore,
-} from "../cardano_transaction/cardanoLucid.js";
 import reviewQueue from "./reviewQueue.js";
 import { fetchLatestChainState as fetchStateV2 } from "../cardano_transaction/rnrContract.js";
 
@@ -448,9 +441,11 @@ export const createReview = async (req, res) => {
       return res.status(404).json({ error: "Booking not found" });
     }
 
-    // if (booking.booking_status !== "Checkedout") {
-    //   return res.status(403).json({ error: "Only checked-out guests can submit reviews" });
-    // }
+    if (booking.booking_status !== "Checkedout") {
+      return res
+        .status(403)
+        .json({ error: "Only checked-out guests can submit reviews" });
+    }
 
     // Validate categories
     const categoryIds = category_wise_review_rating.map(
@@ -494,12 +489,33 @@ export const createReview = async (req, res) => {
 
     return res.status(202).json({
       status: "processing",
+      reviewId,
       message:
         "Review submitted. Blockchain processing started; the review will be stored once the transaction confirms.",
     });
   } catch (error) {
     console.error("Error creating review:", error.message);
     return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// Poll a review's on-chain status by its deterministic reviewId. Returns
+// { status: "pending" } until the worker stores the review, then
+// { status: "confirmed", blockchain_tx } once the review is on-chain.
+export const getReviewStatus = async (req, res) => {
+  try {
+    const { reviewId } = req.params;
+    const review = await Review.findOne({ reviewId }).select(
+      "status blockchain_tx",
+    );
+    if (!review || review.status !== true || !review.blockchain_tx) {
+      return res.status(200).json({ status: "pending" });
+    }
+    return res
+      .status(200)
+      .json({ status: "confirmed", blockchain_tx: review.blockchain_tx });
+  } catch (error) {
+    return res.status(500).json({ status: "error", message: error.message });
   }
 };
 

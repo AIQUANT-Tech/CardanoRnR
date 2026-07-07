@@ -64,3 +64,15 @@ Each entry: **what** changed, **why**, and **impact**.
 **Why:** Close the remaining review findings — mint scoping, an unbounded timestamp, an off-chain double-count on retry, and the leftover legacy surface — and keep the stored reviews consistent with the on-chain state after the contract change.
 
 **Impact:** Only the state token can be minted under the policy; the state cannot be bricked by a bad timestamp; a retry cannot double-count; the old flow is gone; and every review is anchored to the current contract. New script address `addr_test1wrkh08l6jwy4es6kahdv4k2layyr2z2hpc3dszqf4x8zpqqwukaf0`, policy `a9c7f941cd19500c7387297e68279301829d6c251de23b8e0c21665b`.
+
+## 6. Review-submission confirmation, checkout gate, and legacy module detached
+**Files:** `front-end-ui/src/Components/ReviewModal.jsx`, `server/review/reviewController.js`, `server/review/reviewRoutes.js`, `server/cardano_transaction/chainRoutes.js`, `server/cardano_transaction/txDetails.js`
+
+**What:**
+- The review-submission modal now confirms on-chain in place. `createReview` returns the deterministic `reviewId`, and the modal polls a new `GET /api/review/reviews/status/:reviewId` endpoint (which returns `pending` until the worker stores the review, then `confirmed` with the transaction hash) and shows the Cardano transaction hash with a cardanoscan link. Previously the confirmation only appeared after a page refresh.
+- Re-enabled the "only checked-out guests can submit a review" eligibility check in `createReview`.
+- Fully detached the retired `cardanoLucid.js` from the boot path: the read-only `/api/transaction/getTxDetails` handler was extracted into a small Blockfrost-only `txDetails.js`, and the dead `cardanoLucid` imports were removed from `reviewController.js`. Nothing imports the legacy module now, so its heavy top-level work (Lucid init, `validatorToAddress`, a network `utxosAt`) no longer runs at startup.
+
+**Why:** Give immediate on-chain confirmation of a submitted review, enforce review eligibility, and remove a startup dependency on the retired PlutusV2 code that could otherwise fail the boot if its environment variables were dropped.
+
+**Impact:** Submitting a review shows "recorded on-chain" with the tx hash without a refresh; only checked-out bookings can be reviewed; and the server boots without loading the legacy contract module.

@@ -1,6 +1,6 @@
 import express from "express";
 import { fetchRedeemers } from "./index.js";
-import { TxDetails } from "./cardanoLucid.js";
+import { TxDetails } from "./txDetails.js";
 
 const router = express.Router();
 

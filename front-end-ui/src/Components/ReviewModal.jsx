@@ -32,6 +32,7 @@ const ReviewModal = ({ open, setOpen, email, setEmail , bookingId }) => {
   const [submissionStatus, setSubmissionStatus] = useState("idle");
   const [reviewId, setReviewId] = useState(null);
   const [pollError, setPollError] = useState("");
+  const [txHash, setTxHash] = useState(null);
 
   // Fetch categories when modal opens
   useEffect(() => {
@@ -39,6 +40,7 @@ const ReviewModal = ({ open, setOpen, email, setEmail , bookingId }) => {
       fetchCategories();
       setSubmissionStatus("idle");
       setReviewId(null);
+      setTxHash(null);
       setError("");
       setPollError("");
       setOverallRating(0);
@@ -114,28 +116,32 @@ const ReviewModal = ({ open, setOpen, email, setEmail , bookingId }) => {
   useEffect(() => {
     let interval;
     if (submissionStatus === "submitted" && reviewId) {
-      // Poll every 5 seconds
+      let attempts = 0;
+      // Poll every 5s for the on-chain confirmation. The status endpoint returns
+      // { status: "pending" } until the worker stores the review, then
+      // { status: "confirmed", blockchain_tx }. A transient error keeps polling
+      // (the review still processes) rather than blanking the flow.
       interval = setInterval(async () => {
+        attempts++;
+        if (attempts > 48) {
+          clearInterval(interval); // ~4 min; it will still appear after refresh
+          return;
+        }
         try {
           const res = await fetch(
-            `${API_BASE_URL}api/review/reviews/${reviewId}`,
+            `${API_BASE_URL}api/review/reviews/status/${reviewId}`,
             { method: "GET", headers: { "Content-Type": "application/json" } }
           );
           if (res.ok) {
             const data = await res.json();
-            // If the final blockchain redemption status is confirmed (status true)
-            if (data.status === true) {
+            if (data.status === "confirmed" && data.blockchain_tx) {
+              setTxHash(data.blockchain_tx);
               setSubmissionStatus("finalSuccess");
               clearInterval(interval);
             }
-          } else {
-            throw new Error(`Status check failed with ${res.status}`);
           }
         } catch (e) {
-          console.error("Polling error:", e);
-          setPollError("Error checking review status");
-          clearInterval(interval);
-          setSubmissionStatus("failed");
+          console.error("Polling error (will retry):", e);
         }
       }, 5000);
     }
@@ -179,9 +185,9 @@ const ReviewModal = ({ open, setOpen, email, setEmail , bookingId }) => {
 
       if (response.ok) {
         const data = await response.json();
-        // Assume that the response returns the overall review document in data.overall
-        // Immediately set state to "submitted" (lock tx hash received)
-        // setReviewId(data.overall._id);
+        // The API returns the deterministic reviewId; use it to poll for the
+        // on-chain confirmation + transaction hash.
+        setReviewId(data.reviewId);
         setSubmissionStatus("submitted");
       } else {
         const errorData = await response.json();
@@ -399,9 +405,27 @@ const ReviewModal = ({ open, setOpen, email, setEmail , bookingId }) => {
               )}
               
               {submissionStatus === "finalSuccess" && (
-                <Typography variant="body2" color="textSecondary">
-                  Blockchain redemption successful.
-                </Typography>
+                <Box textAlign="center" mt={1}>
+                  <Typography variant="body2" color="success.main">
+                    ✅ Recorded on-chain (Cardano preprod).
+                  </Typography>
+                  {txHash && (
+                    <Typography
+                      variant="caption"
+                      color="textSecondary"
+                      sx={{ wordBreak: "break-all", display: "block", mt: 0.5 }}
+                    >
+                      Transaction:&nbsp;
+                      <a
+                        href={`https://preprod.cardanoscan.io/transaction/${txHash}`}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {txHash}
+                      </a>
+                    </Typography>
+                  )}
+                </Box>
               )}
             </Box>
           )}
