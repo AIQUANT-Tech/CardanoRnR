@@ -14,10 +14,11 @@
 // tamper with the accumulated state — every spend must reproduce the exactly
 // recomputed datum on the single continuing output that also carries the STT.
 
+use aiken/collection/dict
 use aiken/collection/list
 use aiken/primitive/bytearray
 use cardano/address.{Address}
-use cardano/assets.{PolicyId, quantity_of}
+use cardano/assets.{PolicyId, quantity_of, tokens}
 use cardano/transaction.{InlineDatum, Output, OutputReference, Transaction}
 
 // -- Types -------------------------------------------------------------------
@@ -89,15 +90,15 @@ pub fn unique_script_output(
 // The single continuing output must carry exactly one STT AND hold a datum whose
 // state fields are the exactly-recomputed values — both checked on the one and
 // same output. The score-bearing fields (total_score / rating_count /
-// reputation_score) are compared exactly; the timestamp is only required to be
-// strictly increasing (monotonic), which orders state transitions without the
-// fragility of pinning the datum to an exact slot time.
+// reputation_score) are compared exactly. Ordering is enforced by the single STT
+// state-thread UTxO (the same state cannot be spent twice), so the datum's
+// timestamp is a display/record field and is not validated on-chain — this
+// removes the far-future-timestamp liveness brick without weakening integrity.
 fn continuing_state_ok(
   outputs: List<Output>,
   own_address: Address,
   stt_policy: PolicyId,
   stt_asset_name: ByteArray,
-  state: Review,
   action: ReviewAction,
   new_total: Int,
   new_count: Int,
@@ -118,8 +119,6 @@ fn continuing_state_ok(
             d.total_score == new_total,
             d.rating_count == new_count,
             d.reputation_score == calculate_reputation(new_total, new_count),
-            // Monotonic timestamp.
-            d.timestamp > state.timestamp,
           }
         }
         _ -> False
@@ -167,10 +166,33 @@ pub fn validate_review(
       own_address,
       stt_policy,
       stt_asset_name,
-      state,
       action,
       new_total,
       new_count,
     )?,
+  }
+}
+
+// -- one-shot mint validation ------------------------------------------------
+// The seed (genesis) UTxO must be consumed, AND under this policy EXACTLY the
+// STT (asset_name, quantity 1) may be minted — nothing else. Checking the whole
+// minted bag for the policy (not just the STT's own quantity) closes the
+// classic one-shot hole where extra asset names could ride along under the same
+// policy id. Burns (negative quantity) fail the `== 1` check.
+pub fn validate_mint(
+  tx: Transaction,
+  policy_id: PolicyId,
+  asset_name: ByteArray,
+  utxo_ref: OutputReference,
+) -> Bool {
+  let must_spend_seed_utxo =
+    list.any(tx.inputs, fn(i) { i.output_reference == utxo_ref })
+  let policy_tokens = tokens(tx.mint, policy_id)
+  and {
+    must_spend_seed_utxo?,
+    // exactly one asset name under this policy ...
+    (dict.size(policy_tokens) == 1)?,
+    // ... and it is the STT, quantity exactly 1.
+    (quantity_of(tx.mint, policy_id, asset_name) == 1)?,
   }
 }

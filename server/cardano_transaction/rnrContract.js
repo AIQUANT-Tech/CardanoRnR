@@ -235,6 +235,21 @@ export async function submitReview(reviewIdHex, bookingId, rating) {
         );
       }
 
+      // Idempotency guard: if the current state's last review_id already equals
+      // this review, it was applied on a prior attempt (e.g. the confirmation
+      // wait threw after a successful submit). Do NOT submit again — returning
+      // here is what prevents a retry from double-counting the same review.
+      if (state.datum.fields[0] === reviewIdHex) {
+        console.log(
+          "[rnrContract] review already applied on-chain, skipping resubmit:",
+          reviewIdHex,
+        );
+        return {
+          txHash: state.utxo.txHash,
+          reputationScore: state.datum.fields[6].toString(),
+        };
+      }
+
       const oldTotal = state.datum.fields[4];
       const oldCount = state.datum.fields[5];
       const newTotal = oldTotal + r;

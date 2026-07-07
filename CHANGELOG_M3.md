@@ -50,3 +50,17 @@ Each entry: **what** changed, **why**, and **impact**.
 **Why:** The `http` API URL on an `https` page silently blocked every request — hotel search returned nothing and login failed in the browser (while server-side calls worked).
 
 **Impact:** Hotel search returns rooms and login works in the browser. The change is isolated to the booking front-end build; the backend, database and other integrations are untouched.
+
+## 5. Validator hardening + review migration
+**Files:** `SmartContract/aiken/`, `server/cardano_transaction/rnrContract.js`, `server/cardano_transaction/chainRoutes.js`, `server/scheduler/schedulerRoutes.js`
+
+**What:**
+- The one-shot mint policy now requires that **only** the State Thread Token (quantity 1) is minted under its policy id — extra asset names riding along under the same policy are rejected. Five mint-policy unit tests were added (`aiken check` is now 19/19).
+- Removed the datum timestamp gate. Ordering is already enforced by the single-STT state-thread UTxO (the same state cannot be spent twice), so the gate was redundant and could have permanently frozen the state if a bad (far-future) timestamp were ever written; the timestamp is kept as a display field.
+- `submitReview` gained an idempotency guard: if the current on-chain state already reflects this review, it is not submitted again — so a retry after a transient error cannot double-count a review.
+- Removed the legacy `lockFunds` / `redeemFunds` and `sweepOrphanedUtxos` / `scriptState` routes (the old two-step lock/redeem flow).
+- Re-deployed the contract and migrated every existing review onto it, so the review list and the on-chain reputation are consistent on the current contract.
+
+**Why:** Close the remaining review findings — mint scoping, an unbounded timestamp, an off-chain double-count on retry, and the leftover legacy surface — and keep the stored reviews consistent with the on-chain state after the contract change.
+
+**Impact:** Only the state token can be minted under the policy; the state cannot be bricked by a bad timestamp; a retry cannot double-count; the old flow is gone; and every review is anchored to the current contract. New script address `addr_test1wrkh08l6jwy4es6kahdv4k2layyr2z2hpc3dszqf4x8zpqqwukaf0`, policy `a9c7f941cd19500c7387297e68279301829d6c251de23b8e0c21665b`.

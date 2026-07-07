@@ -4,9 +4,11 @@ use aiken/interval.{Finite, Interval, IntervalBound, PositiveInfinity}
 use cardano/address
 use cardano/assets
 use cardano/transaction.{
-  InlineDatum, Input, Output, OutputReference, Transaction, placeholder,
+  InlineDatum, Input, NoDatum, Output, OutputReference, Transaction, placeholder,
 }
-use rnr_utils.{Review, ReviewAction, calculate_reputation, validate_review}
+use rnr_utils.{
+  Review, ReviewAction, calculate_reputation, validate_mint, validate_review,
+}
 
 // -- fixtures ---------------------------------------------------------------
 
@@ -203,21 +205,6 @@ test stt_not_on_input_fails() {
   !run(s, a, tx)
 }
 
-// Non-increasing timestamp => rejected.
-test stale_timestamp_fails() {
-  let s = Review { ..genesis_state(), timestamp: 2000 }
-  let a = action()
-  let tx =
-    Transaction {
-      ..placeholder,
-      inputs: [inp(stt_value(), s)],
-      outputs: [out(stt_value(), next_state(s, a, 2000))],
-      extra_signatories: [business],
-      validity_range: at_time(2000),
-    }
-  !run(s, a, tx)
-}
-
 // Empty booking reference => rejected.
 test empty_reference_fails() {
   let s = genesis_state()
@@ -284,4 +271,60 @@ test second_review_accumulates() {
       validity_range: at_time(3000),
     }
   run(s, a, tx)
+}
+
+// -- mint policy: one-shot + scoped to EXACTLY the STT -----------------------
+
+fn seed_ref() -> OutputReference {
+  OutputReference { transaction_id: placeholder.id, output_index: 7 }
+}
+
+fn seed_input() -> Input {
+  Input {
+    output_reference: seed_ref(),
+    output: Output {
+      address: script_addr(),
+      value: assets.from_lovelace(2_000_000),
+      datum: NoDatum,
+      reference_script: None,
+    },
+  }
+}
+
+fn mint_tx(m) -> Transaction {
+  Transaction { ..placeholder, inputs: [seed_input()], mint: m }
+}
+
+fn run_mint(tx: Transaction) -> Bool {
+  validate_mint(tx, policy, stt_name, seed_ref())
+}
+
+// Mint exactly one STT while consuming the seed UTxO => OK.
+test mint_one_stt_ok() {
+  run_mint(mint_tx(assets.from_asset(policy, stt_name, 1)))
+}
+
+// Mint two STT => rejected.
+test mint_two_stt_fails() {
+  !run_mint(mint_tx(assets.from_asset(policy, stt_name, 2)))
+}
+
+// Mint the STT AND an extra token name under the same policy => rejected.
+test mint_extra_token_fails() {
+  let m =
+    assets.from_asset(policy, stt_name, 1)
+      |> assets.add(policy, #"6f7468", 1)
+  !run_mint(mint_tx(m))
+}
+
+// Mint without consuming the seed UTxO => rejected.
+test mint_without_seed_fails() {
+  let tx =
+    Transaction { ..placeholder, inputs: [], mint: assets.from_asset(policy, stt_name, 1) }
+  !run_mint(tx)
+}
+
+// Burn (negative quantity) => rejected.
+test mint_burn_fails() {
+  !run_mint(mint_tx(assets.from_asset(policy, stt_name, -1)))
 }

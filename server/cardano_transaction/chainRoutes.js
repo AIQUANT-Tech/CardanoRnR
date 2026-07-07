@@ -1,6 +1,6 @@
 import express from "express";
 import { fetchRedeemers } from "./index.js";
-import { lockReviewController, processReviewController, TxDetails } from "./cardanoLucid.js";
+import { TxDetails } from "./cardanoLucid.js";
 
 const router = express.Router();
 
@@ -147,64 +147,6 @@ const router = express.Router();
  *         description: Internal blockchain fetch error
  */
 router.post("/fetchRedeemers", fetchRedeemers);
-
-
-
-/**
- * @swagger
- * /api/transaction/lockFunds:
- *   post:
- *     summary: Lock funds on the Cardano blockchain
- *     description: Creates a script-based UTxO that locks ADA using Cardano Lucid. Useful for escrow, dApps, or staking workflows.
- *     tags: [Cardano]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/LockFundsRequest'
- *     responses:
- *       200:
- *         description: Funds successfully locked
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/LockFundsResponse'
- *       400:
- *         description: Missing senderAddress or invalid amount
- *       500:
- *         description: Cardano transaction construction/signing error
- */
-router.post("/lockFunds", lockReviewController);
-
-
-
-/**
- * @swagger
- * /api/transaction/redeemFunds:
- *   post:
- *     summary: Redeem funds locked in a Cardano script
- *     description: Unlocks previously locked UTxOs using redeemer data and Cardano Lucid.
- *     tags: [Cardano]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/RedeemFundsRequest'
- *     responses:
- *       200:
- *         description: Funds successfully redeemed
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/RedeemFundsResponse'
- *       400:
- *         description: Missing txHash or redeemer
- *       500:
- *         description: Redeeming failed due to invalid redeemer or script mismatch
- */
-router.post("/redeemFunds", processReviewController);
 
 
 
