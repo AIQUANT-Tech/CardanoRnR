@@ -33,6 +33,15 @@ In other words, the deployed contract is reproducible directly from this source.
 
 Source: [`SmartContract/aiken/lib/rnr_tests.ak`](../SmartContract/aiken/lib/rnr_tests.ak)
 
+The **Addresses reviewer point** column refers to the numbered findings raised in the previous
+review: **1(a)** — the datum and the state NFT were checked on two independent outputs
+(double-satisfaction); **1(b)** — reputation was computed only from the review UTxO, not the
+current state UTxO; **1(c)** — the signature-only `StateRedeem` action gave the operator full
+control of the script address (now removed); **3** — concurrent reviews could read stale state and
+produce incorrect results. Entries such as *input validation*, *formula*, *one-shot mint*, and
+*mint scoping* are general soundness categories not tied to a specific finding, and **—** marks the
+baseline happy-path test.
+
 | # | Test | What it proves | Addresses reviewer point |
 |---|------|----------------|--------------------------|
 | 1 | `submit_happy_path` | A valid single-transaction review updates the state | — |
