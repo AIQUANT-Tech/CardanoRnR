@@ -39,12 +39,12 @@ review: **1(a)** — the datum and the state NFT were checked on two independent
 current state UTxO; **1(c)** — the signature-only `StateRedeem` action gave the operator full
 control of the script address (now removed); **3** — concurrent reviews could read stale state and
 produce incorrect results. Entries such as *input validation*, *formula*, *one-shot mint*, and
-*mint scoping* are general soundness categories not tied to a specific finding, and **—** marks the
+*mint scoping* are general soundness categories not tied to a specific finding, Common marks the
 baseline happy-path test.
 
 | # | Test | What it proves | Addresses reviewer point |
 |---|------|----------------|--------------------------|
-| 1 | `submit_happy_path` | A valid single-transaction review updates the state | — |
+| 1 | `submit_happy_path` | A valid single-transaction review updates the state | Common |
 | 2 | `second_review_accumulates` | New reputation is recomputed from the **previous** state datum + the review | 1(b), 3 |
 | 3 | `double_satisfaction_two_script_outputs_fails` | Datum + State Thread Token must be on the **same** single continuing output; split-token/forged-datum is rejected | 1(a) |
 | 4 | `token_not_forwarded_fails` | The State Thread Token must be forwarded to the continuing output | 1(a) |
