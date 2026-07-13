@@ -1,7 +1,5 @@
-// Read-only transaction lookup via Blockfrost. Extracted from the legacy
-// cardanoLucid.js so the /api/transaction/getTxDetails route no longer pulls
-// that module's heavy top-level work (Lucid init, validatorToAddress on
-// SCRIPT_CBOR, and a network utxosAt) onto the server's boot path.
+// Read-only transaction lookup via Blockfrost, backing the
+// /api/transaction/getTxDetails route.
 import { BlockFrostAPI } from "@blockfrost/blockfrost-js";
 import dotenv from "dotenv";
 

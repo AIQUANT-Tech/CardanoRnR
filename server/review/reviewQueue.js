@@ -26,55 +26,6 @@ const reviewQueue = new Queue("reviewQueue", {
   },
 });
 
-// reviewQueue.process(async (job, done) => {
-//   const {
-//     reviewId,
-//     serializedReviewDatum,
-//     serializedReviewRedeemer,
-//     lockTxHash,
-//   } = job.data;
-//   try {
-//     // Convert the serialized hex strings back to Constr objects.
-//     const reviewDatum = Data.from(serializedReviewDatum);
-//     const reviewRedeemer = Data.from(serializedReviewRedeemer);
-
-//     console.log("Background job: Waiting for UTxO with txHash:", lockTxHash);
-//     await waitForUTxOWithTimeout(
-//       scriptAddress,
-//       reviewDatum,
-//       lockTxHash,
-//       600000,
-//       10000
-//     );
-//     console.log(
-//       "Background job: UTxO found. Redeeming review data on-chain..."
-//     );
-
-//     const { txHash: redeemTxHash, reputationScore } = await processReview(
-//       reviewDatum,
-//       reviewRedeemer
-//     );
-//     // console.log("Background job: Review data redeemed, tx hash:", redeemTxHash);
-//     console.log("Background job: Updated Reputation Score:", reputationScore);
-
-//     // Update the review document. Convert redeemTxHash (and reputationScore if needed) to strings.
-//     await Review.findByIdAndUpdate(reviewId, {
-//       blockchain_tx: redeemTxHash.toString(),
-//       status: true,
-//       // Optionally, update reputationScore field if defined:
-//       // reputationScore: reputationScore.toString(),
-//     });
-//     done();
-//   } catch (error) {
-//     console.error("Background job error:", error.message);
-//     await Review.findByIdAndUpdate(reviewId, {
-//       error: error.message,
-//       status: false,
-//     });
-//     done(new Error(error));
-//   }
-// });
-
 reviewQueue.process(async (job, done) => {
   const {
     reviewId,
@@ -87,12 +38,6 @@ reviewQueue.process(async (job, done) => {
   } = job.data;
 
   try {
-    // Re-check for a duplicate right before the on-chain submit. The HTTP
-    // handler already rejects duplicates, but two requests for the same booking
-    // can both pass that check before either is stored; without this guard the
-    // second would still be submitted on-chain (inflating the reputation) and
-    // only then fail the unique index. Since the worker is serialized, checking
-    // here means the second job sees the first job's stored review and skips.
     const alreadyProcessed = await Review.findOne({ reviewId });
     if (alreadyProcessed) {
       console.log(

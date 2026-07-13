@@ -33,49 +33,6 @@ const router = express.Router();
  *                 type: string
  *                 example: "some-redeemer-data"
  *
- *     LockFundsRequest:
- *       type: object
- *       properties:
- *         senderAddress:
- *           type: string
- *           description: User's Cardano address that will lock the funds
- *         amount:
- *           type: number
- *           description: Amount to lock in Lovelace
- *         metadata:
- *           type: object
- *           description: Optional metadata to embed in transaction
- *       required: [senderAddress, amount]
- *
- *     LockFundsResponse:
- *       type: object
- *       properties:
- *         txHash:
- *           type: string
- *         status:
- *           type: string
- *           example: "locked"
- *
- *     RedeemFundsRequest:
- *       type: object
- *       properties:
- *         txHash:
- *           type: string
- *           description: Transaction hash of locked funds
- *         redeemer:
- *           type: object
- *           description: Redeemer data required to unlock funds
- *       required: [txHash, redeemer]
- *
- *     RedeemFundsResponse:
- *       type: object
- *       properties:
- *         txHash:
- *           type: string
- *         status:
- *           type: string
- *           example: "redeemed"
- *
  *     TxDetailsRequest:
  *       type: object
  *       properties:

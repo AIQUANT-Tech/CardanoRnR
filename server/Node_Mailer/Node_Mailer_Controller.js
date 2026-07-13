@@ -3,9 +3,6 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-console.log(process.env.HOTEL_EMAIL_ID);
-console.log(process.env.HOTEL_EMAIL_ID_PASSWORD);
-
 const transporter = nodemailer.createTransport({
   service: "gmail",
   port: 465,
@@ -125,64 +122,3 @@ Team Hotel Kimpton Aluna
     });
   }
 };
-
-// import nodemailer from 'nodemailer';
-// import dotenv from 'dotenv';
-// dotenv.config();
-
-// // Verify environment variables first
-// console.log('Email:', !!process.env.HOTEL_EMAIL_ID);
-// console.log('Password exists:', !!process.env.HOTEL_EMAIL_ID_PASSWORD);
-
-// const transporter = nodemailer.createTransport({
-//     host: 'smtp.gmail.com',
-//     port: 465,
-//     secure: true,
-//     auth: {
-//         user: process.env.HOTEL_EMAIL_ID,
-//         pass: process.env.HOTEL_EMAIL_ID_PASSWORD
-//     },
-// });
-
-// // Verify transporter configuration
-// transporter.verify(function(error, success) {
-//     if (error) {
-//         console.error('SMTP Connection Failed:', error);
-//         console.log('Troubleshooting Tips:');
-//         console.log('1. Verify Gmail credentials in .env file');
-//         console.log('2. Ensure 2FA is enabled and app password is used');
-//         console.log('3. Check Google Account security settings: https://myaccount.google.com/security');
-//     } else {
-//         console.log('SMTP Connection Ready');
-//         sendEmail();
-//     }
-// });
-
-// function sendEmail() {
-//     const mailOptions = {
-//         from: process.env.HOTEL_EMAIL_ID,
-//         to: process.env.HOTEL_EMAIL_ID,
-//         subject: '🌟 How Was Your Stay at Hotel X?',
-//         text: `Hi,\n\nWe hope you enjoyed your stay! Please share your experience:\nhttp://51.21.61.199/user/X\n\nThank you!\nTeam Hotel X`,
-//         html: `
-//             <div style="font-family: Arial, sans-serif; padding: 20px;">
-//                 <!-- HTML content unchanged -->
-//             </div>
-//         `
-//     };
-
-//     transporter.sendMail(mailOptions, (error, info) => {
-//         if (error) {
-//             console.error('Full Error Details:', {
-//                 code: error.code,
-//                 command: error.command,
-//                 response: error.response
-//             });
-//             console.log('Solution Checklist:');
-//             console.log('1. Use app password (not regular password)');
-//             console.log('2. Enable IMAP in Gmail settings');
-//             console.log('3. Try disabling antivirus/firewall temporarily');
-//         } else {
-//             console.log('Email successfully sent:', info.response);
-//         }
-//     });
