@@ -1,4 +1,4 @@
-# CardanoRnR — Open-Source Review & Reputation System
+# CardanoRnR: Open-Source Review & Reputation System
 
 A review-and-reputation system for hotels, with the accumulated reputation anchored on the
 **Cardano** blockchain. Reviews are recorded on-chain through a single-transaction
@@ -10,11 +10,11 @@ Node.js/Express application backed by MongoDB and a Redis/Bull worker queue.
 | Surface | URL | Credentials |
 |---------|-----|-------------|
 | Business dashboard | https://rnr.cloud10hospitality.com/app/login | `kimptom@gmail.com` / `123456` |
-| End-user reputation page | https://rnr.cloud10hospitality.com/app/user/KimptonAluna | — |
+| End-user reputation page | https://rnr.cloud10hospitality.com/app/user/KimptonAluna | To submit a review, user needs to make a booking with their email ID and they will get a magic link which they can use to write and submit a review. |
 | API documentation | https://rnr.cloud10hospitality.com/api-docs/ | — |
 | Hotel booking engine | https://hbe.cloud10hospitality.com/ | `rnr@mail.com` / `123456` |
 
-To create a booking that can be reviewed: search **"Gurgaon"**, pick any future dates, and pay
+To create a booking that can be reviewed: search **"Gurgaon"**, pick any future dates* mandatory to pick stay dates, and pay
 with the test Visa `4100 2800 0000 1007` (CVV any 3 digits, any future expiry).
 
 ## On-chain contract (preprod)
