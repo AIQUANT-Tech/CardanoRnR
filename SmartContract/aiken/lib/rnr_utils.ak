@@ -24,7 +24,7 @@ use cardano/transaction.{InlineDatum, Output, OutputReference, Transaction}
 // -- Types -------------------------------------------------------------------
 
 // The state datum. Field order is fixed and mirrored by the off-chain encoder
-// (cardanoLucid.js): a 7-field record => Constr(0, [...]).
+// (rnrContract.js): a 7-field record => Constr(0, [...]).
 pub type Review {
   review_id: ByteArray,
   // bookingId of the most recent review; None only for the genesis state.

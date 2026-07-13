@@ -1,80 +1,41 @@
-# Change Log
+# Changelog
 
-Each entry: **what** changed, **why**, and **impact**.
+Grouped by date, newest first. Each entry notes **what** changed, **why**, and its **impact**.
 
----
-**2026-07-07**
----
+## 2026-07-13
 
-## 1. New on-chain validator — single-transaction state thread (Aiken)
-**Files:** `SmartContract/aiken/`
+- **Repository cleanup for public review**
+  - **What:** Removed the retired Haskell/PlutusTx contract, its tests, and `dist-newstyle/`; dead server code (`cardanoLucid.js`, `resetBlockchain.js`, the unused `getTransactionMetadata`, and ~1,000 lines of commented-out lock/redeem code in `reviewController.js` / `reviewQueue.js` / `index.js`); scratch/junk files (`server/abc.js`, `server/seed600Bookings.js`), the committed `front-end-ui/build/`, an orphan root `package-lock.json`, the Haskell `.vscode/tasks.json`, CRA boilerplate `App.test.js`, and the unused `TestHome.tsx`. Stopped logging secrets (MongoDB connection string in `db/Config.js`; mailer credentials in `Node_Mailer_Controller.js`) and removed PII debug logs. Removed the stale `LockFunds` / `RedeemFunds` Swagger schemas and dead dependencies (`lucid-cardano`, `audit`, `fix`, `crypto`). Rewrote `README.md` for the current Aiken system and fixed `.gitignore` / `CODEOWNERS`.
+  - **Why:** Make the public repository accurate and auditable — the old contract, dead code, secrets-in-logs, and stale docs no longer matched the deployed Aiken system.
+  - **Impact:** The repository reflects only the deployed single-transaction Aiken contract; no leaked secrets, dead endpoints, or old-contract references remain.
+- **Smart-contract test report**
+  - **What:** Added `TestReport/Aiken_SmartContract_Test_Report.md` — the 19 Aiken unit tests mapped to the previous review's findings, how to run `aiken check` / `aiken build`, and source→on-chain reproducibility (blueprint hashes + the genesis UTxO → the live policy id and script address). Replaces the removed lock/redeem test-scenario document.
+  - **Why:** Give the reviewer test evidence that matches the deployed contract and a deterministic way to reproduce it from source.
+  - **Impact:** The test report matches the deployed contract; `aiken check` → 19/19.
 
-**What:** Replaced the previous PlutusTx validator with an Aiken validator (Plutus V3):
-- `validators/rnr.ak` — spend validator, parameterised by the business key hash, STT policy id and asset name.
-- `validators/stt_mint.ak` — one-shot State Thread Token minting policy (consumes a genesis UTxO; mints exactly one).
-- `lib/rnr_utils.ak` — datum/redeemer types, the reputation formula, and the validation logic.
-- `lib/rnr_tests.ak` — 15 unit tests (`aiken check`), including the double-satisfaction case.
+## 2026-07-07
 
-**Why:** The previous contract had three flaws: the datum and the state NFT were checked on *independent* continuing outputs (double-satisfaction), the new score ignored the current state UTxO, and a signature-only `StateRedeem` action let the operator rewrite the script address.
-
-**Impact:**
-- The state datum and the STT are now bound to **one** continuing output; a forged-datum / split-token transaction is rejected.
-- The new reputation is recomputed on-chain from the **previous state datum** + the review in the redeemer.
-- `StateRedeem` is removed — there is no escape/admin spend path.
-- Reputation semantics are unchanged (same weighted formula), so historical scores keep their meaning.
-
-## 2. Off-chain: one-transaction review flow + duplicate guard
-**Files:** `server/cardano_transaction/rnrContract.js`, `bootstrap.js`, `server/review/*`
-
-**What:**
-- New `rnrContract.js` derives the script address and STT policy at runtime from the compiled blueprint (`plutus.json`) and submits a review as a **single transaction** (`submitReview`): spend the current State UTxO → produce the next one.
-- `submitReview` **retries on UTxO contention** (re-reads state + rebuilds each attempt) and **waits for the produced state UTxO to confirm** before returning; the worker **re-checks for a duplicate right before the on-chain submit**, so a race cannot inflate the on-chain state.
-- `createReview` rejects a second review for the same booking (409) before submitting; `Reviews` schema gains a unique sparse `reviewId` index and persists `reviewId` / `booking_id` / `reputation_score`.
-- Reputation read-back returns a plain number (was a `BigInt`, which failed JSON serialization on the dashboard endpoint).
-- `bootstrap.js` is an operational helper (list UTxOs, derive, genesis, submit, read state).
-
-**Why:** The old flow used two transactions (lock, then redeem), had no protection against duplicate reviews, and had no safeguard for concurrent submissions.
-
-**Impact:** Lower latency and fewer fees per review; duplicate reviews are impossible (application check + DB index + worker guard); concurrent reviews are serialized and each waits for confirmation, so every review is applied to the latest on-chain state without corruption; the reputation dashboard endpoint returns correctly.
-
-## 3. Login provisioning fix
-**Files:** `server/scheduler/schedulerController.js`, `server/user/userController.js`
-
-**What:** Auto-provisioned end-user accounts (created from bookings) now store a **bcrypt hash** of the default password instead of a plaintext string.
-
-**Why:** Login verifies with `bcrypt.compare`, so a plaintext-stored password could never authenticate — those accounts were impossible to log into.
-
-**Impact:** End-user accounts created from a booking can log in.
-
-## 4. Booking engine HTTPS fix
-**What:** The hotel booking front-end was rebuilt so its API base URL uses `https://` (it was `http://`, which browsers block as mixed content on the HTTPS site).
-
-**Why:** The `http` API URL on an `https` page silently blocked every request — hotel search returned nothing and login failed in the browser (while server-side calls worked).
-
-**Impact:** Hotel search returns rooms and login works in the browser. The change is isolated to the booking front-end build; the backend, database and other integrations are untouched.
-
-## 5. Validator hardening + review migration
-**Files:** `SmartContract/aiken/`, `server/cardano_transaction/rnrContract.js`, `server/cardano_transaction/chainRoutes.js`, `server/scheduler/schedulerRoutes.js`
-
-**What:**
-- The one-shot mint policy now requires that **only** the State Thread Token (quantity 1) is minted under its policy id — extra asset names riding along under the same policy are rejected. Five mint-policy unit tests were added (`aiken check` is now 19/19).
-- Removed the datum timestamp gate. Ordering is already enforced by the single-STT state-thread UTxO (the same state cannot be spent twice), so the gate was redundant and could have permanently frozen the state if a bad (far-future) timestamp were ever written; the timestamp is kept as a display field.
-- `submitReview` gained an idempotency guard: if the current on-chain state already reflects this review, it is not submitted again — so a retry after a transient error cannot double-count a review.
-- Removed the legacy `lockFunds` / `redeemFunds` and `sweepOrphanedUtxos` / `scriptState` routes (the old two-step lock/redeem flow).
-- Re-deployed the contract and migrated every existing review onto it, so the review list and the on-chain reputation are consistent on the current contract.
-
-**Why:** Close the remaining review findings — mint scoping, an unbounded timestamp, an off-chain double-count on retry, and the leftover legacy surface — and keep the stored reviews consistent with the on-chain state after the contract change.
-
-**Impact:** Only the state token can be minted under the policy; the state cannot be bricked by a bad timestamp; a retry cannot double-count; the old flow is gone; and every review is anchored to the current contract. New script address `addr_test1wrkh08l6jwy4es6kahdv4k2layyr2z2hpc3dszqf4x8zpqqwukaf0`, policy `a9c7f941cd19500c7387297e68279301829d6c251de23b8e0c21665b`.
-
-## 6. Review-submission confirmation, checkout gate, and legacy module detached
-**Files:** `front-end-ui/src/Components/ReviewModal.jsx`, `server/review/reviewController.js`, `server/review/reviewRoutes.js`, `server/cardano_transaction/chainRoutes.js`, `server/cardano_transaction/txDetails.js`
-
-**What:**
-- The review-submission modal now confirms on-chain in place. `createReview` returns the deterministic `reviewId`, and the modal polls a new `GET /api/review/reviews/status/:reviewId` endpoint (which returns `pending` until the worker stores the review, then `confirmed` with the transaction hash) and shows the Cardano transaction hash with a cardanoscan link. Previously the confirmation only appeared after a page refresh.
-- Re-enabled the "only checked-out guests can submit a review" eligibility check in `createReview`.
-- Fully detached the retired `cardanoLucid.js` from the boot path: the read-only `/api/transaction/getTxDetails` handler was extracted into a small Blockfrost-only `txDetails.js`, and the dead `cardanoLucid` imports were removed from `reviewController.js`. Nothing imports the legacy module now, so its heavy top-level work (Lucid init, `validatorToAddress`, a network `utxosAt`) no longer runs at startup.
-
-**Why:** Give immediate on-chain confirmation of a submitted review, enforce review eligibility, and remove a startup dependency on the retired PlutusV2 code that could otherwise fail the boot if its environment variables were dropped.
-
-**Impact:** Submitting a review shows "recorded on-chain" with the tx hash without a refresh; only checked-out bookings can be reviewed; and the server boots without loading the legacy contract module.
+- **New on-chain validator — single-transaction state thread (Aiken)** — `SmartContract/aiken/`
+  - **What:** Replaced the previous PlutusTx validator with an Aiken (Plutus V3) one: `validators/rnr.ak` (spend validator, parameterised by the business key hash, STT policy id and asset name), `validators/stt_mint.ak` (one-shot STT minting policy), `lib/rnr_utils.ak` (types, reputation formula, validation logic), and `lib/rnr_tests.ak` (unit tests, including the double-satisfaction case).
+  - **Why:** The previous contract had three flaws — datum and state NFT checked on independent continuing outputs (double-satisfaction), the new score ignored the current state UTxO, and a signature-only `StateRedeem` action let the operator rewrite the script address.
+  - **Impact:** Datum + STT are bound to one continuing output (forged-datum / split-token rejected); reputation is recomputed on-chain from the previous state datum + redeemer; `StateRedeem` removed (no admin/escape path); reputation semantics unchanged.
+- **Off-chain: one-transaction review flow + duplicate guard** — `server/cardano_transaction/rnrContract.js`, `bootstrap.js`, `server/review/*`
+  - **What:** `rnrContract.js` derives the script address + STT policy at runtime from `plutus.json` and submits a review as a single transaction (`submitReview`: spend the current State UTxO → produce the next). It retries on UTxO contention and waits for confirmation; the worker re-checks for a duplicate right before submit. `createReview` rejects a second review for the same booking (409); `Reviews` gains a unique sparse `reviewId` index. `bootstrap.js` is an operational helper.
+  - **Why:** The old flow used two transactions (lock, then redeem), had no protection against duplicate reviews, and no safeguard for concurrent submissions.
+  - **Impact:** Lower latency and fees; duplicate reviews impossible; concurrent reviews serialized against the latest on-chain state without corruption; the reputation dashboard endpoint returns correctly.
+- **Login provisioning fix** — `server/scheduler/schedulerController.js`, `server/user/userController.js`
+  - **What:** Auto-provisioned end-user accounts store a bcrypt hash of the default password instead of a plaintext string.
+  - **Why:** Login verifies with `bcrypt.compare`, so a plaintext-stored password could never authenticate.
+  - **Impact:** End-user accounts created from a booking can log in.
+- **Booking engine HTTPS fix**
+  - **What:** The hotel booking front-end was rebuilt so its API base URL uses `https://` (it was `http://`, blocked as mixed content on the HTTPS site).
+  - **Why:** The `http` API URL on an `https` page silently blocked every request — hotel search returned nothing and login failed in the browser.
+  - **Impact:** Hotel search returns rooms and login works in the browser; backend, database, and other integrations untouched.
+- **Validator hardening + review migration** — `SmartContract/aiken/`, `server/cardano_transaction/*`, `server/scheduler/schedulerRoutes.js`
+  - **What:** The one-shot mint policy now requires that only the STT (quantity 1) is minted under its policy id (five mint-policy tests added; `aiken check` now 19/19). Removed the datum timestamp gate (ordering is already enforced by the single-STT state thread, and the gate could have frozen the state on a far-future timestamp). `submitReview` gained an idempotency guard so a retry can't double-count. Removed the legacy `lockFunds` / `redeemFunds` and `sweepOrphanedUtxos` / `scriptState` routes. Re-deployed the contract and migrated every existing review onto it.
+  - **Why:** Close the remaining review findings — mint scoping, an unbounded timestamp, an off-chain double-count on retry, and the leftover legacy surface.
+  - **Impact:** Only the STT can be minted under the policy; the state can't be bricked by a bad timestamp; a retry can't double-count; the old flow is gone. Script address `addr_test1wrkh08l6jwy4es6kahdv4k2layyr2z2hpc3dszqf4x8zpqqwukaf0`, policy `a9c7f941cd19500c7387297e68279301829d6c251de23b8e0c21665b`.
+- **Review-submission confirmation, checkout gate, and legacy module detached** — `front-end-ui/src/Components/ReviewModal.jsx`, `server/review/*`, `server/cardano_transaction/*`
+  - **What:** The review-submission modal confirms on-chain in place — `createReview` returns the deterministic `reviewId`, and the modal polls `GET /api/review/reviews/status/:reviewId` (returns `pending` until the worker stores the review, then `confirmed` with the tx hash) and shows the transaction hash with a cardanoscan link. Re-enabled the "only checked-out guests can submit a review" eligibility check. Detached the retired `cardanoLucid.js` from the boot path (the read-only `getTxDetails` handler was extracted into `txDetails.js`).
+  - **Why:** Give immediate on-chain confirmation of a submitted review, enforce review eligibility, and remove a startup dependency on the retired PlutusV2 code.
+  - **Impact:** Submitting a review shows "recorded on-chain" with the tx hash without a refresh; only checked-out bookings can be reviewed; the server boots without loading the legacy contract module.
