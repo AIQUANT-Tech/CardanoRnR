@@ -35,7 +35,7 @@ const router = express.Router();
  *           example: "+91-9876543210"
  *         password:
  *           type: string
- *           example: "StrongPassword123"
+ *           example: "YourPasswordHere"
  *         user_type:
  *           type: string
  *           enum: [END_USER, BUSINESS_USER]
@@ -61,7 +61,7 @@ const router = express.Router();
  *           example: "arpan@example.com"
  *         password:
  *           type: string
- *           example: "StrongPassword123"
+ *           example: "YourPasswordHere"
  *       required: [email, password]
  *
  *     LoginResponse:
@@ -90,10 +90,10 @@ const router = express.Router();
  *           type: string
  *         document_number:
  *           type: string
- *           example: "A1234567"
+ *           example: "A9876543"
  *         otp:
  *           type: string
- *           example: "123456"
+ *           example: "000000"
  *       required: [user_id, otp]
  *
  *     ValidateUserResponse:

@@ -132,5 +132,4 @@ router.post("/run", processUserMappingFeed);
 router.post("/updateBookingStatus", updateBookingStatusController);
 
 
-
 export default router;

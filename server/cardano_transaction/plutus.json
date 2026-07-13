@@ -1,0 +1,252 @@
+{
+  "preamble": {
+    "title": "AIQUANT-Tech/CardanoRnR",
+    "description": "Cardano Review & Reputation validator — single-transaction, custodial state-thread design",
+    "version": "1.0.0",
+    "plutusVersion": "v3",
+    "compiler": {
+      "name": "Aiken",
+      "version": "v1.1.19+e525483"
+    },
+    "license": "Apache-2.0"
+  },
+  "validators": [
+    {
+      "title": "rnr.rnr.spend",
+      "datum": {
+        "title": "datum",
+        "schema": {
+          "$ref": "#/definitions/rnr_utils~1Review"
+        }
+      },
+      "redeemer": {
+        "title": "redeemer",
+        "schema": {
+          "$ref": "#/definitions/rnr_utils~1ReviewAction"
+        }
+      },
+      "parameters": [
+        {
+          "title": "business_pkh",
+          "schema": {
+            "$ref": "#/definitions/ByteArray"
+          }
+        },
+        {
+          "title": "stt_policy",
+          "schema": {
+            "$ref": "#/definitions/cardano~1assets~1PolicyId"
+          }
+        },
+        {
+          "title": "stt_asset_name",
+          "schema": {
+            "$ref": "#/definitions/ByteArray"
+          }
+        }
+      ],
+      "compiledCode": "59054701010022229800aba2aba1aba0aab9faab9eaab9dab9a9bae0049bae0039bae002488888888896600264653001300b00198059806000cdc3a4005300b0024888966002600460166ea800e2653001301000198081808800cdc3a40009112cc004c004c03cdd500444c8c8ca60026eb4c0580066eb8c05800e6eb8c05800922259800980d0024566002600e602a6ea8022330012301a301b301b301b301b0019180d180d980d800c8c068c06cc06cc06cc06cc06c006460346036003374a90004c064c058dd500424444446644b3001300f301d37540031325980099198008009bac3023302430243024302430243024302430243020375402a44b30010018a508acc004cdc79bae302400101e8a518998010011812800a03e408915980099b8948008dd69804180f9baa0178acc004cdc49bad3008301f375402e9005456600266e212000371a6eb8c018c07cdd500bc566002602b30013756600c603e6ea8c018c07cdd5000c06e034801a3300137586010603e6ea80526044603e6ea8c018c07cdd5000ccdc01bad3009301f37540086eb4c020c07cdd500bccdc01bad3007301f375400890012444464b3001301530233754003132325980099b8748010c094dd5000c4c8c9660026032604e6ea800a2646464646464653001375a6064003375c606400f375a606400b375a6064009375a6064007375a60640049111112cc004c0e401e26464b30013028001899192cc004c0f400a0251640e86eb8c0ec004c0dcdd50014566002605a003159800981b9baa002808459038459035206a3035375400260700191640d8303200130310013030001302f001302e001302d001302837540051640982b3001301d98009bab300e3027375400702381120168acc004cdc79bae302a302737540026eb8c0a8c09cdd500fc56600266ebcc038c09cdd5000980699814980718139baa01f4bd70456600266e1cdd6980818139baa001375a6020604e6ea807e2b30013370e6eb4c044c09cdd5000803456600266e1cdd6980798139baa001005899b87375a6054605660566056605660566056604e6ea8004c8cdc199b803370490322cc004cdc42400000d13370666e0801d20c8013370400c9005452000409866e0920645980099b8848320040062906400c4005026241900266e0c01520c8018a50409514a0812a29410254528204a8a50409514a08128c0a4c098dd5000c5282048300e30253754002604e60486ea8006294102219912cc0040060051598009814800c4c02ccc09cc0a00052f5c100240988130530103d87a800032330010010052259800800c52f5c1133225980099baf302a3027375400400f13302900233004004001899802002000a04a3028001302900140988a50407514a080ea294101d4528203a8a5040746042603c6ea80062c80e0888c966002602c603e6ea80062900044dd6981198101baa001407864b30013016301f375400314c0103d87a8000899198008009bab30243021375400444b30010018a6103d87a8000899192cc004cdc8803000c56600266e3c018006260146604c604800497ae08a60103d87a80004089133004004302800340886eb8c088004c094005023203c32330010010042259800800c5300103d87a8000899192cc004cdc8803000c56600266e3c018006260126604a604600497ae08a60103d87a80004085133004004302700340846eb8c084004c09000502219198008009bac3020301d375402444b30010018a6103d87a80008992cc004cdd79811180f9baa0010128980299810800a5eb82266006006604600480e8c08400501f22c80a22c80b8602c002602a00260206ea80222c807060186ea800e294100a0c02c004c018dd5005c52689b2b20081",
+      "hash": "751f6c5c5463efc35ccc61f5ee31a771647f0d9c0c90ab39bd98e18d"
+    },
+    {
+      "title": "rnr.rnr.else",
+      "redeemer": {
+        "schema": {}
+      },
+      "parameters": [
+        {
+          "title": "business_pkh",
+          "schema": {
+            "$ref": "#/definitions/ByteArray"
+          }
+        },
+        {
+          "title": "stt_policy",
+          "schema": {
+            "$ref": "#/definitions/cardano~1assets~1PolicyId"
+          }
+        },
+        {
+          "title": "stt_asset_name",
+          "schema": {
+            "$ref": "#/definitions/ByteArray"
+          }
+        }
+      ],
+      "compiledCode": "59054701010022229800aba2aba1aba0aab9faab9eaab9dab9a9bae0049bae0039bae002488888888896600264653001300b00198059806000cdc3a4005300b0024888966002600460166ea800e2653001301000198081808800cdc3a40009112cc004c004c03cdd500444c8c8ca60026eb4c0580066eb8c05800e6eb8c05800922259800980d0024566002600e602a6ea8022330012301a301b301b301b301b0019180d180d980d800c8c068c06cc06cc06cc06cc06c006460346036003374a90004c064c058dd500424444446644b3001300f301d37540031325980099198008009bac3023302430243024302430243024302430243020375402a44b30010018a508acc004cdc79bae302400101e8a518998010011812800a03e408915980099b8948008dd69804180f9baa0178acc004cdc49bad3008301f375402e9005456600266e212000371a6eb8c018c07cdd500bc566002602b30013756600c603e6ea8c018c07cdd5000c06e034801a3300137586010603e6ea80526044603e6ea8c018c07cdd5000ccdc01bad3009301f37540086eb4c020c07cdd500bccdc01bad3007301f375400890012444464b3001301530233754003132325980099b8748010c094dd5000c4c8c9660026032604e6ea800a2646464646464653001375a6064003375c606400f375a606400b375a6064009375a6064007375a60640049111112cc004c0e401e26464b30013028001899192cc004c0f400a0251640e86eb8c0ec004c0dcdd50014566002605a003159800981b9baa002808459038459035206a3035375400260700191640d8303200130310013030001302f001302e001302d001302837540051640982b3001301d98009bab300e3027375400702381120168acc004cdc79bae302a302737540026eb8c0a8c09cdd500fc56600266ebcc038c09cdd5000980699814980718139baa01f4bd70456600266e1cdd6980818139baa001375a6020604e6ea807e2b30013370e6eb4c044c09cdd5000803456600266e1cdd6980798139baa001005899b87375a6054605660566056605660566056604e6ea8004c8cdc199b803370490322cc004cdc42400000d13370666e0801d20c8013370400c9005452000409866e0920645980099b8848320040062906400c4005026241900266e0c01520c8018a50409514a0812a29410254528204a8a50409514a08128c0a4c098dd5000c5282048300e30253754002604e60486ea8006294102219912cc0040060051598009814800c4c02ccc09cc0a00052f5c100240988130530103d87a800032330010010052259800800c52f5c1133225980099baf302a3027375400400f13302900233004004001899802002000a04a3028001302900140988a50407514a080ea294101d4528203a8a5040746042603c6ea80062c80e0888c966002602c603e6ea80062900044dd6981198101baa001407864b30013016301f375400314c0103d87a8000899198008009bab30243021375400444b30010018a6103d87a8000899192cc004cdc8803000c56600266e3c018006260146604c604800497ae08a60103d87a80004089133004004302800340886eb8c088004c094005023203c32330010010042259800800c5300103d87a8000899192cc004cdc8803000c56600266e3c018006260126604a604600497ae08a60103d87a80004085133004004302700340846eb8c084004c09000502219198008009bac3020301d375402444b30010018a6103d87a80008992cc004cdd79811180f9baa0010128980299810800a5eb82266006006604600480e8c08400501f22c80a22c80b8602c002602a00260206ea80222c807060186ea800e294100a0c02c004c018dd5005c52689b2b20081",
+      "hash": "751f6c5c5463efc35ccc61f5ee31a771647f0d9c0c90ab39bd98e18d"
+    },
+    {
+      "title": "stt_mint.stt_mint.mint",
+      "redeemer": {
+        "title": "_redeemer",
+        "schema": {
+          "$ref": "#/definitions/Data"
+        }
+      },
+      "parameters": [
+        {
+          "title": "utxo_ref",
+          "schema": {
+            "$ref": "#/definitions/cardano~1transaction~1OutputReference"
+          }
+        },
+        {
+          "title": "asset_name",
+          "schema": {
+            "$ref": "#/definitions/ByteArray"
+          }
+        }
+      ],
+      "compiledCode": "5901e80101002229800aba2aba1aba0aab9faab9eaab9dab9a9bae0024888888896600264653001300900198049805000cc0240092225980099b8748000c020dd50014660026eb8c030c024dd500148966002003148002266e01200233002002300f00140312232330010010032259800800c5300103d87a8000899192cc004cdc8802800c56600266e3c014006266e95200033011300f0024bd7045300103d87a80004035133004004301300340346eb8c034004c04000500e48c034c038c038c038c03800522225980099198008009bac3011300e375400c44b30010018a508acc004cdd7980918079baa30120010168a518998010011809800a01a404113259800980099802002192cc004c008c038dd5000c52f5bded8c1137566024601e6ea800500d198019bab3002300e375400c00b130013259800980118071baa0018a40011375a6024601e6ea800500d192cc004c008c038dd5000c530103d87a8000899198008009bab30133010375400444b30010018a6103d87a8000899192cc004cdc8808000c56600266e3c040006266e9520003301530130024bd7045300103d87a80004045133004004301700340446eb8c044004c050005012201a3300337566004601c6ea8018016294100c1b874800a294100b229410070c024004c010dd5004c52689b2b200401",
+      "hash": "efb17404568789f0ac1a529559ca156d14dbcbdc2e35499e5ee5c60e"
+    },
+    {
+      "title": "stt_mint.stt_mint.else",
+      "redeemer": {
+        "schema": {}
+      },
+      "parameters": [
+        {
+          "title": "utxo_ref",
+          "schema": {
+            "$ref": "#/definitions/cardano~1transaction~1OutputReference"
+          }
+        },
+        {
+          "title": "asset_name",
+          "schema": {
+            "$ref": "#/definitions/ByteArray"
+          }
+        }
+      ],
+      "compiledCode": "5901e80101002229800aba2aba1aba0aab9faab9eaab9dab9a9bae0024888888896600264653001300900198049805000cc0240092225980099b8748000c020dd50014660026eb8c030c024dd500148966002003148002266e01200233002002300f00140312232330010010032259800800c5300103d87a8000899192cc004cdc8802800c56600266e3c014006266e95200033011300f0024bd7045300103d87a80004035133004004301300340346eb8c034004c04000500e48c034c038c038c038c03800522225980099198008009bac3011300e375400c44b30010018a508acc004cdd7980918079baa30120010168a518998010011809800a01a404113259800980099802002192cc004c008c038dd5000c52f5bded8c1137566024601e6ea800500d198019bab3002300e375400c00b130013259800980118071baa0018a40011375a6024601e6ea800500d192cc004c008c038dd5000c530103d87a8000899198008009bab30133010375400444b30010018a6103d87a8000899192cc004cdc8808000c56600266e3c040006266e9520003301530130024bd7045300103d87a80004045133004004301700340446eb8c044004c050005012201a3300337566004601c6ea8018016294100c1b874800a294100b229410070c024004c010dd5004c52689b2b200401",
+      "hash": "efb17404568789f0ac1a529559ca156d14dbcbdc2e35499e5ee5c60e"
+    }
+  ],
+  "definitions": {
+    "ByteArray": {
+      "title": "ByteArray",
+      "dataType": "bytes"
+    },
+    "Data": {
+      "title": "Data",
+      "description": "Any Plutus data."
+    },
+    "Int": {
+      "dataType": "integer"
+    },
+    "Option$ByteArray": {
+      "title": "Option",
+      "anyOf": [
+        {
+          "title": "Some",
+          "description": "An optional value.",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "$ref": "#/definitions/ByteArray"
+            }
+          ]
+        },
+        {
+          "title": "None",
+          "description": "Nothing.",
+          "dataType": "constructor",
+          "index": 1,
+          "fields": []
+        }
+      ]
+    },
+    "cardano/assets/PolicyId": {
+      "title": "PolicyId",
+      "dataType": "bytes"
+    },
+    "cardano/transaction/OutputReference": {
+      "title": "OutputReference",
+      "description": "An `OutputReference` is a unique reference to an output on-chain. The `output_index`\n corresponds to the position in the output list of the transaction (identified by its id)\n that produced that output",
+      "anyOf": [
+        {
+          "title": "OutputReference",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "title": "transaction_id",
+              "$ref": "#/definitions/ByteArray"
+            },
+            {
+              "title": "output_index",
+              "$ref": "#/definitions/Int"
+            }
+          ]
+        }
+      ]
+    },
+    "rnr_utils/Review": {
+      "title": "Review",
+      "anyOf": [
+        {
+          "title": "Review",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "title": "review_id",
+              "$ref": "#/definitions/ByteArray"
+            },
+            {
+              "title": "review_reference_id",
+              "$ref": "#/definitions/Option$ByteArray"
+            },
+            {
+              "title": "overall_rating",
+              "$ref": "#/definitions/Int"
+            },
+            {
+              "title": "timestamp",
+              "$ref": "#/definitions/Int"
+            },
+            {
+              "title": "total_score",
+              "$ref": "#/definitions/Int"
+            },
+            {
+              "title": "rating_count",
+              "$ref": "#/definitions/Int"
+            },
+            {
+              "title": "reputation_score",
+              "$ref": "#/definitions/Int"
+            }
+          ]
+        }
+      ]
+    },
+    "rnr_utils/ReviewAction": {
+      "title": "ReviewAction",
+      "anyOf": [
+        {
+          "title": "ReviewAction",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "title": "review_id",
+              "$ref": "#/definitions/ByteArray"
+            },
+            {
+              "title": "reference_id",
+              "$ref": "#/definitions/ByteArray"
+            },
+            {
+              "title": "rating",
+              "$ref": "#/definitions/Int"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

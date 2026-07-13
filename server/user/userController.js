@@ -165,7 +165,7 @@ export const uploadUser = async (req, res) => {
         if (!reservations) return res.status(400).json({ error: "Invalid JSON format" });
 
         const salt = await bcrypt.genSalt(10);
-        const password = await bcrypt.hash("password", salt);
+        const password = await bcrypt.hash(process.env.DEFAULT_USER_PASSWORD, salt);
 
         const users = [];
 

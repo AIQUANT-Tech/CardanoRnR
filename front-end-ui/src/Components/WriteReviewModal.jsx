@@ -19,6 +19,8 @@ const WriteReviewModal = () => {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
 
+  const bookingId = new URLSearchParams(window.location.search).get("bookingId");
+
   const handleOpen = () => {
     setOpenReviewModal(true);
   };
@@ -138,7 +140,8 @@ const WriteReviewModal = () => {
           </Button>
         </DialogActions>
       </Dialog>
-      <ReviewModal open={openModal} setOpen={setOpenModal} email={email} setEmail={setEmail}/>
+      <ReviewModal open={openModal} setOpen={setOpenModal} email={email} setEmail={setEmail}
+        bookingId={bookingId} />
     </div>
   );
 };

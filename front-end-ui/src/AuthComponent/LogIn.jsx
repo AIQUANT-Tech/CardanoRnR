@@ -93,7 +93,7 @@ function LoginPage() {
                   </Dropdown.Item>
                 </Dropdown.Menu>
               </Dropdown>
-              <Nav.Link href="/signUp">Sign Up</Nav.Link>
+              <Nav.Link href="/app/signUp">Sign Up</Nav.Link>
             </Nav>
           </Navbar.Collapse>
         </Navbar>
@@ -102,7 +102,7 @@ function LoginPage() {
         <div className="login-form">
           <div className="login-section">
             <p className="blue-deep">
-              {t("DONT HAVE AN ACC")} <a href="/signUp">Sign up</a>
+              {t("DONT HAVE AN ACCOUNT")} <a href="/app/signUp">Sign up</a>
             </p>
             {error && <p className="error-message text-danger">{error}</p>}
             <form onSubmit={handleSubmit}>

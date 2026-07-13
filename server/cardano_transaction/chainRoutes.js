@@ -1,6 +1,6 @@
 import express from "express";
 import { fetchRedeemers } from "./index.js";
-import { lockFundsController, redeemFundsController, TxDetails } from "./cardanoLucid.js";
+import { TxDetails } from "./txDetails.js";
 
 const router = express.Router();
 
@@ -32,49 +32,6 @@ const router = express.Router();
  *               data:
  *                 type: string
  *                 example: "some-redeemer-data"
- *
- *     LockFundsRequest:
- *       type: object
- *       properties:
- *         senderAddress:
- *           type: string
- *           description: User's Cardano address that will lock the funds
- *         amount:
- *           type: number
- *           description: Amount to lock in Lovelace
- *         metadata:
- *           type: object
- *           description: Optional metadata to embed in transaction
- *       required: [senderAddress, amount]
- *
- *     LockFundsResponse:
- *       type: object
- *       properties:
- *         txHash:
- *           type: string
- *         status:
- *           type: string
- *           example: "locked"
- *
- *     RedeemFundsRequest:
- *       type: object
- *       properties:
- *         txHash:
- *           type: string
- *           description: Transaction hash of locked funds
- *         redeemer:
- *           type: object
- *           description: Redeemer data required to unlock funds
- *       required: [txHash, redeemer]
- *
- *     RedeemFundsResponse:
- *       type: object
- *       properties:
- *         txHash:
- *           type: string
- *         status:
- *           type: string
- *           example: "redeemed"
  *
  *     TxDetailsRequest:
  *       type: object
@@ -147,64 +104,6 @@ const router = express.Router();
  *         description: Internal blockchain fetch error
  */
 router.post("/fetchRedeemers", fetchRedeemers);
-
-
-
-/**
- * @swagger
- * /api/transaction/lockFunds:
- *   post:
- *     summary: Lock funds on the Cardano blockchain
- *     description: Creates a script-based UTxO that locks ADA using Cardano Lucid. Useful for escrow, dApps, or staking workflows.
- *     tags: [Cardano]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/LockFundsRequest'
- *     responses:
- *       200:
- *         description: Funds successfully locked
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/LockFundsResponse'
- *       400:
- *         description: Missing senderAddress or invalid amount
- *       500:
- *         description: Cardano transaction construction/signing error
- */
-router.post("/lockFunds", lockFundsController);
-
-
-
-/**
- * @swagger
- * /api/transaction/redeemFunds:
- *   post:
- *     summary: Redeem funds locked in a Cardano script
- *     description: Unlocks previously locked UTxOs using redeemer data and Cardano Lucid.
- *     tags: [Cardano]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/RedeemFundsRequest'
- *     responses:
- *       200:
- *         description: Funds successfully redeemed
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/RedeemFundsResponse'
- *       400:
- *         description: Missing txHash or redeemer
- *       500:
- *         description: Redeeming failed due to invalid redeemer or script mismatch
- */
-router.post("/redeemFunds", redeemFundsController);
 
 
 

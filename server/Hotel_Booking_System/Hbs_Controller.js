@@ -20,6 +20,8 @@ export const processGuestBookingInfo = async (req, res) => {
         guest_id,
         first_name,
         last_name,
+        full_name,
+        fullName,
         email,
         phone_number,
         booking_id,
@@ -32,11 +34,15 @@ export const processGuestBookingInfo = async (req, res) => {
         payment_status,
       } = guestData;
 
+      const nameParts = ((full_name || fullName || "").trim()).split(/\s+/);
+      const resolvedFirstName = first_name || nameParts[0] || "";
+      const resolvedLastName = last_name || nameParts.slice(1).join(" ") || "";
+
       // Create guest document
       const guest = new GuestInfo({
         guest_id,
-        first_name,
-        last_name,
+        first_name: resolvedFirstName,
+        last_name: resolvedLastName,
         email,
         phone_number,
         created_at: new Date(),
@@ -299,14 +305,15 @@ export const bookingEngineData = async (req, res) => {
 
     for (const guest of hotelReservation.guestDetails || []) {
       console.log("Guest Data:", guest);
+      const nameParts = ((guest.full_name || guest.fullName || "").trim()).split(/\s+/);
       const guestData = {
-        first_name: guest.personName?.firstName || "",
-        last_name: guest.personName?.surName || "",
+        first_name: guest.personName?.firstName || guest.first_name || nameParts[0] || "",
+        last_name: guest.personName?.surName || guest.last_name || nameParts.slice(1).join(" ") || "",
         email: guest.email || "",
-        phone_number: guest.telePhone?.phoneNo || "",
+        phone_number: guest.telePhone?.phoneNo || guest.phone_number || "",
         address_city: guest.address?.city || "",
         address_country: guest.address?.countryCode || "",
-        guest_id: guest.guestID || uuidv4(),
+        guest_id: guest.guestID || guest.guest_id || uuidv4(),
         guest_id_external: guest.guestID,
       };
 

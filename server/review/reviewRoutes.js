@@ -8,6 +8,7 @@ import {
   getUserReviews,
   getReputationScoreFromBlockchain,
   getReviewById,
+  getReviewStatus,
 } from "./reviewController.js";
 
 const router = express.Router();
@@ -186,6 +187,7 @@ router.get("/reviews", getAllReviews);
  *       500:
  *         description: Error retrieving review
  */
+router.get("/reviews/status/:reviewId", getReviewStatus);
 router.get("/reviews/:id", getReviewById);
 
 

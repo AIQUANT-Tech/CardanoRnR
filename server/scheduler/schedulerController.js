@@ -95,6 +95,7 @@ import User from "../user/UserMast.js";
 import UserGuestMap from "../user/UserGuestMap.js";
 import crypto from "crypto";
 import fetch from "node-fetch";
+import bcrypt from "bcryptjs";
 
 const generateUniqueId = () => crypto.randomUUID();
 const emailEndpoint = process.env.EMAIL_URL;
@@ -232,7 +233,6 @@ const emailEndpoint = process.env.EMAIL_URL;
 //   });
 // }
 
-
 //       // 2. FIND USER
 //       const email = guest.email.toLowerCase();
 //       // console.log("email",email);
@@ -304,10 +304,17 @@ export const processUserMappingFeed = async () => {
 
       let user = await User.findOne({ email });
       if (!user) {
+        // Login uses bcrypt.compare, so the auto-provisioned password must be a
+        // bcrypt hash — storing plaintext made these accounts impossible to log
+        // into. The default is read from the environment (never hard-coded).
+        const defaultPasswordHash = await bcrypt.hash(
+          process.env.DEFAULT_USER_PASSWORD,
+          10,
+        );
         user = await User.create({
           user_id: generateUniqueId(),
           email,
-          password_hash: "password",
+          password_hash: defaultPasswordHash,
           display_name: `${guest.first_name} ${guest.last_name}`,
           role: "End User",
         });
@@ -332,7 +339,7 @@ export const processUserMappingFeed = async () => {
     // 4️⃣ EMAIL LOGIC (SEPARATE, ATOMIC, SAFE)
     // --------------------------------------------------
     const emailBookings = await BookingInfo.find({
-      booking_status: "Checkedout",
+      // booking_status: "Checkedout",
       is_rnr_notified: false,
     });
 
@@ -348,7 +355,7 @@ export const processUserMappingFeed = async () => {
         },
         {
           $set: { is_rnr_notified: true },
-        }
+        },
       );
 
       if (!locked) continue;
@@ -356,7 +363,10 @@ export const processUserMappingFeed = async () => {
       await fetch(emailEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reciepientEmail: guest.email }),
+        body: JSON.stringify({
+          reciepientEmail: guest.email,
+          bookingId: booking.booking_id,
+        }),
       });
     }
 
@@ -365,7 +375,6 @@ export const processUserMappingFeed = async () => {
     console.error("❌ processUserMappingFeed error:", err);
   }
 };
-
 
 export const updateBookingStatusController = async (req, res) => {
   try {
@@ -386,6 +395,7 @@ export const updateBookingStatusController = async (req, res) => {
 
 export const updateBookingStatus = async () => {
   try {
+    console.log("Running booking status update scheduler...");
     // Normalize today's date (00:00:00)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -401,7 +411,7 @@ export const updateBookingStatus = async () => {
 
       // If checkout date is today → mark Checkedout
       if (
-        checkoutDate.getTime() === today.getTime() &&
+        checkoutDate.getTime() <= today.getTime() &&
         booking.booking_status !== "Checkedout"
       ) {
         booking.booking_status = "Checkedout";
