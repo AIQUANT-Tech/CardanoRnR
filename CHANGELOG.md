@@ -3,6 +3,8 @@
 Each entry: **what** changed, **why**, and **impact**.
 
 ---
+**2026-07-07**
+---
 
 ## 1. New on-chain validator — single-transaction state thread (Aiken)
 **Files:** `SmartContract/aiken/`
