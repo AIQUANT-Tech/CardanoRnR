@@ -54,43 +54,14 @@ export async function waitForUTxOWithTimeout(
         utxo.datum === expectedDatumHex && utxo.txHash === expectedTxHash
     );
     if (matchingUtxo) {
-      console.log("Target UTxO with expected txHash found on-chain.");
       return matchingUtxo;
     }
-    console.log(
-      `UTxO not found. Waiting for ${pollInterval / 1000} seconds...`
-    );
     await new Promise((resolve) => setTimeout(resolve, pollInterval));
   }
   throw new Error(
     "Timed out waiting for UTxO with the target datum and expected txHash"
   );
 }
-
-//     // Use user's _id as reviewId (converted to hex)
-//     const reviewId = Buffer.from(user._id.toString()).toString("hex");
-
-//     // Calculate dynamic fields.
-//     const overallRatingCount = await Review.find({ category_id: null });
-//     // console.log(overallRatingCount);
-
-//     const ratingCount = BigInt(overallRatingCount.length);
-//     // console.log(ratingCount);
-
-//     const reputationScore = ratingCount > 0n ? totalScore / ratingCount : 0n;
-//     const timestamp = BigInt(Date.now());
-
-//     // Use user's _id as reviewId (converted to hex)
-//     const reviewId = Buffer.from(user._id.toString()).toString("hex");
-
-//     // Serialize the on-chain datum and redeemer as hex strings using Data.to().
-//     const serializedReviewDatum = Data.to(reviewDatum);
-//     const serializedReviewRedeemer = Data.to(reviewRedeemer);
-
-//     console.log("Saved Overall Review ID:", savedOverall._id.toString());
-//     console.log("Serialized Datum:", serializedReviewDatum);
-//     console.log("Serialized Redeemer:", serializedReviewRedeemer);
-//     console.log("Lock Tx Hash:", lockTxHash);
 
 export const createReview = async (req, res) => {
   try {
@@ -258,28 +229,8 @@ export const getReviewById = async (req, res) => {
   }
 };
 
-// Get all reviews - Business user
-// export const getReviewsForBusinessUser = async (req, res) => {
-//   try {
-//     const { review_rating_info_rq } = req.body;
-
-//     const {
-//       header: { user_name, product, request_type },
-//     } = review_rating_info_rq;
-
-//     console.log("Reviews: ", reviews);
-
-// export const getReviewsForBusinessUser = async (req, res) => {
-//   try {
-//     const { review_rating_info_rq } = req.body;
-
-//     const {
-//       header: { user_name, product, request_type },
-//     } = review_rating_info_rq;
-
 export const getReviewsForBusinessUser = async (req, res) => {
   try {
-    console.log("🚀 START: getReviewsForBusinessUser");
 
     const { review_rating_info_rq } = req.body;
 
@@ -320,7 +271,6 @@ export const getReviewsForBusinessUser = async (req, res) => {
       .lean();
 
 
-    console.log("Reviews fetched:", reviews);
 
     if (!reviews || reviews.length === 0) {
 
@@ -341,7 +291,6 @@ export const getReviewsForBusinessUser = async (req, res) => {
       ),
     ];
 
-    console.log("🧩 Mongo User IDs from reviews:", mongoUserIds);
 
     // ----------------------------------------------
     // 3. Fetch UserGuestMap for these user IDs
@@ -350,7 +299,6 @@ export const getReviewsForBusinessUser = async (req, res) => {
       user_id: { $in: mongoUserIds },
     }).lean();
 
-    console.log("🧭 UserGuestMap records:", userGuestMaps);
 
     // Map user Mongo ID → guest_id
     const guestIdByUserId = {};
@@ -358,7 +306,6 @@ export const getReviewsForBusinessUser = async (req, res) => {
       guestIdByUserId[m.user_id.toString()] = m.guest_id?.toString();
     });
 
-    console.log("🔗 user_id → guest_id:", guestIdByUserId);
 
     // ----------------------------------------------
     // 4. Extract valid guest IDs
@@ -371,7 +318,6 @@ export const getReviewsForBusinessUser = async (req, res) => {
       ),
     ];
 
-    console.log("🎯 Valid Guest IDs:", guestIds);
 
     // ----------------------------------------------
     // 5. Fetch bookings for guest IDs
@@ -382,7 +328,6 @@ export const getReviewsForBusinessUser = async (req, res) => {
       .select("room_type check_in_date check_out_date guest_id")
       .lean();
 
-    console.log("🏨 Bookings fetched:", bookings);
 
     const bookingByGuestId = {};
     bookings.forEach((b) => {
@@ -462,57 +407,6 @@ export const getReviewsForBusinessUser = async (req, res) => {
   }
 };
 
-
-//Get all reviews- end user
-// export const getReviewsForEndUser = async (req, res) => {
-//   try {
-//     const { review_rating_fetch_rq } = req.body;
-
-//     const {
-//       header: { request_type },
-//     } = review_rating_fetch_rq;
-
-//     const validOverallRatings = reviews
-//       .map((r) => r.overall_rating)
-//       .filter((rating) => typeof rating === "number" && !isNaN(rating));
-
-//     const categoryIds = [...new Set(reviews.map((r) => r.category_id))];
-
-//     const categories = await ReviewCategory.find({
-//       _id: { $in: categoryIds },
-//     }).select("category_id category_name category_description");
-
-//     const categoryWiseReviewRating = reviews.reduce((categories, review) => {
-//       const category = categoryDetailsMap[review.category_id];
-//       if (!category) return categories;
-
-//       categories[categoryId].review_rating_details_by_category.push({
-//         review: review.review,
-//         rating: review.rating,
-//       });
-
-//       return categories;
-//     }, {});
-
-//     const categoryWiseReviewList = Object.values(categoryWiseReviewRating);
-
-// export const getReviewsForBusinessUser = async (req, res) => {
-//   try {
-//     const { review_rating_info_rq } = req.body;
-
-//     const {
-//       header: { user_name, product, request_type },
-//     } = review_rating_info_rq;
-
-//     // 3. Batch fetch UserGuestMap documents for these user IDs
-//     const userGuestMaps = await UserGuestMap.find({
-//       user_id: { $in: userIds },
-//     }).lean();
-
-//     // 5. Batch fetch BookingInfo for these guest IDs
-//     const bookings = await BookingInfo.find({ guest_id: { $in: guestIds } })
-//       .select("room_type check_in_date check_out_date guest_id")
-//       .lean();
 
 export const getUserReviews = async (req, res) => {
   try {
@@ -662,47 +556,6 @@ export const calculateReviewStats = async (req, res) => {
   }
 };
 
-//     // Recreate reviewId from the user id (same logic as in createReview)
-//     const reviewId = Buffer.from(userId.toString()).toString("hex");
-//     console.log(reviewId);
-
-//     // Assume the redeemed UTXO is at the wallet address
-//     const walletAddr = await lucid.wallet.address();
-//     const utxos = await lucid.utxosAt(walletAddr);
-//     console.log("My utxo is: ", utxos);
-
-// export const getReviewsForEndUser = async (req, res) => {
-//   try {
-//     const { review_rating_fetch_rq } = req.body;
-
-//     const {
-//       header: { request_type },
-//     } = review_rating_fetch_rq;
-
-//     // Filter for overall reviews (assumed to be those without category_id)
-//     const overallReviews = reviews.filter((r) => !r.category_id);
-
-//     // Category-wise review details (unchanged)
-//     const categoryIds = [...new Set(reviews.map((r) => r.category_id))];
-
-//     const categories = await ReviewCategory.find({
-//       _id: { $in: categoryIds },
-//     }).select("category_id category_name category_description");
-
-//     const categoryWiseReviewRating = reviews.reduce((categories, review) => {
-//       const category = categoryDetailsMap[review.category_id];
-//       if (!category) return categories;
-
-//       categories[categoryId].review_rating_details_by_category.push({
-//         review: review.review,
-//         rating: review.rating,
-//       });
-
-//       return categories;
-//     }, {});
-
-//     const categoryWiseReviewList = Object.values(categoryWiseReviewRating);
-
 export async function fetchReputationScore(userId) {
   // Reputation score is global — stored in the state UTxO identified by the STT.
   // Read it from the current (single-tx design) state contract. Return a plain
@@ -721,7 +574,6 @@ export const getReputationScoreFromBlockchain = async (req, res) => {
         .json({ error: "userId is required in the request body" });
     }
     const { userId } = req.body;
-    console.log("UserId received:", userId);
 
     const reputationScore = await fetchReputationScore(userId);
     return res.status(200).json({ reputationScore });
@@ -734,31 +586,7 @@ export const getReputationScoreFromBlockchain = async (req, res) => {
   }
 };
 
-//     // Filter for overall reviews (assumed to be those without a category_id)
-//     const overallReviews = reviews.filter((r) => !r.category_id);
-
-//     // Use the first overall review's userId to fetch the blockchain reputation score.
-//     let blockchainReputationScore = 0;
-
-//     overallReviews.sort(
-//       (a, b) => new Date(b.created_at) - new Date(a.created_at)
-//     );
-
-//     const lastUserId =
-//       overallReviews.length > 0 ? overallReviews[0].user_id._id : null;
-
-//     if (overallReviews.length > 0) {
-//       blockchainReputationScore = await fetchReputationScore(lastUserId);
-//     }
-
-//     console.log("My Blockchain Reputation Score: ", blockchainReputationScore);
-
-//     const booking = BookingInfo.find
-
-//     const categoryWiseReviewList = Object.values(categoryWiseReviewRating);
-
 export const getReviewsForEndUser = async (req, res) => {
-  //console.log("fn called");
 
   try {
     if (!req.body || !req.body.review_rating_fetch_rq) {
@@ -788,7 +616,6 @@ export const getReviewsForEndUser = async (req, res) => {
       )
       .populate("user_id", "display_name");
 
-    //console.log("Reviews fetched:", reviews);
 
 
     // Filter for overall reviews (assumed to be those without a category_id)
@@ -807,8 +634,6 @@ export const getReviewsForEndUser = async (req, res) => {
       blockchainReputationScore = await fetchReputationScore(lastUserId);
     }
 
-    // console.log("ReputationScore: ", blockchainReputationScore);
-
     // For each overall review, fetch its own blockchain reputation score and booking details
     const reviewRatingDetailsOverall = await Promise.all(
       overallReviews.map(async (r) => {
@@ -819,8 +644,6 @@ export const getReviewsForEndUser = async (req, res) => {
           user_id: userId.toString(),
         });
 
-
-    // console.log("userGuestMapping1:", userGuestMapping);
 
         if (userGuestMapping && userGuestMapping.guest_id) {
           
@@ -850,8 +673,6 @@ export const getReviewsForEndUser = async (req, res) => {
       _id: { $in: categoryIds },
       status: "Active",
     }).select("category_id category_name category_description");
-
-    //  console.log("--------------------------categories", categories);
 
 
     
