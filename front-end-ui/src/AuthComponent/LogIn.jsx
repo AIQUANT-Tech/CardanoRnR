@@ -53,7 +53,7 @@ function LoginPage() {
         localStorage.setItem("user", JSON.stringify(user));
 
         alert("Login successful!");
-        window.location.href = "/categories"; // Redirect to dashboard
+        window.location.href = "/app/categories"; // Redirect to dashboard
       }
     } catch (err) {
       const errorMsg =
