@@ -86,15 +86,13 @@ const router = express.Router();
  *     ValidateUserRequest:
  *       type: object
  *       properties:
- *         user_id:
+ *         email:
  *           type: string
- *         document_number:
+ *           example: "guest@example.com"
+ *         bookingId:
  *           type: string
- *           example: "A1234567"
- *         otp:
- *           type: string
- *           example: "123456"
- *       required: [user_id, otp]
+ *           example: "BK-2026-0001"
+ *       required: [email, bookingId]
  *
  *     ValidateUserResponse:
  *       type: object
@@ -224,7 +222,7 @@ router.get("/users", getAllUsers);
  * @swagger
  * /api/user/validate:
  *   post:
- *     summary: Validate end-user identity (OTP, document verification, etc.)
+ *     summary: Validate that an end user can review a booking (one review per user per booking)
  *     tags: [Users]
  *     requestBody:
  *       required: true

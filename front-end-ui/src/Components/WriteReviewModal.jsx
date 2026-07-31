@@ -41,6 +41,10 @@ const WriteReviewModal = () => {
         setError("Email is required");
         return;
     }
+    if (!bookingId) {
+        setError("Booking ID is missing. Please use the review link from your email.");
+        return;
+    }
 
     try {
         const response = await fetch(`${API_BASE_URL}api/user/validate`, {
@@ -48,7 +52,7 @@ const WriteReviewModal = () => {
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ email }),
+            body: JSON.stringify({ email, bookingId }),
         });
 
         const data = await response.json();

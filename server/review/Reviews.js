@@ -6,6 +6,12 @@ const Reviews = new mongoose.Schema({
     ref: "User",
     required: true,
   },
+  booking_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "BookingInfo",
+    default: null,
+    description: "Booking this review belongs to",
+  },
   overall_review: {
     type: String,
     required: true,

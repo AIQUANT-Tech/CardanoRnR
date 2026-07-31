@@ -449,6 +449,16 @@ export const createReview = async (req, res) => {
       return res.status(403).json({ error: "Only checked-out guests can submit reviews" });
     }
 
+    const existingReview = await Review.findOne({
+      user_id: user._id,
+      booking_id: booking._id,
+    });
+    if (existingReview) {
+      return res
+        .status(409)
+        .json({ error: "Already submitted a review for this booking" });
+    }
+
     // Validate categories
     const categoryIds = category_wise_review_rating.map(
       (catReview) => catReview.category_id,
@@ -499,6 +509,7 @@ export const createReview = async (req, res) => {
     reviewQueue.add({
       lockTxHash,
       userId: user._id.toString(),
+      bookingMongoId: booking._id.toString(),
       overall_rating,
       overall_review,
       category_wise_review_rating,

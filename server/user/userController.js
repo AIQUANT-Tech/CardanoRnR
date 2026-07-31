@@ -4,6 +4,7 @@ import { generateToken } from "../auth/jwtUtils.js";
 import responses from '../utils/responses.js';
 import roles from '../utils/roles.js';
 import Review from '../review/Reviews.js';
+import BookingInfo from '../Hotel_Booking_System/Hbs_Booking_Info_Schema.js';
 
 
 let otps = {};
@@ -98,10 +99,14 @@ export const getAllUsers = async (req, res) => {
 
 export const validateEndUser = async (req, res) => {
     try {
-        const { email } = req.body;
+        const { email, bookingId } = req.body;
 
         if (!email) {
             return res.status(400).json({ user_crud_rs: { status: responses.validation.emailRequired } });
+        }
+
+        if (!bookingId) {
+            return res.status(400).json({ user_crud_rs: { status: "Booking ID is required" } });
         }
 
         // Check if the user exists
@@ -110,9 +115,14 @@ export const validateEndUser = async (req, res) => {
             return res.status(404).json({ user_crud_rs: { status: responses.validation.NotFound } });
         }
 
-        const review = await Review.findOne({ user_id: user._id});
+        const booking = await BookingInfo.findOne({ booking_id: bookingId });
+        if (!booking) {
+            return res.status(404).json({ user_crud_rs: { status: "Booking not found" } });
+        }
+
+        const review = await Review.findOne({ user_id: user._id, booking_id: booking._id });
         if (review){
-            return res.status(404).json({user_crud_rs: { status: "Already submitted a review!" }})
+            return res.status(404).json({user_crud_rs: { status: "Already submitted a review for this booking!" }})
         }
 
         return res.status(200).json({ user_crud_rs: { status: responses.success.success } });

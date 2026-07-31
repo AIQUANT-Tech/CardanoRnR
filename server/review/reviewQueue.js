@@ -84,6 +84,7 @@ reviewQueue.process(async (job, done) => {
   const {
     lockTxHash,
     userId,
+    bookingMongoId,
     overall_rating,
     overall_review,
     category_wise_review_rating,
@@ -112,6 +113,7 @@ reviewQueue.process(async (job, done) => {
     // 1️⃣ Save overall review
     const savedOverall = await Review.create({
       user_id: userId,
+      booking_id: bookingMongoId || null,
       category_id: null,
       overall_review,
       overall_rating,
@@ -129,6 +131,7 @@ reviewQueue.process(async (job, done) => {
 
       return {
         user_id: userId,
+        booking_id: bookingMongoId || null,
         category_id: categoryDoc?._id, // ✅ FIXED
         review: catRev.review,
         rating: catRev.rating,
