@@ -2,6 +2,17 @@
 
 Grouped by date, newest first. Each entry notes **what** changed, **why**, and its **impact**.
 
+## 2026-07-31
+
+- **Per-booking validate endpoint** — `server/user/userController.js`, `server/user/userRoutes.js`, `front-end-ui/src/Components/WriteReviewModal.jsx`
+  - **What:** `POST /api/user/validate` now requires `bookingId` alongside `email`, resolves the booking, and checks the same deterministic `reviewId` (`hex(userId + booking._id)`) that `createReview` and the database index enforce. The write-review modal passes the `bookingId` from the review link and shows a clear error when it is missing. The stale Swagger schema for the endpoint (leftover OTP fields) was corrected.
+  - **Why:** The validate gate still asked "has this user ever reviewed?" — so a returning guest was blocked from the review form even though the submission path and database already allowed one review per booking.
+  - **Impact:** A guest with several stays can review each booking exactly once; all three enforcement layers (validate gate, `createReview` 409, unique sparse `reviewId` index) now agree.
+- **Production configuration aligned with the repository** — `front-end-ui/src/config.js`, `front-end-ui/src/AuthComponent/LogIn.jsx`
+  - **What:** Committed the two values that had only ever been live-edited on the production server: the `https://` API base URL and the `/app/categories` login redirect.
+  - **Why:** Every fresh deploy from `main` would have silently reverted production to the `http://` URL (mixed-content blocked) and the wrong redirect path.
+  - **Impact:** A deploy from `main` reproduces production exactly; no unversioned server-side edits remain.
+
 ## 2026-07-13
 
 - **Repository cleanup for public review**
